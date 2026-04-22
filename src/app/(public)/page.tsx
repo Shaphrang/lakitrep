@@ -279,7 +279,7 @@ export default function Page() {
           className="absolute inset-0 bg-cover bg-center"
           style={{
             backgroundImage:
-              "url('https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=2200&q=80')",
+              "url('https://ztvgdchapyllkihgyuch.supabase.co/storage/v1/object/public/lakitrep-media/properties/cover/1776884600277-95b1ed1b-2165-47ee-bf2f-b225d7480fc4.jpg')",
           }}
         />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(12,20,12,0.82)_0%,rgba(16,24,16,0.62)_35%,rgba(16,24,16,0.30)_65%,rgba(16,24,16,0.62)_100%)]" />
