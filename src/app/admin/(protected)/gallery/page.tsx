@@ -1,10 +1,19 @@
-import { PageShell } from "@/components/shared/page-shell";
+import { notFound } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { PROPERTY_SLUG } from "@/lib/admin/constants";
+import { GalleryManager } from "@/components/admin/gallery-manager";
 
-export default function Page() {
+export default async function GalleryPage() {
+  const supabase = await createClient();
+  const { data: property } = await supabase.from("properties").select("id").eq("slug", PROPERTY_SLUG).single();
+  const { data: images } = await supabase.from("gallery_images").select("*").order("sort_order").limit(200);
+
+  if (!property) return notFound();
+
   return (
-    <PageShell
-      title="gallery"
-      description="This module is scaffolded in Phase A and will be implemented in upcoming phases."
-    />
+    <div className="space-y-4">
+      <h1 className="text-2xl font-semibold">Gallery</h1>
+      <GalleryManager propertyId={property.id} images={images ?? []} />
+    </div>
   );
 }

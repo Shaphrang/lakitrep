@@ -64,7 +64,9 @@ export async function loginAdmin(
 
   if (!adminProfile?.is_active) {
     await supabase.auth.signOut();
-    return { error: "Your account is not authorized for admin access." };
+    return {
+      error: "Your account is not authorized or has been deactivated. Contact super admin.",
+    };
   }
 
   redirect("/admin");
