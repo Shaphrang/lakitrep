@@ -14,8 +14,6 @@ export default async function EditCottagePage({ params }: { params: Promise<{ id
     .maybeSingle();
 
   const { data: amenities } = await supabase.from("amenities").select("id,name").eq("is_active", true).order("name");
-  const { data: images } = await supabase.from("cottage_images").select("*").eq("cottage_id", id).order("sort_order");
-
   if (!cottage) return notFound();
 
   return (
@@ -25,7 +23,6 @@ export default async function EditCottagePage({ params }: { params: Promise<{ id
       cottage={cottage}
       amenities={amenities ?? []}
       selectedAmenities={(cottage.cottage_amenities ?? []).map((item: any) => item.amenity_id)}
-      images={images ?? []}
     />
   );
 }

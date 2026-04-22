@@ -21,7 +21,7 @@ export default async function CottagesPage({
   let query = supabase
     .from("cottages")
     .select(
-      "id,name,code,slug,category,max_total_guests,is_featured,is_bookable,status,cottage_prices(weekday_rate,weekend_rate),cottage_images(storage_path,is_cover,sort_order)",
+      "id,name,code,slug,category,max_total_guests,is_featured,is_bookable,status,cover_image,cottage_prices(weekday_rate,weekend_rate)",
     )
     .eq("property_id", property.id)
     .order("sort_order", { ascending: true });
@@ -79,16 +79,16 @@ export default async function CottagesPage({
           </thead>
           <tbody>
             {cottages?.map((cottage: any) => {
-              const cover = cottage.cottage_images?.find((img: any) => img.is_cover) ?? cottage.cottage_images?.[0];
+              const cover = cottage.cover_image;
               const price = Array.isArray(cottage.cottage_prices) ? cottage.cottage_prices[0] : cottage.cottage_prices;
 
               return (
                 <tr key={cottage.id} className="border-t border-zinc-100">
                   <td className="p-3">
                     <div className="flex items-center gap-3">
-                      {cover?.storage_path ? (
+                      {cover ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={resolveImageUrl(cover.storage_path)} alt={cottage.name} className="h-10 w-14 rounded object-cover" />
+                        <img src={resolveImageUrl(cover)} alt={cottage.name} className="h-10 w-14 rounded object-cover" />
                       ) : (
                         <div className="h-10 w-14 rounded bg-zinc-100" />
                       )}
@@ -124,7 +124,7 @@ export default async function CottagesPage({
 
       <div className="grid gap-3 lg:hidden">
         {cottages?.map((cottage: any) => {
-          const cover = cottage.cottage_images?.find((img: any) => img.is_cover) ?? cottage.cottage_images?.[0];
+          const cover = cottage.cover_image;
           const price = Array.isArray(cottage.cottage_prices) ? cottage.cottage_prices[0] : cottage.cottage_prices;
           return (
             <Card key={cottage.id}>
@@ -132,9 +132,9 @@ export default async function CottagesPage({
                 <CardTitle className="text-base">{cottage.name}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-1 text-sm text-zinc-600">
-                {cover?.storage_path ? (
+                {cover ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={resolveImageUrl(cover.storage_path)} alt={cottage.name} className="mb-2 h-36 w-full rounded object-cover" />
+                  <img src={resolveImageUrl(cover)} alt={cottage.name} className="mb-2 h-36 w-full rounded object-cover" />
                 ) : null}
                 <p>
                   {cottage.code} • {cottage.category}

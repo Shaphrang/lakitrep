@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { COTTAGE_STATUSES, STORAGE_BUCKET } from "@/lib/admin/constants";
 import { extractStoragePath, resolveImageUrl, toSafeFilename } from "@/lib/admin/storage";
-import { cottageImageSchema, cottagePriceSchema, cottageSchema } from "@/lib/admin/validators";
+import { cottagePriceSchema, cottageSchema } from "@/lib/admin/validators";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -23,7 +23,6 @@ type CottageFormProps = {
   cottage?: any;
   amenities: any[];
   selectedAmenities: string[];
-  images: any[];
 };
 
 export function CottageForm({
@@ -32,12 +31,16 @@ export function CottageForm({
   cottage,
   amenities,
   selectedAmenities,
-  images,
 }: CottageFormProps) {
   const router = useRouter();
   const supabase = createClient();
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
+  const [coverImage, setCoverImage] = useState<string | null>(cottage?.cover_image ?? null);
+  const [galleryImages, setGalleryImages] = useState<string[]>(
+    Array.isArray(cottage?.gallery_images) ? cottage.gallery_images : [],
+  );
 
   const defaults = useMemo<FormValues>(
     () => ({
@@ -83,6 +86,83 @@ export function CottageForm({
     return message;
   }
 
+  async function uploadToStorage(file: File, folder: "cover" | "gallery") {
+    const slug = (form.getValues("slug") || cottage?.slug || "new-cottage").trim() || "new-cottage";
+    const path = `cottages/${slug}/${folder}/${file.lastModified}-${toSafeFilename(file.name)}`;
+    const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file, {
+      upsert: false,
+      contentType: file.type,
+    });
+
+    if (error) throw error;
+    return path;
+  }
+
+  async function onCoverUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploadingCover(true);
+    try {
+      const path = await uploadToStorage(file, "cover");
+      const previousPath = extractStoragePath(coverImage);
+      setCoverImage(path);
+      if (previousPath) await supabase.storage.from(STORAGE_BUCKET).remove([previousPath]);
+      toast.success("Cover image uploaded.");
+    } catch (error: any) {
+      toast.error(error.message ?? "Failed to upload cover image.");
+    }
+    setUploadingCover(false);
+    event.target.value = "";
+  }
+
+  async function onGalleryUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0) return;
+
+    setUploadingGallery(true);
+    const uploaded: string[] = [];
+    for (const file of files) {
+      try {
+        const path = await uploadToStorage(file, "gallery");
+        uploaded.push(path);
+      } catch (error: any) {
+        toast.error(error.message ?? `Failed to upload ${file.name}`);
+      }
+    }
+
+    if (uploaded.length > 0) {
+      setGalleryImages((prev) => [...prev, ...uploaded]);
+      toast.success(`${uploaded.length} gallery image(s) uploaded.`);
+    }
+
+    setUploadingGallery(false);
+    event.target.value = "";
+  }
+
+  async function removeCoverImage() {
+    if (!coverImage) return;
+    const objectPath = extractStoragePath(coverImage);
+    if (objectPath) await supabase.storage.from(STORAGE_BUCKET).remove([objectPath]);
+    setCoverImage(null);
+  }
+
+  async function removeGalleryImage(path: string) {
+    const objectPath = extractStoragePath(path);
+    if (objectPath) await supabase.storage.from(STORAGE_BUCKET).remove([objectPath]);
+    setGalleryImages((prev) => prev.filter((item) => item !== path));
+  }
+
+  function moveGalleryImage(index: number, direction: "up" | "down") {
+    setGalleryImages((prev) => {
+      const target = direction === "up" ? index - 1 : index + 1;
+      if (target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  }
+
   async function onSubmit(values: FormValues) {
     setSaving(true);
     const parsed = formSchema.safeParse(values);
@@ -118,6 +198,8 @@ export function CottageForm({
       is_featured: payload.isFeatured,
       is_bookable: payload.isBookable,
       status: payload.status,
+      cover_image: coverImage,
+      gallery_images: galleryImages,
     };
 
     const { data: savedCottage, error } = mode === "create"
@@ -177,91 +259,6 @@ export function CottageForm({
     toast.success(mode === "create" ? "Cottage created." : "Cottage updated.");
     setSaving(false);
     router.push(`/admin/cottages/${targetId}`);
-    router.refresh();
-  }
-
-  async function uploadImage(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file || !cottage?.id) return;
-
-    setUploading(true);
-    const currentSlug = form.getValues("slug") || cottage.slug;
-    const path = `cottages/${currentSlug}/${file.lastModified}-${toSafeFilename(file.name)}`;
-
-    const { error: uploadError } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file, {
-      upsert: false,
-      contentType: file.type,
-    });
-
-    if (uploadError) {
-      toast.error(`Upload failed: ${uploadError.message}`);
-      setUploading(false);
-      return;
-    }
-
-    const { error: dbError } = await supabase.from("cottage_images").insert({
-      cottage_id: cottage.id,
-      storage_path: path,
-      sort_order: images.length,
-    });
-
-    if (dbError) {
-      await supabase.storage.from(STORAGE_BUCKET).remove([path]);
-      toast.error(dbError.message);
-    } else {
-      toast.success("Image uploaded.");
-    }
-
-    setUploading(false);
-    router.refresh();
-  }
-
-  async function updateImageMeta(image: any, updates: { alt_text?: string | null; sort_order?: number; is_cover?: boolean }) {
-    const parsed = cottageImageSchema.safeParse({
-      altText: updates.alt_text ?? image.alt_text ?? "",
-      sortOrder: updates.sort_order ?? image.sort_order ?? 0,
-    });
-
-    if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "Invalid image update.");
-      return;
-    }
-
-    if (updates.is_cover) {
-      const { error: resetError } = await supabase.from("cottage_images").update({ is_cover: false }).eq("cottage_id", cottage.id);
-      if (resetError) {
-        toast.error(resetError.message);
-        return;
-      }
-    }
-
-    const { error } = await supabase
-      .from("cottage_images")
-      .update({
-        alt_text: parsed.data.altText || null,
-        sort_order: parsed.data.sortOrder,
-        ...(updates.is_cover !== undefined ? { is_cover: updates.is_cover } : {}),
-      })
-      .eq("id", image.id);
-
-    if (error) toast.error(error.message);
-    else toast.success("Image updated.");
-    router.refresh();
-  }
-
-  async function deleteImage(image: any) {
-    const objectPath = extractStoragePath(image.storage_path);
-    const { error: dbError } = await supabase.from("cottage_images").delete().eq("id", image.id);
-    if (dbError) {
-      toast.error(dbError.message);
-      return;
-    }
-
-    if (objectPath) {
-      await supabase.storage.from(STORAGE_BUCKET).remove([objectPath]);
-    }
-
-    toast.success("Image deleted.");
     router.refresh();
   }
 
@@ -355,6 +352,42 @@ export function CottageForm({
               <textarea className="w-full rounded-md border p-3" rows={3} {...form.register("notes")} />
             </label>
 
+            <Card>
+              <CardHeader><CardTitle className="text-base">Cottage Images</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Cover image</p>
+                  <input type="file" accept="image/*" onChange={onCoverUpload} disabled={uploadingCover} />
+                  {coverImage ? (
+                    <div className="w-full max-w-sm space-y-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={resolveImageUrl(coverImage)} alt="Cottage cover" className="h-40 w-full rounded object-cover" />
+                      <Button type="button" variant="destructive" className="h-8 px-2 text-xs" onClick={removeCoverImage}>Remove cover</Button>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Gallery images</p>
+                  <input type="file" accept="image/*" multiple onChange={onGalleryUpload} disabled={uploadingGallery} />
+                  <p className="text-xs text-zinc-500">Stored in {STORAGE_BUCKET} as cottages/&#123;slug&#125;/cover and cottages/&#123;slug&#125;/gallery paths.</p>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {galleryImages.map((imagePath, index) => (
+                      <div key={imagePath} className="space-y-2 rounded border p-2">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={resolveImageUrl(imagePath)} alt="Cottage gallery" className="h-32 w-full rounded object-cover" />
+                        <div className="flex flex-wrap gap-2">
+                          <Button type="button" variant="secondary" className="h-8 px-2 text-xs" onClick={() => moveGalleryImage(index, "up")}>Up</Button>
+                          <Button type="button" variant="secondary" className="h-8 px-2 text-xs" onClick={() => moveGalleryImage(index, "down")}>Down</Button>
+                          <Button type="button" variant="destructive" className="h-8 px-2 text-xs" onClick={() => removeGalleryImage(imagePath)}>Delete</Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
               {[
                 ["hasAc", "AC"],
@@ -390,61 +423,6 @@ export function CottageForm({
           </form>
         </CardContent>
       </Card>
-
-      {mode === "edit" ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Cottage Images</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <input type="file" accept="image/*" onChange={uploadImage} disabled={uploading} />
-            <p className="text-xs text-zinc-500">Bucket: {STORAGE_BUCKET}. Uploaded as cottages/&#123;slug&#125;/&#123;filename&#125;.</p>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {images.map((image) => (
-                <div key={image.id} className="space-y-2 rounded border p-2">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={resolveImageUrl(image.storage_path)} alt={image.alt_text || "Cottage image"} className="h-32 w-full rounded object-cover" />
-                  <label className="space-y-1 text-xs">
-                    <span>Alt text</span>
-                    <input
-                      defaultValue={image.alt_text ?? ""}
-                      className="h-8 w-full rounded-md border px-2"
-                      onBlur={(event) => updateImageMeta(image, { alt_text: event.target.value || null })}
-                    />
-                  </label>
-                  <label className="space-y-1 text-xs">
-                    <span>Sort order</span>
-                    <input
-                      defaultValue={image.sort_order ?? 0}
-                      type="number"
-                      className="h-8 w-full rounded-md border px-2"
-                      onBlur={(event) => updateImageMeta(image, { sort_order: Number(event.target.value || 0) })}
-                    />
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      className="h-8 px-2 text-xs"
-                      onClick={() => updateImageMeta(image, { is_cover: true })}
-                    >
-                      {image.is_cover ? "Cover" : "Set cover"}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      className="h-8 px-2 text-xs"
-                      onClick={() => deleteImage(image)}
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      ) : null}
     </div>
   );
 }
