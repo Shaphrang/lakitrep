@@ -6,6 +6,7 @@ import { PROPERTY_SLUG, SITE_SETTING_KEYS } from "@/lib/admin/constants";
 import { settingsSchema } from "@/lib/admin/validators";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { PropertyImagesManager } from "@/components/admin/property-images-manager";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -101,6 +102,12 @@ export default async function SettingsPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-semibold">Settings</h1>
+      <PropertyImagesManager
+        propertyId={property.id}
+        initialCoverImage={property.cover_image ?? null}
+        initialGalleryImages={Array.isArray(property.gallery_images) ? property.gallery_images : []}
+      />
+
       <form action={updateSettings} className="space-y-4">
         <Card><CardHeader><CardTitle>Property Basics</CardTitle></CardHeader><CardContent className="grid gap-2 md:grid-cols-2">
           <input name="name" defaultValue={property.name} placeholder="Property name" className="h-10 rounded-md border px-3" />
@@ -145,7 +152,7 @@ export default async function SettingsPage() {
         <ul className="list-disc pl-5">
           <li><code>NEXT_PUBLIC_SUPABASE_URL</code></li>
           <li><code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code></li>
-          <li><code>NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET</code> (optional, default: <code>lakitrep-media</code>)</li>
+          <li><code>NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET</code> (optional, default: <code>website-media</code>)</li>
         </ul>
         <p>Find URL and anon key in Supabase Dashboard → Project Settings → API.</p>
         <p>Anon key is intended for browser use and is protected by RLS policies. Never expose the service role key in frontend code or any <code>NEXT_PUBLIC_*</code> env variable.</p>

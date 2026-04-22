@@ -9,10 +9,10 @@ export type Json =
 
 export type Database = {
   public: {
-    Tables: {};
-    Views: {};
-    Functions: {};
-    Enums: {};
-    CompositeTypes: {};
+    Tables: Record<string, never>;
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
   };
 };

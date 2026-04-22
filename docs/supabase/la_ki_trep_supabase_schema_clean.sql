@@ -78,6 +78,8 @@ create table if not exists public.properties (
   booking_note text,
   check_in_time time,
   check_out_time time,
+  cover_image text,
+  gallery_images text[] not null default '{}',
   is_active boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -175,6 +177,8 @@ create table if not exists public.cottages (
   is_featured boolean not null default false,
   is_bookable boolean not null default true,
   status public.cottage_status not null default 'active',
+  cover_image text,
+  gallery_images text[] not null default '{}',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -183,16 +187,6 @@ drop trigger if exists trg_cottages_updated_at on public.cottages;
 create trigger trg_cottages_updated_at
 before update on public.cottages
 for each row execute function public.set_updated_at();
-
-create table if not exists public.cottage_images (
-  id uuid primary key default gen_random_uuid(),
-  cottage_id uuid not null references public.cottages(id) on delete cascade,
-  storage_path text not null,
-  alt_text text,
-  is_cover boolean not null default false,
-  sort_order integer not null default 0,
-  created_at timestamptz not null default now()
-);
 
 create table if not exists public.amenities (
   id uuid primary key default gen_random_uuid(),
@@ -252,7 +246,8 @@ create table if not exists public.attractions (
   name text not null,
   description text,
   distance_text text,
-  image_url text,
+  cover_image text,
+  gallery_images text[] not null default '{}',
   sort_order integer not null default 0,
   is_active boolean not null default true,
   created_at timestamptz not null default now(),
@@ -461,7 +456,6 @@ create table if not exists public.activity_logs (
 -- ============================================================
 create index if not exists idx_cottages_property_id on public.cottages(property_id);
 create index if not exists idx_cottages_status on public.cottages(status);
-create index if not exists idx_cottage_images_cottage_id on public.cottage_images(cottage_id);
 create index if not exists idx_gallery_images_property_id on public.gallery_images(property_id);
 create index if not exists idx_attractions_property_id on public.attractions(property_id);
 create index if not exists idx_policies_property_id on public.policies(property_id);
@@ -657,13 +651,8 @@ select
   cp.weekend_rate,
   cp.child_rate,
   cp.extra_bed_rate,
-  (
-    select ci.storage_path
-    from public.cottage_images ci
-    where ci.cottage_id = c.id
-    order by ci.is_cover desc, ci.sort_order asc, ci.created_at asc
-    limit 1
-  ) as cover_image
+  c.cover_image,
+  c.gallery_images
 from public.cottages c
 left join public.cottage_prices cp on cp.cottage_id = c.id
 where c.status = 'active' and c.is_bookable = true;
@@ -700,7 +689,6 @@ alter table public.properties enable row level security;
 alter table public.site_settings enable row level security;
 alter table public.admin_profiles enable row level security;
 alter table public.cottages enable row level security;
-alter table public.cottage_images enable row level security;
 alter table public.amenities enable row level security;
 alter table public.cottage_amenities enable row level security;
 alter table public.cottage_prices enable row level security;
@@ -720,9 +708,6 @@ create policy "public_read_properties" on public.properties for select using (is
 
 drop policy if exists "public_read_cottages" on public.cottages;
 create policy "public_read_cottages" on public.cottages for select using (status = 'active' and is_bookable = true);
-
-drop policy if exists "public_read_cottage_images" on public.cottage_images;
-create policy "public_read_cottage_images" on public.cottage_images for select using (true);
 
 drop policy if exists "public_read_amenities" on public.amenities;
 create policy "public_read_amenities" on public.amenities for select using (is_active = true);
@@ -762,9 +747,6 @@ create policy "admin_all_admin_profiles" on public.admin_profiles for all using 
 
 drop policy if exists "admin_all_cottages" on public.cottages;
 create policy "admin_all_cottages" on public.cottages for all using (public.is_admin()) with check (public.is_admin());
-
-drop policy if exists "admin_all_cottage_images" on public.cottage_images;
-create policy "admin_all_cottage_images" on public.cottage_images for all using (public.is_admin()) with check (public.is_admin());
 
 drop policy if exists "admin_all_amenities" on public.amenities;
 create policy "admin_all_amenities" on public.amenities for all using (public.is_admin()) with check (public.is_admin());
