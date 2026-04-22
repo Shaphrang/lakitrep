@@ -31,7 +31,7 @@ export async function loginAdmin(
   const { data: adminProfile, error: profileError } = await supabase
     .from("admin_profiles")
     .select("is_active")
-    .eq("user_id", authData.user.id)
+    .eq("id", authData.user.id)
     .maybeSingle();
 
   if (profileError || !adminProfile?.is_active) {
