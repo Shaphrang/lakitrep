@@ -9,7 +9,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { COTTAGE_STATUSES, STORAGE_BUCKET } from "@/lib/admin/constants";
-import { extractStoragePath, resolveImageUrl, toSafeFilename } from "@/lib/admin/storage";
+import { buildStoragePath, extractStoragePath, resolveImageUrl } from "@/lib/admin/storage";
 import { cottagePriceSchema, cottageSchema } from "@/lib/admin/validators";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,6 +41,7 @@ export function CottageForm({
   const [galleryImages, setGalleryImages] = useState<string[]>(
     Array.isArray(cottage?.gallery_images) ? cottage.gallery_images : [],
   );
+  const [pathsToDelete, setPathsToDelete] = useState<string[]>([]);
 
   const defaults = useMemo<FormValues>(
     () => ({
@@ -87,8 +88,9 @@ export function CottageForm({
   }
 
   async function uploadToStorage(file: File, folder: "cover" | "gallery") {
+    if (!file.type.startsWith("image/")) throw new Error("Please select a valid image file.");
     const slug = (form.getValues("slug") || cottage?.slug || "new-cottage").trim() || "new-cottage";
-    const path = `cottages/${slug}/${folder}/${file.lastModified}-${toSafeFilename(file.name)}`;
+    const path = buildStoragePath(`cottages/${slug}/${folder}`, file);
     const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file, {
       upsert: false,
       contentType: file.type,
@@ -107,7 +109,9 @@ export function CottageForm({
       const path = await uploadToStorage(file, "cover");
       const previousPath = extractStoragePath(coverImage);
       setCoverImage(path);
-      if (previousPath) await supabase.storage.from(STORAGE_BUCKET).remove([previousPath]);
+      if (previousPath) {
+        setPathsToDelete((prev) => (prev.includes(previousPath) ? prev : [...prev, previousPath]));
+      }
       toast.success("Cover image uploaded.");
     } catch (error: any) {
       toast.error(error.message ?? "Failed to upload cover image.");
@@ -143,13 +147,17 @@ export function CottageForm({
   async function removeCoverImage() {
     if (!coverImage) return;
     const objectPath = extractStoragePath(coverImage);
-    if (objectPath) await supabase.storage.from(STORAGE_BUCKET).remove([objectPath]);
+    if (objectPath) {
+      setPathsToDelete((prev) => (prev.includes(objectPath) ? prev : [...prev, objectPath]));
+    }
     setCoverImage(null);
   }
 
   async function removeGalleryImage(path: string) {
     const objectPath = extractStoragePath(path);
-    if (objectPath) await supabase.storage.from(STORAGE_BUCKET).remove([objectPath]);
+    if (objectPath) {
+      setPathsToDelete((prev) => (prev.includes(objectPath) ? prev : [...prev, objectPath]));
+    }
     setGalleryImages((prev) => prev.filter((item) => item !== path));
   }
 
@@ -256,6 +264,15 @@ export function CottageForm({
       }
     }
 
+    if (pathsToDelete.length > 0) {
+      const { error: storageError } = await supabase.storage.from(STORAGE_BUCKET).remove(pathsToDelete);
+      if (storageError) {
+        toast.error(`Cottage saved, but some old image files could not be deleted: ${storageError.message}`);
+      } else {
+        setPathsToDelete([]);
+      }
+    }
+
     toast.success(mode === "create" ? "Cottage created." : "Cottage updated.");
     setSaving(false);
     router.push(`/admin/cottages/${targetId}`);
@@ -357,7 +374,7 @@ export function CottageForm({
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <p className="text-sm font-medium">Cover image</p>
-                  <input type="file" accept="image/*" onChange={onCoverUpload} disabled={uploadingCover} />
+                  <input type="file" accept="image/*" onChange={onCoverUpload} disabled={uploadingCover} className="w-full text-sm" />
                   {coverImage ? (
                     <div className="w-full max-w-sm space-y-2">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -369,7 +386,7 @@ export function CottageForm({
 
                 <div className="space-y-2">
                   <p className="text-sm font-medium">Gallery images</p>
-                  <input type="file" accept="image/*" multiple onChange={onGalleryUpload} disabled={uploadingGallery} />
+                  <input type="file" accept="image/*" multiple onChange={onGalleryUpload} disabled={uploadingGallery} className="w-full text-sm" />
                   <p className="text-xs text-zinc-500">Stored in {STORAGE_BUCKET} as cottages/&#123;slug&#125;/cover and cottages/&#123;slug&#125;/gallery paths.</p>
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {galleryImages.map((imagePath, index) => (

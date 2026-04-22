@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { STORAGE_BUCKET } from "@/lib/admin/constants";
-import { extractStoragePath, resolveImageUrl, toSafeFilename } from "@/lib/admin/storage";
+import { buildStoragePath, extractStoragePath, resolveImageUrl } from "@/lib/admin/storage";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -25,7 +25,10 @@ export function AttractionsManager({ propertyId, attractions }: AttractionsManag
   const [savingId, setSavingId] = useState<string | null>(null);
 
   async function uploadFile(file: File, entityKey: string, folder: "cover" | "gallery") {
-    const path = `attractions/${entityKey}/${folder}/${file.lastModified}-${toSafeFilename(file.name)}`;
+    if (!file.type.startsWith("image/")) {
+      throw new Error("Please select a valid image file.");
+    }
+    const path = buildStoragePath(`attractions/${entityKey}/${folder}`, file);
     const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file, {
       upsert: false,
       contentType: file.type,
@@ -57,6 +60,8 @@ export function AttractionsManager({ propertyId, attractions }: AttractionsManag
     const coverFile = formData.get("coverImage") as File | null;
     const galleryFiles = formData.getAll("galleryImages").filter((item) => item instanceof File && item.size > 0) as File[];
 
+    const newlyUploaded: string[] = [];
+    let oldCoverToDelete = "";
     setSavingId(id || "new");
     try {
       const entityKey = id || toSlug(name);
@@ -67,12 +72,14 @@ export function AttractionsManager({ propertyId, attractions }: AttractionsManag
         const uploadedCover = await uploadFile(coverFile, entityKey, "cover");
         const oldCover = extractStoragePath(existingCover);
         coverImage = uploadedCover;
-        if (oldCover) await supabase.storage.from(STORAGE_BUCKET).remove([oldCover]);
+        newlyUploaded.push(uploadedCover);
+        oldCoverToDelete = oldCover;
       }
 
       for (const file of galleryFiles) {
         const uploadedPath = await uploadFile(file, entityKey, "gallery");
         galleryImages.push(uploadedPath);
+        newlyUploaded.push(uploadedPath);
       }
 
       const payload = {
@@ -94,9 +101,19 @@ export function AttractionsManager({ propertyId, attractions }: AttractionsManag
         if (error) throw error;
       }
 
+      if (oldCoverToDelete) {
+        const { error: deleteError } = await supabase.storage.from(STORAGE_BUCKET).remove([oldCoverToDelete]);
+        if (deleteError) {
+          toast.error(`Attraction saved, but old cover delete failed: ${deleteError.message}`);
+        }
+      }
+
       toast.success(id ? "Attraction updated." : "Attraction created.");
       router.refresh();
     } catch (error: any) {
+      if (newlyUploaded.length > 0) {
+        await supabase.storage.from(STORAGE_BUCKET).remove(newlyUploaded);
+      }
       toast.error(error.message ?? "Failed to save attraction.");
     }
     setSavingId(null);
@@ -111,7 +128,10 @@ export function AttractionsManager({ propertyId, attractions }: AttractionsManag
     }
 
     const objectPath = extractStoragePath(imagePath);
-    if (objectPath) await supabase.storage.from(STORAGE_BUCKET).remove([objectPath]);
+    if (objectPath) {
+      const { error: storageError } = await supabase.storage.from(STORAGE_BUCKET).remove([objectPath]);
+      if (storageError) toast.error(`Gallery updated, but file delete failed: ${storageError.message}`);
+    }
 
     toast.success("Gallery image removed.");
     router.refresh();
@@ -125,7 +145,10 @@ export function AttractionsManager({ propertyId, attractions }: AttractionsManag
     }
 
     const objectPath = extractStoragePath(attraction.cover_image);
-    if (objectPath) await supabase.storage.from(STORAGE_BUCKET).remove([objectPath]);
+    if (objectPath) {
+      const { error: storageError } = await supabase.storage.from(STORAGE_BUCKET).remove([objectPath]);
+      if (storageError) toast.error(`Cover removed, but file delete failed: ${storageError.message}`);
+    }
 
     toast.success("Cover image removed.");
     router.refresh();
@@ -143,11 +166,11 @@ export function AttractionsManager({ propertyId, attractions }: AttractionsManag
             <textarea name="description" placeholder="Description" className="rounded-md border p-2 md:col-span-3" rows={3} />
             <label className="space-y-1 text-sm md:col-span-2">
               <span>Cover image</span>
-              <input name="coverImage" type="file" accept="image/*" />
+              <input name="coverImage" type="file" accept="image/*" className="w-full text-sm" />
             </label>
             <label className="space-y-1 text-sm md:col-span-3">
               <span>Gallery images</span>
-              <input name="galleryImages" type="file" accept="image/*" multiple />
+              <input name="galleryImages" type="file" accept="image/*" multiple className="w-full text-sm" />
             </label>
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="isActive" defaultChecked /> Active</label>
             <Button type="submit" variant="secondary" disabled={savingId === "new"}>{savingId === "new" ? "Saving..." : "Save"}</Button>
@@ -169,7 +192,7 @@ export function AttractionsManager({ propertyId, attractions }: AttractionsManag
 
               <div className="space-y-2 md:col-span-3">
                 <p className="text-sm font-medium">Cover image</p>
-                <input name="coverImage" type="file" accept="image/*" />
+                <input name="coverImage" type="file" accept="image/*" className="w-full text-sm" />
                 {item.cover_image ? (
                   <div className="w-full max-w-sm space-y-2">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -181,7 +204,7 @@ export function AttractionsManager({ propertyId, attractions }: AttractionsManag
 
               <div className="space-y-2 md:col-span-3">
                 <p className="text-sm font-medium">Gallery images</p>
-                <input name="galleryImages" type="file" accept="image/*" multiple />
+                <input name="galleryImages" type="file" accept="image/*" multiple className="w-full text-sm" />
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {(item.gallery_images ?? []).map((imagePath: string) => (
                     <div key={imagePath} className="space-y-2 rounded border p-2">
