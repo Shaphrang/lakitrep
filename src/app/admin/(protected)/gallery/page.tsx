@@ -1,10 +1,14 @@
+import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { PROPERTY_SLUG } from "@/lib/admin/constants";
 import { GalleryManager } from "@/components/admin/gallery-manager";
 
 export default async function GalleryPage() {
   const supabase = await createClient();
-  const { data: property } = await supabase.from("properties").select("id").eq("slug", "la-ki-trep-resort").single();
+  const { data: property } = await supabase.from("properties").select("id").eq("slug", PROPERTY_SLUG).single();
   const { data: images } = await supabase.from("gallery_images").select("*").order("sort_order").limit(200);
+
+  if (!property) return notFound();
 
   return (
     <div className="space-y-4">

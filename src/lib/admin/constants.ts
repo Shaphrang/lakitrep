@@ -20,11 +20,15 @@ export const EVENT_INQUIRY_STATUSES = [
   "closed",
 ] as const;
 
+export const BOOKING_CONTACT_METHODS = ["phone", "whatsapp", "email", "other"] as const;
+
 export const COTTAGE_STATUSES = ["active", "inactive", "maintenance"] as const;
 
 export const SITE_SETTING_KEYS = {
   HOMEPAGE_HERO: "homepage_hero",
   SEO_HOMEPAGE: "seo_homepage",
 } as const;
+
+export const PROPERTY_SLUG = "la-ki-trep-resort";
 
 export const STORAGE_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET ?? "lakitrep-media";

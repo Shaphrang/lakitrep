@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { STORAGE_BUCKET } from "@/lib/admin/constants";
+import { extractStoragePath, resolveImageUrl, toSafeFilename } from "@/lib/admin/storage";
+import { gallerySchema } from "@/lib/admin/validators";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -16,29 +18,80 @@ export function GalleryManager({ propertyId, images }: { propertyId: string; ima
 
   async function upload(formData: FormData) {
     const file = formData.get("file") as File;
-    if (!file || file.size === 0) return;
+    if (!file || file.size === 0) {
+      toast.error("Please select an image file.");
+      return;
+    }
+
+    const parsed = gallerySchema.safeParse({
+      propertyId,
+      title: formData.get("title"),
+      category: formData.get("category"),
+      altText: formData.get("altText"),
+      sortOrder: formData.get("sortOrder"),
+      isFeatured: formData.get("isFeatured") === "on",
+      isActive: formData.get("isActive") === "on",
+    });
+
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]?.message ?? "Invalid gallery input.");
+      return;
+    }
+
     setBusy(true);
-    const path = `gallery/${file.lastModified}-${file.name.replace(/\s+/g, "-")}`;
-    const { error: uploadError } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file);
+    const path = `gallery/${file.lastModified}-${toSafeFilename(file.name)}`;
+    const { error: uploadError } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file, {
+      upsert: false,
+      contentType: file.type,
+    });
+
     if (uploadError) {
       toast.error(uploadError.message);
       setBusy(false);
       return;
     }
-    const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+
     const { error } = await supabase.from("gallery_images").insert({
-      property_id: propertyId,
-      title: String(formData.get("title") || "") || null,
-      category: String(formData.get("category") || "") || null,
-      alt_text: String(formData.get("altText") || "") || null,
-      storage_path: data.publicUrl,
-      is_featured: formData.get("isFeatured") === "on",
-      is_active: formData.get("isActive") !== "off",
-      sort_order: Number(formData.get("sortOrder") || 0),
+      property_id: parsed.data.propertyId,
+      title: parsed.data.title || null,
+      category: parsed.data.category || null,
+      alt_text: parsed.data.altText || null,
+      storage_path: path,
+      is_featured: parsed.data.isFeatured,
+      is_active: parsed.data.isActive,
+      sort_order: parsed.data.sortOrder,
     });
-    if (error) toast.error(error.message);
-    else toast.success("Image uploaded.");
+
+    if (error) {
+      await supabase.storage.from(STORAGE_BUCKET).remove([path]);
+      toast.error(error.message);
+    } else {
+      toast.success("Image uploaded.");
+    }
     setBusy(false);
+    router.refresh();
+  }
+
+  async function deleteImage(image: any) {
+    const objectPath = extractStoragePath(image.storage_path);
+    const { error } = await supabase.from("gallery_images").delete().eq("id", image.id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
+    if (objectPath) {
+      await supabase.storage.from(STORAGE_BUCKET).remove([objectPath]);
+    }
+
+    toast.success("Image deleted.");
+    router.refresh();
+  }
+
+  async function updateImage(image: any, updates: Record<string, unknown>) {
+    const { error } = await supabase.from("gallery_images").update(updates).eq("id", image.id);
+    if (error) toast.error(error.message);
+    else toast.success("Image updated.");
     router.refresh();
   }
 
@@ -59,18 +112,42 @@ export function GalleryManager({ propertyId, images }: { propertyId: string; ima
         {images.map((image) => (
           <Card key={image.id}><CardContent className="space-y-2 p-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={image.storage_path} alt={image.alt_text || "Gallery image"} className="h-40 w-full rounded object-cover" />
-            <p className="text-sm font-medium">{image.title || "Untitled"}</p>
-            <p className="text-xs text-zinc-500">{image.category || "uncategorized"} · sort {image.sort_order}</p>
+            <img src={resolveImageUrl(image.storage_path)} alt={image.alt_text || "Gallery image"} className="h-40 w-full rounded object-cover" />
+            <input
+              defaultValue={image.title ?? ""}
+              className="h-9 w-full rounded-md border px-2 text-sm"
+              placeholder="Title"
+              onBlur={(event) => updateImage(image, { title: event.target.value || null })}
+            />
+            <input
+              defaultValue={image.alt_text ?? ""}
+              className="h-9 w-full rounded-md border px-2 text-sm"
+              placeholder="Alt text"
+              onBlur={(event) => updateImage(image, { alt_text: event.target.value || null })}
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                defaultValue={image.category ?? ""}
+                className="h-9 w-full rounded-md border px-2 text-sm"
+                placeholder="Category"
+                onBlur={(event) => updateImage(image, { category: event.target.value || null })}
+              />
+              <input
+                defaultValue={image.sort_order ?? 0}
+                type="number"
+                className="h-9 w-full rounded-md border px-2 text-sm"
+                placeholder="Sort"
+                onBlur={(event) => updateImage(image, { sort_order: Number(event.target.value || 0) })}
+              />
+            </div>
             <div className="flex gap-2">
-              <Button className="h-8 px-2 text-xs" variant="secondary" onClick={async () => {
-                await supabase.from("gallery_images").update({ is_featured: !image.is_featured }).eq("id", image.id);
-                router.refresh();
-              }}>{image.is_featured ? "Unfeature" : "Feature"}</Button>
-              <Button className="h-8 px-2 text-xs" variant="destructive" onClick={async () => {
-                await supabase.from("gallery_images").delete().eq("id", image.id);
-                router.refresh();
-              }}>Delete</Button>
+              <Button className="h-8 px-2 text-xs" variant="secondary" onClick={() => updateImage(image, { is_featured: !image.is_featured })}>
+                {image.is_featured ? "Unfeature" : "Feature"}
+              </Button>
+              <Button className="h-8 px-2 text-xs" variant="secondary" onClick={() => updateImage(image, { is_active: !image.is_active })}>
+                {image.is_active ? "Deactivate" : "Activate"}
+              </Button>
+              <Button className="h-8 px-2 text-xs" variant="destructive" onClick={() => deleteImage(image)}>Delete</Button>
             </div>
           </CardContent></Card>
         ))}
