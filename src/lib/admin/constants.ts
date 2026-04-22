@@ -31,4 +31,4 @@ export const SITE_SETTING_KEYS = {
 
 export const PROPERTY_SLUG = "la-ki-trep-resort";
 
-export const STORAGE_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET ?? "lakitrep-media";
+export const STORAGE_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET ?? "website-media";

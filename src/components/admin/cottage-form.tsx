@@ -77,6 +77,12 @@ export function CottageForm({
     defaultValues: defaults,
   });
 
+  function formatSupabaseErrorMessage(message: string) {
+    if (message.toLowerCase().includes("cottages_code_key")) return "Code already exists. Please use a unique code.";
+    if (message.toLowerCase().includes("cottages_slug_key")) return "Slug already exists. Please use a unique slug.";
+    return message;
+  }
+
   async function onSubmit(values: FormValues) {
     setSaving(true);
     const parsed = formSchema.safeParse(values);
@@ -119,21 +125,26 @@ export function CottageForm({
       : await supabase.from("cottages").update(cottageData).eq("id", cottage.id).select("id").single();
 
     if (error || !savedCottage) {
-      toast.error(error?.message ?? "Failed to save cottage.");
+      toast.error(formatSupabaseErrorMessage(error?.message ?? "Failed to save cottage."));
       setSaving(false);
       return;
     }
 
     const targetId = savedCottage.id;
 
-    const { error: priceError } = await supabase.from("cottage_prices").upsert({
-      cottage_id: targetId,
-      weekday_rate: payload.weekdayRate,
-      weekend_rate: payload.weekendRate,
-      child_rate: payload.childRate,
-      extra_bed_rate: payload.extraBedRate,
-      notes: payload.notes || null,
-    }, { onConflict: "cottage_id" });
+    const { error: priceError } = await supabase
+      .from("cottage_prices")
+      .upsert(
+        {
+          cottage_id: targetId,
+          weekday_rate: payload.weekdayRate,
+          weekend_rate: payload.weekendRate,
+          child_rate: payload.childRate,
+          extra_bed_rate: payload.extraBedRate,
+          notes: payload.notes || null,
+        },
+        { onConflict: "cottage_id" },
+      );
 
     if (priceError) {
       toast.error(priceError.message);
@@ -174,7 +185,8 @@ export function CottageForm({
     if (!file || !cottage?.id) return;
 
     setUploading(true);
-    const path = `cottages/${cottage.slug}/${file.lastModified}-${toSafeFilename(file.name)}`;
+    const currentSlug = form.getValues("slug") || cottage.slug;
+    const path = `cottages/${currentSlug}/${file.lastModified}-${toSafeFilename(file.name)}`;
 
     const { error: uploadError } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file, {
       upsert: false,
@@ -409,7 +421,7 @@ export function CottageForm({
                       onBlur={(event) => updateImageMeta(image, { sort_order: Number(event.target.value || 0) })}
                     />
                   </label>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button
                       type="button"
                       variant="secondary"

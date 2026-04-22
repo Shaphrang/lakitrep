@@ -1,14 +1,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { revalidatePath } from "next/cache";
+import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { EVENT_INQUIRY_STATUSES } from "@/lib/admin/constants";
+import { EVENT_INQUIRY_STATUSES, PROPERTY_SLUG } from "@/lib/admin/constants";
 import { eventInquiryUpdateSchema } from "@/lib/admin/validators";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export default async function EventInquiriesPage() {
   const supabase = await createClient();
-  const { data: inquiries } = await supabase.from("event_inquiries").select("*").order("created_at", { ascending: false }).limit(100);
+  const { data: property } = await supabase.from("properties").select("id").eq("slug", PROPERTY_SLUG).maybeSingle();
+  if (!property) return notFound();
+
+  const { data: inquiries, error } = await supabase
+    .from("event_inquiries")
+    .select("*")
+    .eq("property_id", property.id)
+    .order("created_at", { ascending: false })
+    .limit(100);
 
   async function updateStatus(formData: FormData) {
     "use server";
@@ -26,6 +35,7 @@ export default async function EventInquiriesPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-semibold">Event Inquiries</h1>
+      {error ? <Card><CardContent className="pt-6 text-sm text-red-600">Unable to load event inquiries.</CardContent></Card> : null}
       <div className="grid gap-3">
         {inquiries?.map((inq: any) => (
           <Card key={inq.id}><CardContent className="space-y-2 pt-6 text-sm">
@@ -46,6 +56,9 @@ export default async function EventInquiriesPage() {
           </CardContent></Card>
         ))}
       </div>
+      {!error && (inquiries?.length ?? 0) === 0 ? (
+        <Card><CardContent className="pt-6 text-sm text-zinc-600">No event inquiries found.</CardContent></Card>
+      ) : null}
     </div>
   );
 }

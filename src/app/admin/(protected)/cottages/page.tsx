@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PROPERTY_SLUG } from "@/lib/admin/constants";
 import { resolveImageUrl } from "@/lib/admin/storage";
 
 export default async function CottagesPage({
@@ -12,12 +14,16 @@ export default async function CottagesPage({
 }) {
   const { q } = await searchParams;
   const supabase = await createClient();
+  const { data: property } = await supabase.from("properties").select("id").eq("slug", PROPERTY_SLUG).maybeSingle();
+
+  if (!property) return notFound();
 
   let query = supabase
     .from("cottages")
     .select(
       "id,name,code,slug,category,max_total_guests,is_featured,is_bookable,status,cottage_prices(weekday_rate,weekend_rate),cottage_images(storage_path,is_cover,sort_order)",
     )
+    .eq("property_id", property.id)
     .order("sort_order", { ascending: true });
 
   if (q) {
@@ -74,7 +80,7 @@ export default async function CottagesPage({
           <tbody>
             {cottages?.map((cottage: any) => {
               const cover = cottage.cottage_images?.find((img: any) => img.is_cover) ?? cottage.cottage_images?.[0];
-              const price = cottage.cottage_prices?.[0];
+              const price = Array.isArray(cottage.cottage_prices) ? cottage.cottage_prices[0] : cottage.cottage_prices;
 
               return (
                 <tr key={cottage.id} className="border-t border-zinc-100">
@@ -110,15 +116,26 @@ export default async function CottagesPage({
         </table>
       </div>
 
+      {!error && (cottages?.length ?? 0) === 0 ? (
+        <Card>
+          <CardContent className="pt-6 text-sm text-zinc-600">No cottages found. Create your first cottage to get started.</CardContent>
+        </Card>
+      ) : null}
+
       <div className="grid gap-3 lg:hidden">
         {cottages?.map((cottage: any) => {
-          const price = cottage.cottage_prices?.[0];
+          const cover = cottage.cottage_images?.find((img: any) => img.is_cover) ?? cottage.cottage_images?.[0];
+          const price = Array.isArray(cottage.cottage_prices) ? cottage.cottage_prices[0] : cottage.cottage_prices;
           return (
             <Card key={cottage.id}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-base">{cottage.name}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-1 text-sm text-zinc-600">
+                {cover?.storage_path ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={resolveImageUrl(cover.storage_path)} alt={cottage.name} className="mb-2 h-36 w-full rounded object-cover" />
+                ) : null}
                 <p>
                   {cottage.code} • {cottage.category}
                 </p>

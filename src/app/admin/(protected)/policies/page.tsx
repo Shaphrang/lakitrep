@@ -9,10 +9,14 @@ import { Button } from "@/components/ui/button";
 
 export default async function PoliciesPage() {
   const supabase = await createClient();
-  const { data: property } = await supabase.from("properties").select("id").eq("slug", PROPERTY_SLUG).single();
-  const { data: policies } = await supabase.from("policies").select("*").order("sort_order");
+  const { data: property } = await supabase.from("properties").select("id").eq("slug", PROPERTY_SLUG).maybeSingle();
 
   if (!property) return notFound();
+  const { data: policies, error: policiesError } = await supabase
+    .from("policies")
+    .select("*")
+    .eq("property_id", property.id)
+    .order("sort_order");
 
   async function savePolicy(formData: FormData) {
     "use server";
@@ -57,6 +61,10 @@ export default async function PoliciesPage() {
           <Button type="submit" variant="secondary">Save</Button>
         </form>
       </CardContent></Card>
+
+      {policiesError ? (
+        <Card><CardContent className="pt-6 text-sm text-red-600">Unable to load policies.</CardContent></Card>
+      ) : null}
 
       <div className="grid gap-3">
         {policies?.map((policy: any) => (
