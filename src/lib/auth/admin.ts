@@ -41,7 +41,7 @@ export async function getAuthenticatedAdmin(): Promise<AuthenticatedAdmin> {
 
   const adminProfile = profileQuery.data as AdminProfile | null;
 
-  if (!adminProfile?.is_active) {
+  if (!adminProfile || !adminProfile.is_active) {
     await supabase.auth.signOut();
     redirect("/admin/login?error=unauthorized");
   }

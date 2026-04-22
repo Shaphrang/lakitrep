@@ -986,7 +986,9 @@ join public.amenities a on (
 )
 on conflict do nothing;
 
-insert into public.attractions (property_id, name, description, sort_order, is_active)
+insert into public.attractions (
+  property_id, name, description, sort_order, is_active
+)
 select p.id, x.name, x.description, x.sort_order, true
 from public.properties p
 cross join (
@@ -999,7 +1001,12 @@ cross join (
     ('Tea Garden & Mini Golf Course, Umran', 'Nearby leisure stop in Umran', 6)
 ) as x(name, description, sort_order)
 where p.slug = 'la-ki-trep-resort'
-on conflict do nothing;
+on conflict (property_id, name) do update
+set
+  description = excluded.description,
+  sort_order = excluded.sort_order,
+  is_active = excluded.is_active,
+  updated_at = now();
 
 insert into public.policies (property_id, policy_key, title, content, sort_order, is_active)
 select p.id, x.policy_key, x.title, x.content, x.sort_order, true
