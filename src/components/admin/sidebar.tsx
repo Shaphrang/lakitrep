@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CalendarCheck,
-  Camera,
+  ClipboardList,
   FileText,
   Home,
   House,
@@ -23,7 +23,7 @@ const links = [
   { href: "/admin/event-inquiries", label: "Event Inquiries", icon: FileText },
   { href: "/admin/gallery", label: "Gallery", icon: Images },
   { href: "/admin/attractions", label: "Attractions", icon: MapPin },
-  { href: "/admin/policies", label: "Policies", icon: Camera },
+  { href: "/admin/policies", label: "Policies", icon: ClipboardList },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
