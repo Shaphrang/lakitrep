@@ -89,6 +89,20 @@ export function GalleryManager({ propertyId, images }: { propertyId: string; ima
   }
 
   async function updateImage(image: any, updates: Record<string, unknown>) {
+    const parsed = gallerySchema.safeParse({
+      propertyId,
+      title: String(updates.title ?? image.title ?? ""),
+      category: String(updates.category ?? image.category ?? ""),
+      altText: String(updates.alt_text ?? image.alt_text ?? ""),
+      sortOrder: updates.sort_order ?? image.sort_order ?? 0,
+      isFeatured: Boolean(updates.is_featured ?? image.is_featured),
+      isActive: Boolean(updates.is_active ?? image.is_active),
+    });
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]?.message ?? "Invalid gallery update.");
+      return;
+    }
+
     const { error } = await supabase.from("gallery_images").update(updates).eq("id", image.id);
     if (error) toast.error(error.message);
     else toast.success("Image updated.");
@@ -152,6 +166,9 @@ export function GalleryManager({ propertyId, images }: { propertyId: string; ima
           </CardContent></Card>
         ))}
       </div>
+      {images.length === 0 ? (
+        <Card><CardContent className="pt-6 text-sm text-zinc-600">No gallery images yet. Upload an image to populate the gallery.</CardContent></Card>
+      ) : null}
     </div>
   );
 }

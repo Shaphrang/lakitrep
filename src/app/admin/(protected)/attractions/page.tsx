@@ -9,10 +9,14 @@ import { Button } from "@/components/ui/button";
 
 export default async function AttractionsPage() {
   const supabase = await createClient();
-  const { data: property } = await supabase.from("properties").select("id").eq("slug", PROPERTY_SLUG).single();
-  const { data: attractions } = await supabase.from("attractions").select("*").order("sort_order");
+  const { data: property } = await supabase.from("properties").select("id").eq("slug", PROPERTY_SLUG).maybeSingle();
 
   if (!property) return notFound();
+  const { data: attractions, error: attractionsError } = await supabase
+    .from("attractions")
+    .select("*")
+    .eq("property_id", property.id)
+    .order("sort_order");
 
   async function saveAttraction(formData: FormData) {
     "use server";
@@ -63,6 +67,10 @@ export default async function AttractionsPage() {
           </form>
         </CardContent>
       </Card>
+
+      {attractionsError ? (
+        <Card><CardContent className="pt-6 text-sm text-red-600">Unable to load attractions.</CardContent></Card>
+      ) : null}
 
       <div className="grid gap-3">
         {attractions?.map((item: any) => (
