@@ -23,8 +23,8 @@ export default async function AdminDashboardPage() {
     upcomingArrivalsCount,
   ] = await Promise.all([
     countRows("cottages"),
-    countRows("bookings", ["status", "pending"]),
-    countRows("bookings", ["status", "confirmed"]),
+    countRows("pending_bookings_view"),
+    countRows("confirmed_bookings_view"),
     countRows("inquiries"),
     countRows("event_inquiries"),
     countRows("upcoming_arrivals_view"),

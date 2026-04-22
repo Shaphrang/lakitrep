@@ -1,14 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { revalidatePath } from "next/cache";
+import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { PROPERTY_SLUG } from "@/lib/admin/constants";
 import { attractionSchema } from "@/lib/admin/validators";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export default async function AttractionsPage() {
   const supabase = await createClient();
-  const { data: property } = await supabase.from("properties").select("id").eq("slug", "la-ki-trep-resort").single();
+  const { data: property } = await supabase.from("properties").select("id").eq("slug", PROPERTY_SLUG).single();
   const { data: attractions } = await supabase.from("attractions").select("*").order("sort_order");
+
+  if (!property) return notFound();
 
   async function saveAttraction(formData: FormData) {
     "use server";

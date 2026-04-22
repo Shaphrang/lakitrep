@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { resolveImageUrl } from "@/lib/admin/storage";
 
 export default async function CottagesPage({
   searchParams,
@@ -81,7 +82,7 @@ export default async function CottagesPage({
                     <div className="flex items-center gap-3">
                       {cover?.storage_path ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={cover.storage_path} alt={cottage.name} className="h-10 w-14 rounded object-cover" />
+                        <img src={resolveImageUrl(cover.storage_path)} alt={cottage.name} className="h-10 w-14 rounded object-cover" />
                       ) : (
                         <div className="h-10 w-14 rounded bg-zinc-100" />
                       )}

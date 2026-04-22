@@ -41,6 +41,7 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
               <div>
                 <p className="font-semibold">{booking.booking_code} · {booking.guest_name}</p>
                 <p className="text-zinc-500">{booking.cottage_name} · {booking.check_in_date} → {booking.check_out_date}</p>
+                <p className="text-zinc-500">Phone: {booking.guest_phone || "-"} · Created: {new Date(booking.created_at).toLocaleDateString()}</p>
                 <p className="text-zinc-500">{booking.status} · {booking.payment_status}</p>
               </div>
               <Link href={`/admin/bookings/${booking.id}`} className="inline-flex h-9 items-center rounded-md bg-zinc-900 px-3 text-xs font-medium text-white">Open</Link>

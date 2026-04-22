@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  BOOKING_CONTACT_METHODS,
   BOOKING_STATUSES,
   COTTAGE_STATUSES,
   EVENT_INQUIRY_STATUSES,
@@ -16,6 +17,7 @@ export const cottageSchema = z.object({
   shortDescription: z.string().trim().optional(),
   fullDescription: z.string().trim().optional(),
   bedType: z.string().trim().optional(),
+  componentCodes: z.string().trim().optional(),
   maxAdults: z.coerce.number().int().min(1),
   maxChildren: z.coerce.number().int().min(0),
   maxInfants: z.coerce.number().int().min(0),
@@ -70,8 +72,8 @@ export const bookingUpdateSchema = z.object({
 });
 
 export const bookingContactLogSchema = z.object({
-  contactMethod: z.string().trim().min(2),
-  contactSummary: z.string().trim().optional(),
+  contactMethod: z.enum(BOOKING_CONTACT_METHODS),
+  contactSummary: z.string().trim().min(2).optional(),
 });
 
 export const inquiryUpdateSchema = z.object({
@@ -95,13 +97,26 @@ export const gallerySchema = z.object({
 
 export const settingsSchema = z.object({
   name: z.string().trim().min(2),
+  slug: z.string().trim().min(2),
   tagline: z.string().trim().optional(),
+  shortIntro: z.string().trim().optional(),
+  fullDescription: z.string().trim().optional(),
+  propertyType: z.string().trim().optional(),
+  addressLine: z.string().trim().optional(),
+  district: z.string().trim().optional(),
+  state: z.string().trim().optional(),
+  country: z.string().trim().optional(),
   phoneNumber: z.string().trim().optional(),
   whatsappNumber: z.string().trim().optional(),
   email: z.string().trim().optional(),
-  addressLine: z.string().trim().optional(),
+  instagramHandle: z.string().trim().optional(),
+  instagramUrl: z.string().trim().optional(),
+  facebookUrl: z.string().trim().optional(),
   bookingNote: z.string().trim().optional(),
   mapsNote: z.string().trim().optional(),
+  checkInTime: z.string().trim().optional(),
+  checkOutTime: z.string().trim().optional(),
+  isActive: z.boolean(),
   heroHeadline: z.string().trim().optional(),
   heroSubheadline: z.string().trim().optional(),
   heroTrustLine: z.string().trim().optional(),
