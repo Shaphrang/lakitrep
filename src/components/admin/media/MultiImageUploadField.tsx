@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { uploadAdminImageAction } from "@/actions/admin/media";
+import { uploadAdminImageFromClient } from "@/lib/supabase/upload-admin-image";
 
 type Props = {
   label: string;
@@ -14,6 +14,7 @@ export function MultiImageUploadField({ label, folder, name, defaultValues = [] 
   const [images, setImages] = useState<string[]>(defaultValues);
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
+
   const uploadFiles = (files: FileList | null) => {
     if (!files || files.length === 0) {
       return;
@@ -23,12 +24,9 @@ export function MultiImageUploadField({ label, folder, name, defaultValues = [] 
       const uploadedUrls: string[] = [];
 
       for (const file of Array.from(files)) {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("folder", folder);
+        const result = await uploadAdminImageFromClient(file, folder);
 
-        const result = await uploadAdminImageAction(formData);
-        if (!result.success || !result.url) {
+        if (!result.success) {
           setError(result.error ?? "Upload failed");
           continue;
         }
@@ -55,7 +53,7 @@ export function MultiImageUploadField({ label, folder, name, defaultValues = [] 
           onChange={(e) => uploadFiles(e.target.files)}
           className="w-full rounded-md border border-slate-300 px-3 py-2"
         />
-        </label>
+      </label>
       {isPending ? <p className="text-xs text-slate-500">Uploading...</p> : null}
       {error ? <p className="text-xs text-red-600">{error}</p> : null}
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">

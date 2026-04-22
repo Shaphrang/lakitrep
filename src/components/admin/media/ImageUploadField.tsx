@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { uploadAdminImageAction } from "@/actions/admin/media";
+import { uploadAdminImageFromClient } from "@/lib/supabase/upload-admin-image";
 
 type Props = {
   label: string;
@@ -15,18 +15,15 @@ export function ImageUploadField({ label, folder, name, defaultValue }: Props) {
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
 
-    const uploadFile = (file: File | null) => {
+  const uploadFile = (file: File | null) => {
     if (!file) {
       return;
     }
 
     startTransition(async () => {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("folder", folder);
-      const result = await uploadAdminImageAction(formData);
+      const result = await uploadAdminImageFromClient(file, folder);
 
-      if (!result.success || !result.url) {
+      if (!result.success) {
         setError(result.error ?? "Upload failed");
         return;
       }
@@ -47,7 +44,7 @@ export function ImageUploadField({ label, folder, name, defaultValue }: Props) {
           onChange={(e) => uploadFile(e.target.files?.[0] ?? null)}
           className="w-full rounded-md border border-slate-300 px-3 py-2"
         />
-        </label>
+      </label>
       {isPending ? <p className="text-xs text-slate-500">Uploading...</p> : null}
       {error ? <p className="text-xs text-red-600">{error}</p> : null}
       {url ? (

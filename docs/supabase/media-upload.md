@@ -6,7 +6,7 @@ This project stores admin-managed images in a **single public bucket** and saves
 
 - Bucket name: `lakitrep-media` (override via `NEXT_PUBLIC_SUPABASE_MEDIA_BUCKET`)
 - Bucket visibility: **public**
-- Upload action: `src/actions/admin/media.ts`
+- Browser upload utility: `src/lib/supabase/upload-admin-image.ts`
 
 ## Folder/path convention
 
@@ -41,11 +41,10 @@ Reusable components:
 Flow:
 
 1. Admin selects a file.
-2. Component calls `uploadAdminImageAction`.
-3. Server action validates admin session and uploads to Storage.
-4. Public URL is returned to the component.
-5. URL is written into hidden form inputs.
-6. Normal create/update action persists URL(s) to DB.
+2. Component uploads directly to Supabase Storage from the browser.
+3. Public URL is returned to the component.
+4. URL is written into hidden form inputs.
+5. Normal create/update action persists URL(s) to DB.
 
 ## Preview/display behavior
 
