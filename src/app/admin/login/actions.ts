@@ -1,3 +1,4 @@
+//src\app\admin\login\actions.ts
 "use server";
 
 import { redirect } from "next/navigation";
@@ -6,6 +7,12 @@ import { adminLoginSchema } from "@/lib/validators/admin-auth";
 
 export type LoginState = {
   error?: string;
+};
+
+type AdminProfile = {
+  id: string;
+  is_active: boolean;
+  role: string;
 };
 
 export async function loginAdmin(
@@ -18,23 +25,44 @@ export async function loginAdmin(
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid form values." };
+    return {
+      error: parsed.error.issues[0]?.message ?? "Invalid form values.",
+    };
   }
+
+  const email = parsed.data.email.trim().toLowerCase();
+  const password = parsed.data.password;
 
   const supabase = await createClient();
-  const { error: authError, data: authData } = await supabase.auth.signInWithPassword(parsed.data);
+
+  const { data: authData, error: authError } =
+    await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
   if (authError || !authData.user) {
-    return { error: "Invalid credentials. Please try again." };
+    console.error("Supabase login error:", authError);
+    return {
+      error: authError?.message ?? "Invalid credentials. Please try again.",
+    };
   }
 
-  const { data: adminProfile, error: profileError } = await supabase
+  const profileQuery = await supabase
     .from("admin_profiles")
-    .select("is_active")
-    .eq("user_id", authData.user.id)
+    .select("id, is_active, role")
+    .eq("id", authData.user.id)
     .maybeSingle();
 
-  if (profileError || !adminProfile?.is_active) {
+  if (profileQuery.error) {
+    console.error("Admin profile lookup error:", profileQuery.error);
+    await supabase.auth.signOut();
+    return { error: "Unable to verify admin access. Please try again." };
+  }
+
+  const adminProfile = profileQuery.data as AdminProfile | null;
+
+  if (!adminProfile?.is_active) {
     await supabase.auth.signOut();
     return { error: "Your account is not authorized for admin access." };
   }

@@ -1,7 +1,7 @@
+//src\lib\supabase\proxy.ts
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { supabaseAnonKey, supabaseUrl } from "@/lib/supabase/env";
-import type { Database } from "@/types/database";
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({
@@ -10,19 +10,25 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  const supabase = createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
+  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
       getAll() {
         return request.cookies.getAll();
       },
       setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+        cookiesToSet.forEach(({ name, value }) => {
+          request.cookies.set(name, value);
+        });
+
         response = NextResponse.next({
           request: {
             headers: request.headers,
           },
         });
-        cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+
+        cookiesToSet.forEach(({ name, value, options }) => {
+          response.cookies.set(name, value, options);
+        });
       },
     },
   });

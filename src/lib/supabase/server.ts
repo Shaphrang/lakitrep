@@ -1,12 +1,12 @@
+//src\lib\supabase\server.ts
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { supabaseAnonKey, supabaseUrl } from "@/lib/supabase/env";
-import type { Database } from "@/types/database";
 
 export async function createClient() {
   const cookieStore = await cookies();
 
-  return createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
+  return createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
       getAll() {
         return cookieStore.getAll();
@@ -17,7 +17,7 @@ export async function createClient() {
             cookieStore.set(name, value, options);
           });
         } catch {
-          // Ignored: called from a Server Component where cookies cannot be set.
+          // ignored in contexts where cookies cannot be set
         }
       },
     },
