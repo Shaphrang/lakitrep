@@ -1,11 +1,38 @@
-import { attractionDemoData } from "../demo-data";
-import type { Attraction } from "../types";
+import { getSupabaseServerClient } from "@/lib/supabase/server";
+import type { AttractionInput } from "../schema";
 
-// TODO: replace mock service with Supabase query.
-let records = [...attractionDemoData];
+export async function getAllAttractions() {
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("attractions")
+    .select("id,property_id,name,description,distance_text,cover_image,gallery_images,sort_order,is_active,properties(name)")
+    .order("sort_order", { ascending: true });
+  if (error) throw new Error(`Failed to fetch attractions: ${error.message}`);
+  return (data ?? []).map((row) => ({ ...row, property_name: (row.properties as { name?: string } | null)?.name }));
+}
 
-export async function getAllAttractions(): Promise<Attraction[]> { return records; }
-export async function getAttractionById(id: string): Promise<Attraction | undefined> { return records.find((x) => x.id === id); }
-export async function createAttraction(input: Omit<Attraction, "id">): Promise<Attraction> { const created = { id: `att-${Date.now()}`, ...input }; records = [created, ...records]; return created; }
-export async function updateAttraction(id: string, input: Partial<Omit<Attraction, "id">>): Promise<Attraction | undefined> { records = records.map((x) => (x.id === id ? { ...x, ...input } : x)); return records.find((x) => x.id === id); }
-export async function deleteAttraction(id: string): Promise<boolean> { const before = records.length; records = records.filter((x) => x.id !== id); return records.length < before; }
+export async function getAttractionById(id: string) {
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase.from("attractions").select("*").eq("id", id).maybeSingle();
+  if (error) throw new Error(`Failed to fetch attraction: ${error.message}`);
+  return data;
+}
+
+export async function createAttraction(input: AttractionInput) {
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase.from("attractions").insert(input).select("id").single();
+  if (error) throw new Error(`Failed to create attraction: ${error.message}`);
+  return data;
+}
+
+export async function updateAttraction(id: string, input: AttractionInput) {
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.from("attractions").update(input).eq("id", id);
+  if (error) throw new Error(`Failed to update attraction: ${error.message}`);
+}
+
+export async function deleteAttraction(id: string) {
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.from("attractions").delete().eq("id", id);
+  if (error) throw new Error(`Failed to delete attraction: ${error.message}`);
+}

@@ -4,7 +4,31 @@ export type ActionResult = {
   errors?: Record<string, string[]>;
 };
 
-export function mockActionResult(message: string): ActionResult {
-  // TODO: connect server action to real mutation.
-  return { success: true, message };
+export function getString(formData: FormData, key: string) {
+  return String(formData.get(key) ?? "").trim();
+}
+
+export function getBoolean(formData: FormData, key: string) {
+  return formData.get(key) === "on";
+}
+
+export function getNumber(formData: FormData, key: string, defaultValue = 0) {
+  const raw = String(formData.get(key) ?? "").trim();
+  if (!raw) return defaultValue;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : defaultValue;
+}
+
+export function parseTextList(input: string) {
+  return input
+    .split("\n")
+    .map((x) => x.trim())
+    .filter(Boolean);
+}
+
+export function parseCommaList(input: string) {
+  return input
+    .split(",")
+    .map((x) => x.trim())
+    .filter(Boolean);
 }
