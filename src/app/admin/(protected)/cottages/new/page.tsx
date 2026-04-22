@@ -10,5 +10,5 @@ export default async function NewCottagePage() {
 
   if (!property) return notFound();
 
-  return <CottageForm mode="create" propertyId={property.id} amenities={amenities ?? []} selectedAmenities={[]} images={[]} />;
+  return <CottageForm mode="create" propertyId={property.id} amenities={amenities ?? []} selectedAmenities={[]} />;
 }

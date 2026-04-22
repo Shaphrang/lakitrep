@@ -9,6 +9,14 @@ export function toSafeFilename(fileName: string) {
   return fileName.toLowerCase().replace(/[^a-z0-9.\-_]/g, "-").replace(/-+/g, "-");
 }
 
+export function buildStoragePath(baseFolder: string, file: File) {
+  const ext = file.name.includes(".") ? file.name.split(".").pop() : "";
+  const stem = toSafeFilename(file.name.replace(/\.[^/.]+$/, "")) || "image";
+  const unique = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const cleanBase = baseFolder.replace(/\/+$/, "");
+  return `${cleanBase}/${stem}-${unique}${ext ? `.${ext.toLowerCase()}` : ""}`;
+}
+
 export function resolveImageUrl(storagePath: string | null | undefined) {
   if (!storagePath) return "";
   if (storagePath.startsWith("http://") || storagePath.startsWith("https://")) {
