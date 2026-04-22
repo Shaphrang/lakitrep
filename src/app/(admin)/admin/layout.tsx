@@ -1,4 +1,8 @@
 import type { ReactNode } from "react";
-export default function AdminRootLayout({ children }: { children: ReactNode }) {
-  return children;
+import { AdminShell } from "@/components/admin/layout/AdminShell";
+import { getAuthenticatedAdmin } from "@/lib/auth/admin";
+
+export default async function AdminRootLayout({ children }: { children: ReactNode }) {
+  const admin = await getAuthenticatedAdmin();
+  return <AdminShell adminLabel={admin?.fullName ?? admin?.email ?? "Admin"}>{children}</AdminShell>;
 }

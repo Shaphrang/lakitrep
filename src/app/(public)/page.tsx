@@ -1,361 +1,487 @@
-
-import React from "react";
-import Link from "next/link";
+import type { ButtonHTMLAttributes, ReactNode } from "react";
 import {
   BedDouble,
   CalendarDays,
   Car,
   ChevronDown,
   ChevronRight,
-  Facebook,
   Flame,
-  Globe,
-  Instagram,
+  House,
   Mail,
   MapPin,
   Menu,
-  Mountain,
   Phone,
-  Star,
   Trees,
   Users,
-  Wifi,
   UtensilsCrossed,
-  BadgeCheck,
-  WalletCards,
+  Waves,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+
+type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+  children: ReactNode;
+};
+
+function Button({
+  className = "",
+  children,
+  type = "button",
+  ...props
+}: ButtonProps) {
+  return (
+    <button
+      type={type}
+      className={`inline-flex items-center justify-center transition-all duration-300 ${className}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
+
+type BoxProps = {
+  className?: string;
+  children: ReactNode;
+};
+
+function Card({ className = "", children }: BoxProps) {
+  return <div className={className}>{children}</div>;
+}
+
+function CardContent({ className = "", children }: BoxProps) {
+  return <div className={className}>{children}</div>;
+}
+
+function LeafMark({ className = "h-8 w-8" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      className={className}
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        d="M31.5 10C20 12 12 21.5 12 33c0 12.2 9.8 22 22 22 11.6 0 21.2-9 22-20.4C46.6 34 35 27.3 31.5 10Z"
+        stroke="currentColor"
+        strokeWidth="2.5"
+      />
+      <path
+        d="M29 19c-3.8 4.8-5.8 9.4-6 14"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M37.5 24c-5.1 4.3-8.8 9.6-11 16"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M43 31c-4.6 3.4-8.2 7.7-10.5 12.5"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M10 49c6.6-3.7 12.9-5.3 19-4.7"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function WhatsAppIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M20.52 3.48A11.84 11.84 0 0 0 12.07 0C5.48 0 .13 5.35.13 11.94c0 2.1.55 4.15 1.6 5.95L0 24l6.28-1.64a11.87 11.87 0 0 0 5.79 1.48h.01c6.59 0 11.94-5.35 11.94-11.94 0-3.19-1.24-6.19-3.5-8.42ZM12.08 21.8a9.8 9.8 0 0 1-4.99-1.37l-.36-.21-3.73.98 1-3.64-.24-.37A9.84 9.84 0 0 1 2.26 12c0-5.42 4.4-9.82 9.82-9.82 2.62 0 5.09 1.02 6.94 2.87A9.74 9.74 0 0 1 21.9 12c0 5.42-4.4 9.8-9.82 9.8Zm5.39-7.36c-.29-.14-1.73-.85-2-.95-.27-.1-.47-.14-.67.14-.2.29-.76.95-.94 1.15-.17.2-.34.22-.63.07-.29-.14-1.2-.44-2.29-1.4-.85-.76-1.42-1.69-1.59-1.98-.17-.29-.02-.44.13-.58.14-.14.29-.34.43-.51.14-.17.19-.29.29-.48.1-.2.05-.37-.02-.51-.07-.14-.67-1.61-.92-2.21-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.51.07-.78.37-.27.29-1.03 1.01-1.03 2.46 0 1.45 1.05 2.85 1.19 3.05.14.2 2.06 3.15 4.99 4.41.7.3 1.24.47 1.66.61.7.22 1.34.19 1.85.12.56-.08 1.73-.71 1.97-1.4.24-.69.24-1.28.17-1.41-.06-.12-.26-.19-.55-.33Z" />
+    </svg>
+  );
+}
+
+function InstagramIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function BrandLogo() {
+  return (
+    <div className="flex items-center gap-3 text-[#d3b068]">
+      <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[#d3b068]/35 bg-[#d3b068]/8">
+        <LeafMark className="h-6 w-6" />
+      </div>
+      <div className="leading-none">
+        <div className="font-serif text-[30px] tracking-tight text-[#f4eedf]">
+          La Ki Trep Resort
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SectionTitle({
+  eyebrow,
+  title,
+}: {
+  eyebrow?: string;
+  title: string;
+}) {
+  return (
+    <div className="text-center">
+      {eyebrow ? (
+        <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.35em] text-[#8d9467]">
+          {eyebrow}
+        </div>
+      ) : null}
+      <h2 className="font-serif text-[34px] leading-tight text-[#31472f] sm:text-[48px]">
+        {title}
+      </h2>
+    </div>
+  );
+}
+
+const navItems = ["Home", "About", "Cottages", "Dining", "Gallery", "Contact"];
 
 const bookingFields = [
-  {
-    label: "Check-in",
-    value: "24 May 2025",
-    icon: CalendarDays,
-  },
-  {
-    label: "Check-out",
-    value: "26 May 2025",
-    icon: CalendarDays,
-  },
-  {
-    label: "Guests",
-    value: "2 Adults",
-    icon: Users,
-  },
-  {
-    label: "Room Type",
-    value: "Deluxe Room",
-    icon: BedDouble,
-  },
+  { label: "Check-in", value: "Select date", icon: CalendarDays },
+  { label: "Check-out", value: "Select date", icon: CalendarDays },
+  { label: "Guests", value: "Select guests", icon: Users },
+  { label: "Cottage Type", value: "Select type", icon: House },
 ];
 
-const roomCards = [
+const aboutFeatures = [
+  { title: "5 Private Cottages", icon: House },
+  { title: "Swimming Pool", icon: Waves },
+  { title: "In-house Restaurant", icon: UtensilsCrossed },
+  { title: "Outdoor Spaces", icon: Trees },
+];
+
+const cottages = [
   {
-    title: "Deluxe Room",
-    description: "Spacious room with private balcony and mountain view.",
-    price: "₹5,499",
+    name: "Premium Cottage A",
+    subtitle: "2 units",
+    description:
+      "Spacious AC cottage with pool or garden view, balcony sit-out and breakfast included.",
+    guests: "2 Adults + 1 Infant",
+    weekday: "₹6,000",
+    weekend: "₹8,000",
     image:
-      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80",
   },
   {
-    title: "Premium Room",
-    description: "Elegant interiors with panoramic views and all modern amenities.",
-    price: "₹6,999",
+    name: "Premium Cottage B",
+    subtitle: "1 unit",
+    description:
+      "Spacious AC cottage with garden hedge seating and private sit-out for bonfires.",
+    guests: "2 Adults + 1 Infant",
+    weekday: "₹6,000",
+    weekend: "₹8,000",
     image:
-      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=1200&q=80",
   },
   {
-    title: "Luxury Suite",
-    description: "Luxury suite with living area, balcony and stunning valley views.",
-    price: "₹9,999",
+    name: "Cottage 4",
+    subtitle: "Standard cottage",
+    description:
+      "Comfortable non-AC cottage with terrace sit-out and extra bed on request.",
+    guests: "2 Adults + 1 Infant",
+    weekday: "₹5,000",
+    weekend: "₹6,000",
     image:
-      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    name: "Family Cottage",
+    subtitle: "Cottage 4 + 5 combined",
+    description:
+      "Two cottages with a shared private compound, ideal for families or small groups.",
+    guests: "Up to 5 Adults",
+    weekday: "₹8,000",
+    weekend: "₹10,000",
+    image:
+      "https://images.unsplash.com/photo-1523217582562-09d0def993a6?auto=format&fit=crop&w=1200&q=80",
   },
 ];
 
 const amenities = [
+  { title: "Complimentary Breakfast", icon: UtensilsCrossed },
+  { title: "In-house Restaurant", icon: UtensilsCrossed },
+  { title: "Swimming Pool", icon: Waves },
+  { title: "Designated Parking", icon: Car },
+  { title: "Bonfire on Request", icon: Flame },
+  { title: "Local Sightseeing Assistance", icon: MapPin },
+];
+
+const nearbyPlaces = [
   {
-    title: "Breakfast",
-    description: "Delicious & fresh morning meals",
-    icon: UtensilsCrossed,
+    title: "Umiam Lake / Barapani",
+    image:
+      "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80",
   },
   {
-    title: "Bonfire",
-    description: "Cozy evenings under the stars",
-    icon: Flame,
+    title: "Umiam Boating Point",
+    image:
+      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=80",
   },
   {
-    title: "Scenic Views",
-    description: "Breathtaking views all around",
-    icon: Mountain,
+    title: "Lum Nehru Park",
+    image:
+      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
   },
   {
-    title: "Pickup & Drop",
-    description: "Hassle-free transfers on request",
-    icon: Car,
+    title: "Lum Sohpetbneng",
+    image:
+      "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=900&q=80",
   },
   {
-    title: "Wi‑Fi",
-    description: "High-speed internet throughout stay",
-    icon: Wifi,
-  },
-  {
-    title: "Local Tours",
-    description: "Explore the best of the local attractions",
-    icon: MapPin,
+    title: "Umden-Diwon Eri Silk Village",
+    image:
+      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80",
   },
 ];
 
 const galleryImages = [
-  "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80",
 ];
 
-const quickLinks = ["Home", "About Us", "Rooms", "Services", "Gallery", "Contact Us"];
+const quickLinksLeft = ["Home", "About", "Cottages"];
+const quickLinksRight = ["Dining", "Gallery", "Contact"];
 
-const aboutHighlights = [
-  "Peaceful Location",
-  "Warm Hospitality",
-  "Modern Comforts",
-  "Memorable Stays",
-];
-
-function SectionEyebrow({ children }: { children: React.ReactNode }) {
+export default function Page() {
   return (
-    <div className="mb-3 flex items-center justify-center gap-3 text-center text-[11px] font-semibold uppercase tracking-[0.35em] text-[#b7904f]">
-      <span>{children}</span>
-      <span className="h-px w-6 bg-[#c6a56a]" />
-    </div>
-  );
-}
-
-function BrandMark() {
-  return (
-    <div className="flex flex-col leading-none text-[#d3ab69]">
-      <div className="mb-1 flex items-center gap-2">
-        <div className="flex gap-[2px]">
-          <span className="block h-2 w-4 rotate-[-20deg] rounded-full bg-[#d3ab69]" />
-          <span className="mt-[-2px] block h-3 w-5 rounded-full bg-[#d3ab69] [clip-path:polygon(50%_0,100%_100%,0_100%)]" />
-          <span className="block h-2 w-4 rotate-[20deg] rounded-full bg-[#d3ab69]" />
-        </div>
-      </div>
-      <span className="font-serif text-[26px] font-medium tracking-wide sm:text-[34px]">Serene Valley</span>
-      <span className="mt-1 text-[10px] uppercase tracking-[0.55em] text-[#f0e5cf]">Homestay</span>
-    </div>
-  );
-}
-
-function DecorativeLeaf() {
-  return (
-    <div className="pointer-events-none absolute left-0 top-1/2 hidden -translate-y-1/2 opacity-30 lg:block">
-      <svg width="110" height="240" viewBox="0 0 110 240" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M50 236C62 181 74 143 104 94" stroke="#D4C4AB" strokeWidth="1.5" />
-        <path d="M49 210C30 190 23 164 30 136" stroke="#D4C4AB" strokeWidth="1.5" />
-        <path d="M49 182C28 171 14 151 10 124" stroke="#D4C4AB" strokeWidth="1.5" />
-        <path d="M50 153C34 145 24 129 21 108" stroke="#D4C4AB" strokeWidth="1.5" />
-        <path d="M52 130C69 114 83 91 88 61" stroke="#D4C4AB" strokeWidth="1.5" />
-        <path d="M51 104C38 90 33 70 35 47" stroke="#D4C4AB" strokeWidth="1.5" />
-        <path d="M49 80C29 67 21 46 24 19" stroke="#D4C4AB" strokeWidth="1.5" />
-      </svg>
-    </div>
-  );
-}
-
-export default function PublicHomePage() {
-  return (
-    <div className="min-h-screen bg-[#f7f4ee] text-[#2d2a26]">
-      <header className="relative overflow-hidden bg-[#15202a] text-white">
+    <div className="min-h-screen bg-[#f5f1e8] text-[#2e2d28]">
+      <header className="relative overflow-hidden text-white">
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
             backgroundImage:
-              "url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=2000&q=80')",
+              "url('https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=2200&q=80')",
           }}
         />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(14,22,30,0.86)_0%,rgba(14,22,30,0.62)_42%,rgba(14,22,30,0.28)_68%,rgba(14,22,30,0.48)_100%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(212,171,105,0.18),transparent_28%),linear-gradient(to_bottom,rgba(0,0,0,0.02),rgba(0,0,0,0.25))]" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(12,20,12,0.82)_0%,rgba(16,24,16,0.62)_35%,rgba(16,24,16,0.30)_65%,rgba(16,24,16,0.62)_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(185,155,86,0.15),transparent_24%),linear-gradient(to_bottom,rgba(0,0,0,0.08),rgba(0,0,0,0.28))]" />
 
-        <div className="relative mx-auto max-w-[1420px] px-4 pb-24 pt-6 sm:px-6 lg:px-10 lg:pb-36">
+        <div className="relative mx-auto max-w-[1440px] px-4 pb-20 pt-5 sm:px-6 lg:px-10 lg:pb-28">
           <nav className="flex items-center justify-between gap-4">
-            <BrandMark />
+            <BrandLogo />
 
-            <div className="hidden items-center gap-10 text-[17px] font-medium text-white/90 lg:flex">
-              {[
-                "Home",
-                "About",
-                "Rooms",
-                "Services",
-                "Gallery",
-                "Contact",
-              ].map((item, index) => (
+            <div className="hidden items-center gap-10 text-[15px] font-medium text-white/85 lg:flex">
+              {navItems.map((item) => (
                 <a
                   key={item}
                   href={`#${item.toLowerCase()}`}
-                  className={`relative transition hover:text-[#d9b476] ${
-                    index === 0 ? "text-[#d9b476]" : ""
-                  }`}
+                  className="transition hover:text-[#d8bb73]"
                 >
                   {item}
-                  {index === 0 && (
-                    <span className="absolute left-0 top-full mt-3 h-[2px] w-8 rounded-full bg-[#d9b476]" />
-                  )}
                 </a>
               ))}
             </div>
 
             <div className="flex items-center gap-3">
-              <Button className="hidden h-14 rounded-xl border border-[#d6ae6a]/20 bg-[#d1a85c] px-8 text-[17px] font-semibold text-[#fffdf7] shadow-[0_18px_40px_rgba(0,0,0,0.18)] transition hover:bg-[#c49b50] lg:inline-flex">
-                Book Now
-                <WalletCards className="ml-2 h-4 w-4" />
+              <Button className="hidden h-12 rounded-xl border border-[#d7be80]/25 bg-[#3d5f32] px-6 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.18)] hover:bg-[#34542b] lg:inline-flex">
+                <WhatsAppIcon className="mr-2 h-4 w-4" />
+                Book on WhatsApp
               </Button>
-              <button className="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-white backdrop-blur lg:hidden">
+
+              <button className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-white lg:hidden">
                 <Menu className="h-5 w-5" />
               </button>
             </div>
           </nav>
 
-          <div className="grid items-center gap-10 pt-16 lg:grid-cols-[minmax(0,680px)_1fr] lg:pt-24">
-            <div className="max-w-[760px]">
-              <div className="mb-8 h-px w-28 bg-[#c8a55c]/70" />
-              <h1 className="max-w-[720px] font-serif text-[56px] leading-[1.04] tracking-[-0.03em] text-[#f8f4ee] sm:text-[72px] xl:text-[86px]">
-                Experience <span className="text-[#d2a65c]">Luxury</span> in Nature
+          <div className="grid gap-10 pt-12 lg:grid-cols-[1.05fr_480px] lg:items-center lg:pt-16">
+            <div className="max-w-[700px]">
+              <h1 className="font-serif text-[52px] leading-[1.02] tracking-[-0.03em] text-[#f7f2e9] sm:text-[70px] xl:text-[84px]">
+                A Quiet Boutique Escape in Meghalaya
               </h1>
-              <div className="mt-6 h-[3px] w-44 bg-[linear-gradient(90deg,#d3ab67_0%,rgba(211,171,103,0.15)_100%)]" />
-              <p className="mt-10 max-w-[650px] text-xl leading-9 text-white/86 sm:text-[29px] sm:leading-[1.5]">
-                A serene escape in the lap of nature.
-                <br />
-                Where comfort meets breathtaking views.
+
+              <p className="mt-6 max-w-[600px] text-lg leading-8 text-white/85 sm:text-[24px] sm:leading-[1.55]">
+                Private cottages, a swimming pool, in-house dining, and slow,
+                peaceful stays in the hills of Umran.
               </p>
+
+              <div className="mt-6 flex items-center gap-3 text-[#d4b56c]">
+                <span className="h-px w-12 bg-[#cdaa59]" />
+                <span className="text-[15px] font-semibold">
+                  Only 5 cottages • Pre-booking required
+                </span>
+              </div>
+
+              <div className="mt-8 flex flex-wrap gap-4">
+                <Button className="h-14 rounded-2xl bg-[#35562d] px-7 text-base font-semibold text-white shadow-[0_12px_30px_rgba(0,0,0,0.2)] hover:bg-[#2f4c28]">
+                  <WhatsAppIcon className="mr-2 h-5 w-5" />
+                  Book via WhatsApp
+                </Button>
+
+                <Button className="h-14 rounded-2xl border border-white/35 bg-transparent px-7 text-base font-semibold text-white hover:bg-white/10">
+                  Explore Cottages
+                </Button>
+              </div>
             </div>
-            <div />
+
+            <Card className="overflow-hidden rounded-[24px] border border-[#e6decf] bg-[#f6f2ea] shadow-[0_22px_70px_rgba(0,0,0,0.22)]">
+              <CardContent className="p-6 sm:p-7">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {bookingFields.map((field) => {
+                    const Icon = field.icon;
+
+                    return (
+                      <div key={field.label}>
+                        <div className="mb-2 text-sm font-medium text-[#6c6a61]">
+                          {field.label}
+                        </div>
+                        <div className="flex h-14 items-center justify-between rounded-xl border border-[#ddd5c7] bg-white px-4 text-[#686558]">
+                          <div className="flex items-center gap-3">
+                            <Icon className="h-4 w-4 text-[#7f8366]" />
+                            <span className="text-sm">{field.value}</span>
+                          </div>
+                          <ChevronDown className="h-4 w-4 text-[#8a877c]" />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <Button className="mt-5 h-14 w-full rounded-xl bg-[#35562d] text-base font-semibold text-white hover:bg-[#2f4c28]">
+                  Send Booking Request
+                </Button>
+
+                <div className="mt-3 text-center text-sm font-medium text-[#8a877c]">
+                  Pre-booking required
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </header>
 
-      <main className="relative">
-        <section className="relative z-20 mx-auto -mt-12 max-w-[1320px] px-4 sm:px-6 lg:px-8">
-          <Card className="overflow-hidden rounded-[24px] border border-[#ebe4d9] bg-[#fbfaf7] shadow-[0_18px_70px_rgba(34,29,20,0.12)]">
-            <CardContent className="grid gap-2 p-0 lg:grid-cols-[1fr_1fr_1fr_1fr_auto]">
-              {bookingFields.map((field) => {
-                const Icon = field.icon;
-                return (
-                  <div
-                    key={field.label}
-                    className="flex min-h-[112px] items-center gap-4 border-b border-[#eee7dc] px-6 py-6 lg:border-b-0 lg:border-r"
-                  >
-                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f2ebdf] text-[#b28d52]">
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium text-[#6b6459]">{field.label}</div>
-                      <div className="mt-2 flex items-center justify-between gap-2 text-[17px] font-medium text-[#3e3a33]">
-                        <span className="truncate">{field.value}</span>
-                        <ChevronDown className="h-4 w-4 shrink-0 text-[#857b6d]" />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-
-              <div className="flex min-h-[112px] flex-col items-stretch justify-center gap-3 px-6 py-6 lg:min-w-[250px]">
-                <Button className="h-14 rounded-xl bg-[#34422a] text-base font-semibold text-white shadow-md transition hover:bg-[#2d3824]">
-                  Request Booking
-                </Button>
-                <div className="flex items-center justify-center gap-2 text-sm font-medium text-[#8a7f73]">
-                  <WalletCards className="h-4 w-4 text-[#c39d58]" />
-                  Pay on Arrival
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
-
-        <section id="about" className="relative mx-auto max-w-[1320px] px-4 pb-16 pt-16 sm:px-6 lg:px-8 lg:pb-24 lg:pt-24">
-          <DecorativeLeaf />
-          <div className="grid gap-12 lg:grid-cols-[1.05fr_1fr] lg:items-center">
-            <div className="relative">
-              <div className="absolute -bottom-4 -right-4 hidden h-full w-full rounded-[26px] border border-[#c69f5d] lg:block" />
-              <div className="overflow-hidden rounded-[22px] shadow-[0_18px_50px_rgba(44,36,23,0.12)]">
-                <img
-                  src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1400&q=80"
-                  alt="Valley seating view"
-                  className="h-[320px] w-full object-cover sm:h-[420px] lg:h-[460px]"
-                />
-              </div>
+      <main>
+        <section
+          id="about"
+          className="mx-auto max-w-[1440px] px-4 py-10 sm:px-6 lg:px-10 lg:py-14"
+        >
+          <div className="grid gap-10 lg:grid-cols-[1.02fr_1fr] lg:items-center">
+            <div className="overflow-hidden rounded-[22px] border border-[#e6ddcf] bg-white shadow-[0_10px_30px_rgba(70,62,42,0.08)]">
+              <img
+                src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1600&q=80"
+                alt="Outdoor sit-out at La Ki Trep"
+                className="h-[320px] w-full object-cover sm:h-[430px]"
+              />
             </div>
 
-            <div className="grid gap-8 lg:grid-cols-[1fr_250px] lg:gap-10">
-              <div>
-                <div className="mb-4 flex items-center gap-3 text-[12px] font-semibold uppercase tracking-[0.35em] text-[#b7904f]">
-                  <span>About Us</span>
-                  <span className="h-px w-6 bg-[#c6a56a]" />
-                </div>
-                <h2 className="font-serif text-4xl leading-tight text-[#37332d] sm:text-5xl">
-                  Your Home in the Hills
-                </h2>
-                <p className="mt-7 max-w-[620px] text-lg leading-9 text-[#5b544a]">
-                  Serene Valley Homestay is a boutique retreat surrounded by lush greenery, misty mountains and peace.
-                  Thoughtfully designed for comfort and relaxation, we offer warm hospitality, modern amenities and unforgettable views.
-                </p>
-                <Button className="mt-8 h-14 rounded-xl bg-[#34422a] px-7 text-base font-semibold text-white hover:bg-[#2c3825]">
-                  Discover Our Story
-                </Button>
+            <div>
+              <div className="mb-3 text-[12px] font-semibold uppercase tracking-[0.32em] text-[#8f9870]">
+                About La Ki Trep
               </div>
 
-              <div className="grid gap-5 border-l border-[#e2d7c7] pl-0 lg:pl-8">
-                {aboutHighlights.map((item) => (
-                  <div key={item} className="flex items-center gap-3 text-lg text-[#5b544a]">
-                    <BadgeCheck className="h-5 w-5 text-[#c59d59]" />
-                    <span>{item}</span>
-                  </div>
-                ))}
+              <h2 className="max-w-[700px] font-serif text-[40px] leading-tight text-[#31472f] sm:text-[56px]">
+                Private, Peaceful, Intentionally Limited
+              </h2>
+
+              <p className="mt-5 max-w-[680px] text-[17px] leading-8 text-[#666257] sm:text-[19px]">
+                La Ki Trep Resort is a private cottage stay spread across a
+                scenic property in Umran, Ri Bhoi. With only five cottages, the
+                experience is intentionally calm, personal and uncrowded — ideal
+                for couples, small families, private retreats and intimate
+                getaways.
+              </p>
+
+              <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                {aboutFeatures.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <div
+                      key={item.title}
+                      className="rounded-[18px] border border-[#e8dfd1] bg-[#faf7f1] px-4 py-5 text-center"
+                    >
+                      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#edf0e5] text-[#60704f]">
+                        <Icon className="h-6 w-6" />
+                      </div>
+                      <div className="mt-3 text-[15px] leading-6 text-[#5c5a52]">
+                        {item.title}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
         </section>
 
-        <section id="rooms" className="mx-auto max-w-[1320px] px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
-          <SectionEyebrow>Featured Rooms</SectionEyebrow>
-          <h2 className="text-center font-serif text-4xl text-[#3b3731] sm:text-5xl">Stay in Comfort &amp; Style</h2>
-          <div className="mx-auto mt-4 h-px w-10 bg-[#d0ab69]" />
+        <section
+          id="cottages"
+          className="mx-auto max-w-[1440px] px-4 py-4 sm:px-6 lg:px-10"
+        >
+          <SectionTitle title="Stay in Our Cottages" />
 
-          <div className="mt-12 grid gap-8 lg:grid-cols-3">
-            {roomCards.map((room, index) => (
+          <div className="mt-8 grid gap-6 xl:grid-cols-4">
+            {cottages.map((cottage) => (
               <Card
-                key={`${room.title}-${index}`}
-                className="overflow-hidden rounded-[20px] border border-[#e9dfd2] bg-white shadow-[0_12px_34px_rgba(50,41,28,0.07)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_44px_rgba(50,41,28,0.12)]"
+                key={cottage.name}
+                className="overflow-hidden rounded-[20px] border border-[#e7dece] bg-white shadow-[0_10px_26px_rgba(70,62,42,0.07)]"
               >
-                <div className="overflow-hidden">
-                  <img src={room.image} alt={room.title} className="h-[270px] w-full object-cover transition duration-500 hover:scale-105" />
+                <div className="relative">
+                  <img
+                    src={cottage.image}
+                    alt={cottage.name}
+                    className="h-[220px] w-full object-cover"
+                  />
+                  <div className="absolute left-4 top-4 rounded-lg bg-[#576b3f] px-3 py-1 text-xs font-semibold text-white shadow-md">
+                    Breakfast Included
+                  </div>
                 </div>
-                <CardContent className="p-6">
-                  <h3 className="font-serif text-[34px] leading-none text-[#3a362f]">{room.title}</h3>
-                  <p className="mt-4 min-h-[56px] text-base leading-7 text-[#60584e]">{room.description}</p>
 
-                  <div className="mt-5 flex flex-wrap items-center gap-5 border-b border-[#ede6da] pb-5 text-[15px] text-[#8a7d6d]">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-[#c39c57]" />
-                      <span>2 Guests</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <BedDouble className="h-4 w-4 text-[#c39c57]" />
-                      <span>King Bed</span>
-                    </div>
+                <CardContent className="p-5">
+                  <h3 className="font-serif text-[31px] leading-none text-[#31472f]">
+                    {cottage.name}
+                  </h3>
+                  <div className="mt-2 text-[15px] font-medium text-[#7b786f]">
+                    {cottage.subtitle}
                   </div>
 
-                  <div className="mt-5 flex items-center justify-between gap-4">
-                    <div>
-                      <div className="font-serif text-[40px] leading-none text-[#3a362f]">{room.price}</div>
-                      <div className="mt-1 text-base text-[#71695d]">/ night</div>
-                    </div>
-                    <Button className="h-12 rounded-xl bg-[#34422a] px-6 text-[15px] font-semibold text-white hover:bg-[#2d3925]">
-                      View Details
-                    </Button>
+                  <p className="mt-3 min-h-[88px] text-[15px] leading-7 text-[#615d54]">
+                    {cottage.description}
+                  </p>
+
+                  <div className="mt-4 flex items-center gap-2 text-[15px] text-[#7d796f]">
+                    <Users className="h-4 w-4 text-[#7f8a61]" />
+                    <span>{cottage.guests}</span>
+                  </div>
+
+                  <div className="mt-5 border-t border-[#ece4d7] pt-4 text-[18px] text-[#4c4b45]">
+                    <span className="font-semibold text-[#31472f]">
+                      {cottage.weekday}
+                    </span>{" "}
+                    weekday{" "}
+                    <span className="mx-1 text-[#b8b1a3]">•</span>
+                    <span className="font-semibold text-[#31472f]">
+                      {cottage.weekend}
+                    </span>{" "}
+                    weekend
                   </div>
                 </CardContent>
               </Card>
@@ -363,173 +489,267 @@ export default function PublicHomePage() {
           </div>
         </section>
 
-        <section id="services" className="mx-auto max-w-[1320px] px-4 py-10 sm:px-6 lg:px-8 lg:py-12">
-          <SectionEyebrow>Services &amp; Amenities</SectionEyebrow>
+        <section
+          id="dining"
+          className="mx-auto max-w-[1440px] px-4 py-10 sm:px-6 lg:px-10"
+        >
+          <SectionTitle title="Amenities & Experiences" />
+
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             {amenities.map((item) => {
               const Icon = item.icon;
               return (
                 <Card
                   key={item.title}
-                  className="rounded-[18px] border border-[#e8e0d6] bg-[#fbfaf7] shadow-none transition hover:-translate-y-1 hover:shadow-[0_12px_28px_rgba(40,34,24,0.08)]"
+                  className="rounded-[18px] border border-[#e7dece] bg-[#faf7f1] px-4 py-6 text-center shadow-sm"
                 >
-                  <CardContent className="flex min-h-[190px] flex-col items-center justify-center px-5 py-8 text-center">
-                    <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[#f5efe4] text-[#c19a57]">
-                      <Icon className="h-8 w-8" />
-                    </div>
-                    <h3 className="font-serif text-[30px] leading-none text-[#3c3832]">{item.title}</h3>
-                    <p className="mt-3 text-sm leading-6 text-[#6b6459]">{item.description}</p>
-                  </CardContent>
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#edf0e5] text-[#617251]">
+                    <Icon className="h-7 w-7" />
+                  </div>
+                  <div className="mt-4 text-[18px] leading-6 text-[#4f4c45]">
+                    {item.title}
+                  </div>
                 </Card>
               );
             })}
           </div>
+
+          <div className="mt-5 text-center text-[15px] text-[#817d71]">
+            Lunch 1–4 PM <span className="mx-2">•</span> Dinner 6–10 PM{" "}
+            <span className="mx-2">•</span> Pool access for in-house guests 8 AM–6
+            PM
+          </div>
         </section>
 
-        <section id="gallery" className="mx-auto max-w-[1320px] px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
-          <SectionEyebrow>Gallery</SectionEyebrow>
-          <h2 className="text-center font-serif text-4xl text-[#3b3731] sm:text-5xl">A Glimpse of Serenity</h2>
+        <section className="mx-auto max-w-[1440px] px-4 py-4 sm:px-6 lg:px-10">
+          <div className="grid gap-6 xl:grid-cols-[1.05fr_1fr]">
+            <Card className="rounded-[22px] border border-[#e6ddcf] bg-[#faf7f1] p-6 shadow-[0_10px_26px_rgba(70,62,42,0.06)]">
+              <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+                <div>
+                  <h3 className="font-serif text-[36px] leading-tight text-[#31472f]">
+                    Private Events &amp; Group Getaways
+                  </h3>
+                  <p className="mt-4 text-[16px] leading-7 text-[#666257]">
+                    La Ki Trep is ideal for birthdays, anniversaries,
+                    bachelorettes, corporate retreats and small private day
+                    events. Full property bookings available.
+                  </p>
 
-          <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+                  <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {[
+                      "Up to 11 adults with stay",
+                      "Day events up to 25 guests",
+                      "In-house catering only",
+                      "WhatsApp for group rates",
+                    ].map((item) => (
+                      <div
+                        key={item}
+                        className="rounded-[16px] border border-[#e7dece] bg-white px-3 py-4 text-center text-[13px] leading-5 text-[#69645a]"
+                      >
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="overflow-hidden rounded-[18px]">
+                  <img
+                    src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1200&q=80"
+                    alt="Private event dinner setup"
+                    className="h-full min-h-[240px] w-full object-cover"
+                  />
+                </div>
+              </div>
+            </Card>
+
+            <Card className="rounded-[22px] border border-[#e6ddcf] bg-[#faf7f1] p-6 shadow-[0_10px_26px_rgba(70,62,42,0.06)]">
+              <h3 className="font-serif text-[36px] leading-tight text-[#31472f]">
+                Explore Nearby
+              </h3>
+
+              <div className="mt-5 grid gap-3 grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
+                {nearbyPlaces.map((place) => (
+                  <div
+                    key={place.title}
+                    className="overflow-hidden rounded-[16px] border border-[#e4dbcd] bg-white"
+                  >
+                    <img
+                      src={place.image}
+                      alt={place.title}
+                      className="h-[110px] w-full object-cover"
+                    />
+                    <div className="px-3 py-3 text-center text-[13px] leading-5 text-[#5f5a50]">
+                      {place.title}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        </section>
+
+        <section
+          id="gallery"
+          className="mx-auto max-w-[1440px] px-4 py-10 sm:px-6 lg:px-10"
+        >
+          <SectionTitle title="A Glimpse of La Ki Trep" />
+
+          <div className="mt-8 grid gap-4 grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
             {galleryImages.map((src, index) => (
-              <div key={`${src}-${index}`} className="group overflow-hidden rounded-[16px] shadow-[0_10px_24px_rgba(44,36,24,0.08)]">
+              <div
+                key={`${src}-${index}`}
+                className="group overflow-hidden rounded-[16px] border border-[#e6ddcf] bg-white shadow-sm"
+              >
                 <img
                   src={src}
-                  alt={`Gallery ${index + 1}`}
-                  className="h-[140px] w-full object-cover transition duration-500 group-hover:scale-110 md:h-[180px]"
+                  alt={`La Ki Trep gallery ${index + 1}`}
+                  className="h-[150px] w-full object-cover transition duration-500 group-hover:scale-105"
                 />
               </div>
             ))}
           </div>
 
-          <div className="mt-8 flex justify-center">
-            <Button className="h-14 rounded-xl bg-[#34422a] px-8 text-base font-semibold text-white hover:bg-[#2d3925]">
+          <div className="mt-7 flex justify-center">
+            <Button className="h-12 rounded-xl bg-[#35562d] px-7 text-sm font-semibold text-white hover:bg-[#2f4c28]">
+              <LeafMark className="mr-2 h-4 w-4" />
               View Full Gallery
             </Button>
           </div>
         </section>
 
-        <section className="mt-8 bg-[linear-gradient(90deg,#273321_0%,#314028_32%,#2c3b25_65%,#34442b_100%)] text-white">
-          <div className="mx-auto grid max-w-[1440px] gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[1.4fr_1fr_1fr_auto] lg:items-center lg:px-8">
-            <div className="flex items-start gap-5">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-[#cfa55f]/40 bg-[#d0a75c]/10 text-[#d7af69]">
-                <WalletCards className="h-7 w-7" />
-              </div>
-              <div>
-                <h3 className="font-serif text-[42px] leading-none text-[#f5eddc]">Ready for a Serene Escape?</h3>
-                <p className="mt-3 max-w-[560px] text-base leading-7 text-white/75">
-                  Send us a booking request or get in touch with us for a memorable stay amidst nature.
+        <section className="mx-auto max-w-[1440px] px-4 pb-6 pt-2 sm:px-6 lg:px-10">
+          <div className="overflow-hidden rounded-[22px] border border-[#557044]/15 bg-[linear-gradient(90deg,#2f4d2a_0%,#3a5d33_34%,#2f4c29_68%,#40623a_100%)] text-white shadow-[0_14px_40px_rgba(31,48,23,0.16)]">
+            <div className="grid gap-5 px-5 py-6 lg:grid-cols-[1.3fr_240px_220px_auto] lg:items-center lg:px-8">
+              <div className="relative overflow-hidden rounded-[18px] border border-white/10 bg-white/5 px-5 py-5">
+                <div className="pointer-events-none absolute -left-6 bottom-0 text-[#b99a57]/20">
+                  <LeafMark className="h-20 w-20" />
+                </div>
+                <h3 className="relative font-serif text-[36px] leading-tight text-[#f7f0df]">
+                  Plan Your Quiet Getaway
+                </h3>
+                <p className="relative mt-2 max-w-[700px] text-[14px] leading-7 text-white/80 sm:text-[15px]">
+                  Bookings are handled directly on WhatsApp. Walk-ins are not
+                  permitted. The exact location is shared after booking
+                  confirmation to protect guest privacy.
                 </p>
               </div>
-            </div>
 
-            <div className="flex items-center gap-4 border-white/10 lg:border-l lg:pl-8">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full border border-[#d5ad69]/40 text-[#d8b36f]">
-                <Phone className="h-5 w-5" />
+              <div className="rounded-[18px] border border-white/10 bg-white/5 px-5 py-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[#d5bd7a]/30 bg-[#d5bd7a]/10 text-[#e1c881]">
+                    <WhatsAppIcon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="text-sm text-white/70">WhatsApp</div>
+                    <div className="text-xl font-semibold">6009044450</div>
+                  </div>
+                </div>
               </div>
-              <div>
-                <div className="text-sm text-white/70">Call Us</div>
-                <div className="mt-1 text-xl font-semibold text-[#f7f2e9]">+91 98765 43210</div>
-              </div>
-            </div>
 
-            <div className="flex items-center gap-4 border-white/10 lg:border-l lg:pl-8">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full border border-[#d5ad69]/40 text-[#d8b36f]">
-                <Globe className="h-5 w-5" />
+              <div className="rounded-[18px] border border-white/10 bg-white/5 px-5 py-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[#d5bd7a]/30 bg-[#d5bd7a]/10 text-[#e1c881]">
+                    <InstagramIcon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="text-sm text-white/70">Instagram</div>
+                    <div className="text-xl font-semibold">@lakitrep</div>
+                  </div>
+                </div>
               </div>
-              <div>
-                <div className="text-sm text-white/70">WhatsApp</div>
-                <div className="mt-1 text-xl font-semibold text-[#f7f2e9]">+91 98765 43210</div>
-              </div>
-            </div>
 
-            <div className="flex justify-start lg:justify-end">
-              <Button className="h-14 rounded-xl bg-[#d0a85c] px-8 text-base font-semibold text-[#fffdf7] hover:bg-[#c79e52]">
-                Request Booking
-                <ChevronRight className="ml-2 h-4 w-4" />
-              </Button>
+              <div className="flex justify-start lg:justify-end">
+                <Button className="h-14 rounded-2xl bg-[#d8a84a] px-7 text-base font-semibold text-[#fffdf7] hover:bg-[#ca9a3f]">
+                  <WhatsAppIcon className="mr-2 h-5 w-5" />
+                  Book Now on WhatsApp
+                </Button>
+              </div>
             </div>
           </div>
         </section>
       </main>
 
-      <footer id="contact" className="relative overflow-hidden bg-[#191d19] text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_left_bottom,rgba(208,168,92,0.12),transparent_32%),radial-gradient(circle_at_right_top,rgba(208,168,92,0.08),transparent_26%)]" />
-        <div className="relative mx-auto max-w-[1440px] px-4 pb-8 pt-12 sm:px-6 lg:px-8">
-          <div className="grid gap-10 lg:grid-cols-[1.2fr_1fr_1fr_1fr]">
+      <footer
+        id="contact"
+        className="border-t border-[#e4dccf] bg-[#f8f4ec] text-[#3f3d37]"
+      >
+        <div className="mx-auto max-w-[1440px] px-4 py-10 sm:px-6 lg:px-10">
+          <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr_0.8fr_1fr]">
             <div>
-              <BrandMark />
-              <p className="mt-6 max-w-[360px] text-[15px] leading-7 text-white/68">
-                A luxury homestay nestled in the lap of nature, offering comfort, peace and unforgettable experiences.
-              </p>
-              <div className="mt-6 flex items-center gap-4 text-white/80">
-                <a href="#" className="rounded-full border border-white/10 p-2 transition hover:border-[#d0a85c] hover:text-[#d0a85c]"><Facebook className="h-4 w-4" /></a>
-                <a href="#" className="rounded-full border border-white/10 p-2 transition hover:border-[#d0a85c] hover:text-[#d0a85c]"><Instagram className="h-4 w-4" /></a>
-                <a href="#" className="rounded-full border border-white/10 p-2 transition hover:border-[#d0a85c] hover:text-[#d0a85c]"><Phone className="h-4 w-4" /></a>
-                <a href="#" className="rounded-full border border-white/10 p-2 transition hover:border-[#d0a85c] hover:text-[#d0a85c]"><Trees className="h-4 w-4" /></a>
+              <div className="flex items-center gap-3 text-[#b4954b]">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[#ccb06c]/35 bg-[#ccb06c]/8">
+                  <LeafMark className="h-6 w-6" />
+                </div>
+                <div className="font-serif text-[30px] leading-none text-[#9f8650]">
+                  La Ki Trep Resort
+                </div>
               </div>
+
+              <p className="mt-4 max-w-[320px] text-[17px] leading-8 text-[#666257]">
+                A quiet boutique resort in Meghalaya
+              </p>
             </div>
 
             <div>
-              <h3 className="text-sm font-semibold uppercase tracking-[0.28em] text-[#d0a85c]">Quick Links</h3>
-              <ul className="mt-6 space-y-3 text-white/75">
-                {quickLinks.map((item) => (
+              <h3 className="text-sm font-semibold uppercase tracking-[0.28em] text-[#8f9870]">
+                Quick Links
+              </h3>
+              <ul className="mt-5 space-y-3 text-[15px] text-[#5f5a50]">
+                {quickLinksLeft.map((item) => (
                   <li key={item}>
-                    <a href="#" className="transition hover:text-[#d8b470]">› {item}</a>
+                    <a href="#" className="transition hover:text-[#35562d]">
+                      {item}
+                    </a>
                   </li>
                 ))}
               </ul>
             </div>
 
             <div>
-              <h3 className="text-sm font-semibold uppercase tracking-[0.28em] text-[#d0a85c]">Contact Info</h3>
-              <div className="mt-6 space-y-4 text-white/75">
-                <div className="flex items-start gap-3">
-                  <Phone className="mt-1 h-4 w-4 text-[#d8b36f]" />
-                  <span>+91 98765 43210</span>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Mail className="mt-1 h-4 w-4 text-[#d8b36f]" />
-                  <span>info@serenevalley.com</span>
-                </div>
-                <div className="flex items-start gap-3">
-                  <MapPin className="mt-1 h-4 w-4 text-[#d8b36f]" />
-                  <span>Village Sari, P.O. Mawkhal, Ranikhet, Uttarakhand 263645</span>
-                </div>
-              </div>
+              <h3 className="text-sm font-semibold uppercase tracking-[0.28em] text-[#8f9870]">
+                More
+              </h3>
+              <ul className="mt-5 space-y-3 text-[15px] text-[#5f5a50]">
+                {quickLinksRight.map((item) => (
+                  <li key={item}>
+                    <a href="#" className="transition hover:text-[#35562d]">
+                      {item}
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </div>
 
             <div>
-              <h3 className="text-sm font-semibold uppercase tracking-[0.28em] text-[#d0a85c]">Follow Us</h3>
-              <div className="mt-6 space-y-4 text-white/75">
-                <a href="#" className="flex items-center gap-3 transition hover:text-[#d8b470]">
-                  <Facebook className="h-4 w-4 text-[#d8b36f]" />
-                  <span>Facebook</span>
-                </a>
-                <a href="#" className="flex items-center gap-3 transition hover:text-[#d8b470]">
-                  <Instagram className="h-4 w-4 text-[#d8b36f]" />
-                  <span>Instagram</span>
-                </a>
-                <a href="#" className="flex items-center gap-3 transition hover:text-[#d8b470]">
-                  <Phone className="h-4 w-4 text-[#d8b36f]" />
-                  <span>WhatsApp</span>
-                </a>
+              <h3 className="text-sm font-semibold uppercase tracking-[0.28em] text-[#8f9870]">
+                Contact
+              </h3>
+
+              <div className="mt-5 space-y-3 text-[15px] leading-7 text-[#5f5a50]">
+                <div className="flex items-start gap-3">
+                  <MapPin className="mt-1 h-4 w-4 text-[#8a9466]" />
+                  <span>Umran, Ri Bhoi District, Meghalaya</span>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <Phone className="mt-1 h-4 w-4 text-[#8a9466]" />
+                  <span>WhatsApp: 6009044450</span>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <InstagramIcon className="mt-1 h-4 w-4 text-[#8a9466]" />
+                  <span>Instagram: @lakitrep</span>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <Mail className="mt-1 h-4 w-4 text-[#8a9466]" />
+                  <span>Precise location shared after booking confirmation.</span>
+                </div>
               </div>
             </div>
-          </div>
-                <h1 className="text-3xl font-semibold">La Ki Trep Resort</h1>
-      <p className="text-slate-600">Public website placeholder. Build-out comes after admin modules.</p>
-      <Link className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white" href="/admin">
-        Go to Admin Dashboard
-      </Link>
-
-          <div className="mt-10 flex flex-col gap-4 border-t border-white/10 pt-6 text-sm text-white/55 sm:flex-row sm:items-center sm:justify-between">
-            <div>© 2025 Serene Valley Homestay. All Rights Reserved.</div>
-            <div>Designed with ❤️ for travelers</div>
           </div>
         </div>
       </footer>
     </div>
   );
 }
-
