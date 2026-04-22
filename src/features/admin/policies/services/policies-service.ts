@@ -1,11 +1,38 @@
-import { policyDemoData } from "../demo-data";
-import type { Policy } from "../types";
+import { getSupabaseServerClient } from "@/lib/supabase/server";
+import type { PolicyInput } from "../schema";
 
-// TODO: replace mock service with Supabase query.
-let records = [...policyDemoData];
+export async function getAllPolicies() {
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("policies")
+    .select("id,property_id,policy_key,title,content,sort_order,is_active,properties(name)")
+    .order("sort_order", { ascending: true });
+  if (error) throw new Error(`Failed to fetch policies: ${error.message}`);
+  return (data ?? []).map((row) => ({ ...row, property_name: (row.properties as { name?: string } | null)?.name }));
+}
 
-export async function getAllPolicies(): Promise<Policy[]> { return records; }
-export async function getPolicyById(id: string): Promise<Policy | undefined> { return records.find((x) => x.id === id); }
-export async function createPolicy(input: Omit<Policy, "id">): Promise<Policy> { const created = { id: `pol-${Date.now()}`, ...input }; records = [created, ...records]; return created; }
-export async function updatePolicy(id: string, input: Partial<Omit<Policy, "id">>): Promise<Policy | undefined> { records = records.map((x) => (x.id === id ? { ...x, ...input } : x)); return records.find((x) => x.id === id); }
-export async function deletePolicy(id: string): Promise<boolean> { const before = records.length; records = records.filter((x) => x.id !== id); return records.length < before; }
+export async function getPolicyById(id: string) {
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase.from("policies").select("*").eq("id", id).maybeSingle();
+  if (error) throw new Error(`Failed to fetch policy: ${error.message}`);
+  return data;
+}
+
+export async function createPolicy(input: PolicyInput) {
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase.from("policies").insert(input).select("id").single();
+  if (error) throw new Error(`Failed to create policy: ${error.message}`);
+  return data;
+}
+
+export async function updatePolicy(id: string, input: PolicyInput) {
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.from("policies").update(input).eq("id", id);
+  if (error) throw new Error(`Failed to update policy: ${error.message}`);
+}
+
+export async function deletePolicy(id: string) {
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.from("policies").delete().eq("id", id);
+  if (error) throw new Error(`Failed to delete policy: ${error.message}`);
+}
