@@ -1,9 +1,9 @@
-export type PolicyStatus = "active" | "draft" | "inactive";
-
 export type Policy = {
   id: string;
+  property_id: string;
+  policy_key: string;
   title: string;
-  slug: string;
   content: string;
-  status: PolicyStatus;
+  sort_order: number;
+  is_active: boolean;
 };

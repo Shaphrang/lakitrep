@@ -1,8 +1,23 @@
-// TODO: replace with real Supabase server client setup.
-export function getSupabaseServerClient() {
-  return {
-    from: () => {
-      throw new Error("Supabase server placeholder: connect real client before use.");
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+
+export async function getSupabaseServerClient() {
+  const cookieStore = await cookies();
+
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookieList) {
+          cookieList.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
+          });
+        },
+      },
     },
-  };
+  );
 }

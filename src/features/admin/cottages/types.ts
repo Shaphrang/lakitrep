@@ -1,19 +1,17 @@
-export type CottageStatus = "active" | "draft" | "inactive";
+export type CottageStatus = "active" | "inactive" | "maintenance";
 
 export type Cottage = {
   id: string;
-  propertyId: string;
-  name: string;
+  property_id: string;
   code: string;
+  name: string;
   slug: string;
   category: string;
-  shortDescription: string;
-  fullDescription: string;
-  amenities: string[];
-  basePrice: number;
-  weekendPrice: number;
-  coverImage: string;
-  galleryImages: string[];
-  maxGuests: number;
+  max_total_guests: number;
+  weekday_price: number;
+  weekend_price: number;
+  cover_image: string | null;
+  gallery_images: string[];
   status: CottageStatus;
+  is_bookable: boolean;
 };

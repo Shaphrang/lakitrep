@@ -1,18 +1,18 @@
+import Link from "next/link";
 import { DataTable } from "@/components/admin/shared/DataTable";
 import { StatusBadge } from "@/components/admin/shared/StatusBadge";
-import type { Cottage } from "../types";
 
-export function CottageTable({ cottages }: { cottages: Cottage[] }) {
+export function CottageTable({ cottages }: { cottages: Array<Record<string, unknown>> }) {
   return (
     <DataTable
-      rows={cottages}
+      rows={cottages as Array<{ id: string }>}
       columns={[
-        { key: "name", header: "Name" },
+        { key: "name", header: "Name", render: (row: any) => <Link href={`/admin/cottages/${String(row.id)}`} className="underline">{String(row.name)}</Link> },
         { key: "code", header: "Code" },
+        { key: "property_name", header: "Property" },
         { key: "category", header: "Category" },
-        { key: "basePrice", header: "Base Price", render: (row) => `$${row.basePrice}` },
-        { key: "maxGuests", header: "Guests" },
-        { key: "status", header: "Status", render: (row) => <StatusBadge status={row.status} /> },
+        { key: "weekday_price", header: "Weekday", render: (row: any) => `₹${row.weekday_price}` },
+        { key: "status", header: "Status", render: (row: any) => <StatusBadge status={String(row.status)} /> },
       ]}
     />
   );
