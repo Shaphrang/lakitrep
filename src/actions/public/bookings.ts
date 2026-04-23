@@ -27,6 +27,15 @@ export type BookingFormState = {
   bookingCode?: string;
   estimatedTotal?: number;
 };
+function getOptionalString(formData: FormData, key: string) {
+  const value = formData.get(key);
+  return typeof value === "string" ? value : undefined;
+}
+
+function getRequiredString(formData: FormData, key: string) {
+  const value = formData.get(key);
+  return typeof value === "string" ? value : "";
+}
 
 export async function submitBookingRequest(
   _prevState: BookingFormState,
@@ -38,16 +47,16 @@ export async function submitBookingRequest(
   }
 
   const parsed = formSchema.safeParse({
-    cottageSlug: formData.get("cottageSlug"),
-    fullName: formData.get("fullName"),
-    phone: formData.get("phone"),
-    whatsappNumber: formData.get("whatsappNumber"),
-    email: formData.get("email"),
-    city: formData.get("city"),
-    state: formData.get("state"),
-    country: formData.get("country"),
-    checkInDate: formData.get("checkInDate"),
-    checkOutDate: formData.get("checkOutDate"),
+    cottageSlug: getRequiredString(formData, "cottageSlug"),
+    fullName: getRequiredString(formData, "fullName"),
+    phone: getRequiredString(formData, "phone"),
+    whatsappNumber: getOptionalString(formData, "whatsappNumber"),
+    email: getOptionalString(formData, "email"),
+    city: getOptionalString(formData, "city"),
+    state: getOptionalString(formData, "state"),
+    country: getOptionalString(formData, "country"),
+    checkInDate: getRequiredString(formData, "checkInDate"),
+    checkOutDate: getRequiredString(formData, "checkOutDate"),
     adults: formData.get("adults"),
     children: formData.get("children"),
     infants: formData.get("infants"),

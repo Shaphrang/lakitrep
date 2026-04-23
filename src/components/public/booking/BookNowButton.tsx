@@ -1,3 +1,4 @@
+//src\components\public\booking\BookNowButton.tsx
 "use client";
 
 import { useBookingFlow } from "@/components/public/booking/BookingFlowProvider";
@@ -9,6 +10,7 @@ type BookNowButtonProps = {
   lockCottage?: boolean;
 };
 
+//
 export function BookNowButton({ cottageSlug, label = "Book Now", className, lockCottage = true }: BookNowButtonProps) {
   const { openBooking } = useBookingFlow();
 

@@ -1,3 +1,4 @@
+//src\components\public\booking\BookingFlowProvider.tsx
 "use client";
 
 import { createContext, useContext, useMemo, useState } from "react";
@@ -41,22 +42,39 @@ export function BookingFlowProvider({ children, cottages }: { children: React.Re
     <BookingFlowContext.Provider value={value}>
       {children}
       {isOpen ? (
-        <div className="fixed inset-0 z-50">
-          <button type="button" className="absolute inset-0 bg-black/50" onClick={() => setIsOpen(false)} aria-label="Close booking" />
-          <div className="absolute inset-x-0 bottom-0 max-h-[92vh] overflow-auto rounded-t-3xl border border-[#d8cebf] bg-[#f8f4ec] p-4 shadow-2xl sm:inset-auto sm:left-1/2 sm:top-1/2 sm:w-[min(92vw,760px)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[#6f7f75]">La Ki Trep</p>
-                <h3 className="font-serif text-2xl text-[#214531]">Complete your booking request</h3>
-              </div>
-              <button type="button" onClick={() => setIsOpen(false)} className="rounded-full border border-[#d8cdbd] px-3 py-1 text-sm text-[#2d573b]">
-                Close
-              </button>
-            </div>
-            <BookingRequestForm key={version} cottages={cottages} initialValues={seed} cottageLocked={lockCottage} compact />
-          </div>
+  <div className="fixed inset-0 z-50">
+    <button
+      type="button"
+      className="absolute inset-0 bg-black/55 backdrop-blur-[2px]"
+      onClick={() => setIsOpen(false)}
+      aria-label="Close booking"
+    />
+    <div className="absolute inset-x-0 bottom-0 max-h-[94vh] overflow-auto rounded-t-[28px] border border-[#d8cebf] bg-[#f8f4ec] p-4 shadow-2xl sm:inset-auto sm:left-1/2 sm:top-1/2 sm:w-[min(92vw,760px)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-[30px] sm:p-6">
+      <div className="mb-4 flex items-start justify-between gap-4">
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.2em] text-[#6f7f75]">La Ki Trep</p>
+          <h3 className="font-serif text-2xl text-[#214531] sm:text-[2rem]">
+            Complete your booking request
+          </h3>
         </div>
-      ) : null}
+        <button
+          type="button"
+          onClick={() => setIsOpen(false)}
+          className="rounded-full border border-[#d8cdbd] px-3 py-1.5 text-sm text-[#2d573b]"
+        >
+          Close
+        </button>
+      </div>
+      <BookingRequestForm
+        key={version}
+        cottages={cottages}
+        initialValues={seed}
+        cottageLocked={lockCottage}
+        compact
+      />
+    </div>
+  </div>
+) : null}
     </BookingFlowContext.Provider>
   );
 }
