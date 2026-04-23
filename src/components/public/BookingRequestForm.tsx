@@ -90,6 +90,7 @@ export function BookingRequestForm({ cottages, initialValues, cottageLocked = fa
               </option>
             ))}
           </select>
+          {cottageLocked ? <input type="hidden" name="cottageSlug" value={cottageSlug} /> : null}
         </label>
 
         <label className="space-y-1 text-sm text-[#3f4f45]">

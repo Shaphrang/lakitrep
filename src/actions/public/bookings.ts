@@ -55,7 +55,18 @@ export async function submitBookingRequest(
   });
 
   if (!parsed.success) {
-    return { success: false, message: "Please complete all required fields correctly." };
+    const firstIssue = parsed.error.issues[0];
+    const path = firstIssue?.path?.[0];
+
+    return {
+      success: false,
+      message:
+        path === "cottageSlug"
+          ? "Please choose a cottage."
+          : path === "checkInDate" || path === "checkOutDate"
+            ? "Please select valid check-in and check-out dates."
+            : firstIssue?.message || "Please complete all required fields correctly.",
+    };
   }
 
   const supabase = getSupabasePublicServerClient();
