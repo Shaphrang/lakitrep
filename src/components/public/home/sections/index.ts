@@ -1,0 +1,9 @@
+export { HeroSection } from "./HeroSection";
+export { QuickHighlightsSection } from "./QuickHighlightsSection";
+export { StorySection } from "./StorySection";
+export { CottagesSection } from "./CottagesSection";
+export { GalleryPreviewSection } from "./GalleryPreviewSection";
+export { AttractionsSection } from "./AttractionsSection";
+export { EventsSection } from "./EventsSection";
+export { PoliciesFaqSection } from "./PoliciesFaqSection";
+export { FinalCtaSection } from "./FinalCtaSection";
