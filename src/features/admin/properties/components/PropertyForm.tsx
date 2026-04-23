@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createPropertiesAction, deletePropertiesAction, updatePropertiesAction } from "@/actions/admin/properties";
 import { ImageUploadField } from "@/components/admin/media/ImageUploadField";
 import { MultiImageUploadField } from "@/components/admin/media/MultiImageUploadField";
@@ -60,7 +61,17 @@ export function PropertyForm({ property }: { property?: PropertyRecord }) {
           <ImageUploadField label="Cover Image" folder="properties/cover" name="cover_image" defaultValue={property?.cover_image} />
           <MultiImageUploadField label="Gallery Images" folder="properties/gallery" name="gallery_images" defaultValues={property?.gallery_images ?? []} />
           <label className="flex items-center gap-2 text-sm text-[#33533f]"><input type="checkbox" name="is_active" defaultChecked={property?.is_active ?? true} /> Active</label>
-          <FormActions submitLabel={property ? "Update Property" : "Create Property"} />
+          <div className="flex flex-wrap gap-2">
+            <FormActions submitLabel={property ? "Update Property" : "Create Property"} />
+            {property ? (
+              <Link
+                href={`/admin/properties/${property.id}/gallery`}
+                className="inline-flex items-center rounded-xl border border-[#2f5a3d] px-4 py-2 text-sm font-medium text-[#2f5a3d]"
+              >
+                Open Gallery Manager
+              </Link>
+            ) : null}
+          </div>
         </section>
       </form>
 

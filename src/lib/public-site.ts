@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { getPublicGalleryByPropertyId } from "@/features/gallery/gallery-service";
 import { getSupabasePublicServerClient } from "@/lib/supabase/public-server";
 
 type Property = {
@@ -167,3 +168,6 @@ export const getSeoByPageKey = cache(
 export function getFirstImage(coverImage: string | null, gallery: string[] = []) {
   return coverImage || gallery[0] || "/next.svg";
 }
+
+
+export const getPropertyGalleryByCategory = cache(async (propertyId: string) => getPublicGalleryByPropertyId(propertyId));
