@@ -2,6 +2,66 @@ import { cache } from "react";
 import { getPublicGalleryByPropertyId } from "@/features/gallery/gallery-service";
 import { getSupabasePublicServerClient } from "@/lib/supabase/public-server";
 
+const MEDIA_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_MEDIA_BUCKET ?? "lakitrep-media";
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+
+function getPublicObjectPrefix() {
+  if (!SUPABASE_URL) return "";
+  return `${SUPABASE_URL.replace(/\/$/, "")}/storage/v1/object/public/${MEDIA_BUCKET}/`;
+}
+
+function extractStoragePath(input: string): string | null {
+  const value = input.trim();
+  if (!value) return null;
+
+  if (!value.startsWith("http")) {
+    return value.replace(/^\/+/, "");
+  }
+
+  try {
+    const url = new URL(value);
+    const publicMatch = url.pathname.match(new RegExp(`/storage/v1/object/public/${MEDIA_BUCKET}/(.+)$`));
+    if (publicMatch?.[1]) {
+      return decodeURIComponent(publicMatch[1]);
+    }
+
+    const signMatch = url.pathname.match(new RegExp(`/storage/v1/object/sign/${MEDIA_BUCKET}/(.+)$`));
+    if (signMatch?.[1]) {
+      return decodeURIComponent(signMatch[1]);
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+export function resolveMediaUrl(input: string | null | undefined): string | null {
+  if (!input) return null;
+
+  const value = input.trim();
+  if (!value) return null;
+
+  const storagePath = extractStoragePath(value);
+  const publicObjectPrefix = getPublicObjectPrefix();
+
+  if (storagePath && publicObjectPrefix) {
+    return `${publicObjectPrefix}${encodeURI(storagePath)}`;
+  }
+
+  if (!value.startsWith("http")) {
+    return null;
+  }
+
+  try {
+    const url = new URL(value);
+    url.search = "";
+    return url.toString();
+  } catch {
+    return value;
+  }
+}
+
 type Property = {
   id: string;
   name: string;
@@ -166,7 +226,7 @@ export const getSeoByPageKey = cache(
 );
 
 export function getFirstImage(coverImage: string | null, gallery: string[] = []) {
-  return coverImage || gallery[0] || "/next.svg";
+  return resolveMediaUrl(coverImage) || resolveMediaUrl(gallery[0]) || "/window.svg";
 }
 
 

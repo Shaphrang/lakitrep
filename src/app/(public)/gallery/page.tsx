@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import {
   getPrimaryProperty,
   getPropertyGalleryByCategory,
+  resolveMediaUrl,
   getSeoByPageKey,
 } from "@/lib/public-site";
 
@@ -29,9 +30,11 @@ type GallerySection = {
 
 function mapGalleryImage(item?: RawGalleryItem): GalleryImage | null {
   if (!item) return null;
+  const url = resolveMediaUrl(item.public_url);
+  if (!url) return null;
 
   return {
-    url: item.public_url,
+    url,
     alt: item.alt_text || item.caption || "La Ki Trep gallery image",
     caption: item.caption,
   };

@@ -8,8 +8,8 @@ import {
   getPrimaryProperty,
   getPropertyGalleryByCategory,
   getPublicCottages,
+  resolveMediaUrl,
   getSeoByPageKey,
-  type PublicCottage,
 } from "@/lib/public-site";
 import { BookNowButton } from "@/components/public/booking/BookNowButton";
 import { HeroBookingWidget } from "@/components/public/booking/HeroBookingWidget";
@@ -114,8 +114,10 @@ const FAQ_ITEMS = [
 
 function mapGalleryImage(item?: { public_url: string; alt_text: string | null; caption: string | null }): GalleryImage | null {
   if (!item) return null;
+  const url = resolveMediaUrl(item.public_url);
+  if (!url) return null;
   return {
-    url: item.public_url,
+    url,
     alt: item.alt_text || item.caption || "La Ki Trep gallery image",
     caption: item.caption,
   };
@@ -126,16 +128,7 @@ function firstGalleryImage(images: Array<{ public_url: string; alt_text: string 
 }
 
 function getGalleryUrl(items?: Array<{ public_url: string; alt_text: string | null; caption: string | null }>): string | null {
-  return items?.[0]?.public_url ?? null;
-}
-
-function getCottageByKeywords(cottages: PublicCottage[], keywords: string[]): PublicCottage | null {
-  return (
-    cottages.find((cottage) => {
-      const source = `${cottage.name} ${cottage.category} ${cottage.slug}`.toLowerCase();
-      return keywords.some((keyword) => source.includes(keyword));
-    }) ?? null
-  );
+  return resolveMediaUrl(items?.[0]?.public_url);
 }
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -250,25 +243,17 @@ export default async function HomePage() {
     getPropertyGalleryByCategory(property.id),
   ]);
 
-  const premiumCottage = getCottageByKeywords(cottages, ["premium"]);
-  const standardCottage = getCottageByKeywords(cottages, ["standard"]);
-  const familyCottage = getCottageByKeywords(cottages, ["family"]);
-
-  const preferredStayCards = [premiumCottage, standardCottage, familyCottage].filter(Boolean) as PublicCottage[];
-  const stayCards =
-    preferredStayCards.length >= 3
-      ? preferredStayCards.slice(0, 3)
-      : [...preferredStayCards, ...cottages.filter((item) => !preferredStayCards.some((picked) => picked.id === item.id))].slice(0, 3);
-
   const aboutImagePrimary = firstGalleryImage(groupedGallery.exteriorView) || firstGalleryImage(groupedGallery.outdoorGarden);
   const aboutImageSecondary = firstGalleryImage(groupedGallery.interiorView) || firstGalleryImage(groupedGallery.premiumCottage);
   const aboutImageAccent = firstGalleryImage(groupedGallery.swimmingPool) || firstGalleryImage(groupedGallery.scenicViews);
 
-  const diningImage = firstGalleryImage(groupedGallery.restaurantDining) || firstGalleryImage(groupedGallery.interiorView);
   const eventImage =
     firstGalleryImage(groupedGallery.activitiesExperiences) ||
     firstGalleryImage(groupedGallery.outdoorGarden) ||
     firstGalleryImage(groupedGallery.scenicViews);
+  const whatsappNumber = (property.whatsapp_number || property.phone_number || "6009044450").replace(/\D/g, "");
+  const whatsappMsisdn = whatsappNumber.startsWith("91") ? whatsappNumber : `91${whatsappNumber}`;
+  const whatsappEventLink = `https://wa.me/${whatsappMsisdn}`;
 
 const galleryPreviewCards = [
   {
@@ -348,7 +333,7 @@ const totalGalleryImages = [
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,18,12,0.30)_0%,rgba(10,18,12,0.05)_20%,rgba(10,18,12,0.35)_100%)]" />
 
         <div className="relative mx-auto flex min-h-[620px] max-w-7xl items-end px-4 pb-10 pt-24 sm:min-h-[680px] sm:px-6 sm:pb-12 sm:pt-28 lg:min-h-[720px] lg:pb-14 lg:pt-32">
-          <div className="grid w-full items-end gap-8 lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_400px]">
+          <div className="grid w-full items-end gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8 xl:grid-cols-[minmax(0,1fr)_400px]">
             <div className="max-w-3xl text-[#f8f4ec]">
               <p className="text-[0.72rem] font-medium uppercase tracking-[0.28em] text-[#e4d6b0] sm:text-xs">La Ki Trep Resort</p>
 
@@ -385,15 +370,11 @@ const totalGalleryImages = [
               </div>
             </div>
 
-            <div className="hidden lg:block">
+            <div className="w-full max-w-[420px] justify-self-start lg:justify-self-end">
               <HeroBookingWidget cottages={cottages} />
             </div>
           </div>
         </div>
-      </section>
-
-      <section className="-mt-6 relative z-20 mx-auto max-w-7xl px-4 sm:px-6 lg:hidden">
-        <HeroBookingWidget cottages={cottages} />
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
@@ -524,8 +505,8 @@ const totalGalleryImages = [
           </Link>
         </div>
 
-<div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-    {stayCards.map((cottage) => {
+<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    {cottages.slice(0, 5).map((cottage, index) => {
       const category = String(cottage.category || "").toLowerCase();
 
       const fallbackByCategory = category.includes("premium")
@@ -534,65 +515,47 @@ const totalGalleryImages = [
           ? getGalleryUrl(groupedGallery.standardCottage)
           : getGalleryUrl(groupedGallery.interiorView);
 
-      const heroImage = getFirstImage(
+      const heroImage = resolveMediaUrl(getFirstImage(
         cottage.cover_image || fallbackByCategory || null,
         cottage.gallery_images
-      );
-
-      const supportOne =
-        cottage.gallery_images?.[1] ||
-        getGalleryUrl(groupedGallery.interiorView) ||
-        heroImage;
-
-      const supportTwo =
-        cottage.gallery_images?.[2] ||
-        getGalleryUrl(groupedGallery.outdoorGarden) ||
-        heroImage;
+      ));
 
       return (
         <article
           key={cottage.id}
-          className="overflow-hidden rounded-[28px] border border-[#dfd6c9] bg-[#fdfbf7] shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+          className="overflow-hidden rounded-[24px] border border-[#dfd6c9] bg-[#fdfbf7] shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
         >
-          <div className="relative">
-            <img
-              src={heroImage}
-              alt={`${cottage.name} cover`}
-              className="h-52 w-full object-cover"
-              loading="lazy"
-            />
+          <div className="relative aspect-[4/3] bg-[#efe6d8]">
+            {heroImage ? (
+              <img
+                src={heroImage}
+                alt={`${cottage.name} cover`}
+                className="h-full w-full object-cover"
+                loading={index === 0 ? "eager" : "lazy"}
+                fetchPriority={index === 0 ? "high" : "auto"}
+                decoding="async"
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm text-[#647369]">Image unavailable</div>
+            )}
             <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(16,28,20,0.02)_0%,rgba(16,28,20,0.12)_45%,rgba(16,28,20,0.35)_100%)]" />
           </div>
 
-          <div className="grid grid-cols-2 gap-2 p-3">
-            <img
-              src={supportOne}
-              alt={`${cottage.name} interior`}
-              className="h-24 w-full rounded-2xl object-cover"
-              loading="lazy"
-            />
-            <img
-              src={supportTwo}
-              alt={`${cottage.name} sit-out and surroundings`}
-              className="h-24 w-full rounded-2xl object-cover"
-              loading="lazy"
-            />
-          </div>
-
-          <div className="space-y-2 p-4">
-            <h3 className="font-serif text-2xl text-[#224331]">
+          <div className="space-y-2.5 p-4">
+            <h3 className="font-serif text-[1.7rem] leading-tight text-[#224331]">
               {cottage.name}
             </h3>
 
-            <p className="line-clamp-3 text-sm text-[#5c6a61]">
+            <p className="line-clamp-2 text-sm text-[#5c6a61]">
               {cottage.short_description ||
                 cottage.full_description ||
                 "Comfortable stay with curated amenities."}
             </p>
 
-            <p className="text-sm text-[#355740]">
-              Up to {cottage.max_total_guests} guests
-            </p>
+            <div className="flex flex-wrap items-center gap-2 text-xs text-[#47624f]">
+              <span className="rounded-full bg-[#f2ecdf] px-2.5 py-1">Up to {cottage.max_total_guests} guests</span>
+              <span className="rounded-full bg-[#f2ecdf] px-2.5 py-1">{cottage.category}</span>
+            </div>
 
             <div className="space-y-2 border-t border-[#e6ddcf] pt-3">
               <div className="flex items-center justify-between gap-3">
@@ -611,7 +574,7 @@ const totalGalleryImages = [
               <div className="rounded-xl bg-[#f4efe6] p-2">
                 <BookNowButton
                   cottageSlug={cottage.slug}
-                  className="w-full rounded-lg bg-[#2f5a3d] px-3 py-2 text-sm font-semibold text-white"
+                  className="w-full rounded-lg bg-[#2f5a3d] px-3 py-2.5 text-sm font-semibold text-white"
                   label="Book now"
                 />
               </div>
@@ -687,11 +650,35 @@ const totalGalleryImages = [
       <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 sm:pb-12 lg:pb-16">
         <h2 className="font-serif text-3xl text-[#214531] sm:text-4xl">Around La Ki Trep</h2>
         <p className="mt-2 text-sm text-[#5b675f] sm:text-base">Slow days, scenic drives, and local experiences near the resort.</p>
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {(attractions.length > 0 ? attractions.slice(0, 6).map((item) => ({ name: item.name, note: item.description || "A nearby highlight to pair with your stay itinerary." })) : FALLBACK_EXPERIENCES).map((experience) => (
-            <article key={experience.name} className="rounded-2xl border border-[#dfd6c9] bg-[#fdfbf7] p-4 shadow-sm">
-              <h3 className="font-serif text-xl text-[#244532]">{experience.name}</h3>
-              <p className="mt-2 text-sm text-[#55645a]">{experience.note}</p>
+        <div className="mt-5 grid gap-3 grid-cols-2 lg:grid-cols-3">
+          {(attractions.length > 0
+            ? attractions.slice(0, 6).map((item) => ({
+                name: item.name,
+                note: item.description || "A nearby highlight to pair with your stay itinerary.",
+                distance: item.distance_text || "Near La Ki Trep",
+                image: resolveMediaUrl(getFirstImage(item.cover_image, item.gallery_images)),
+              }))
+            : FALLBACK_EXPERIENCES.map((item) => ({ ...item, distance: "Nearby", image: null }))
+          ).map((experience, index) => (
+            <article key={experience.name} className="overflow-hidden rounded-2xl border border-[#dfd6c9] bg-[#fdfbf7] shadow-sm">
+              <div className="relative aspect-[4/3] bg-[#efe6d8]">
+                {experience.image ? (
+                  <img
+                    src={experience.image}
+                    alt={experience.name}
+                    className="h-full w-full object-cover"
+                    loading={index === 0 ? "eager" : "lazy"}
+                    decoding="async"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-sm text-[#647369]">Attraction image unavailable</div>
+                )}
+              </div>
+              <div className="p-4">
+                <p className="text-[11px] uppercase tracking-[0.15em] text-[#6a7a70]">{experience.distance}</p>
+                <h3 className="mt-1 font-serif text-xl text-[#244532]">{experience.name}</h3>
+                <p className="mt-2 line-clamp-3 text-sm text-[#55645a]">{experience.note}</p>
+              </div>
             </article>
           ))}
         </div>
@@ -713,24 +700,15 @@ const totalGalleryImages = [
               <li>• Restaurant-only groups: up to 6 outside diners, subject to availability.</li>
               <li>• Outside food/catering and outside alcohol are not permitted.</li>
             </ul>
-            <div className="mt-4 rounded-xl border border-[#d8ccb9] bg-white/75 p-3 text-sm text-[#2f4f3a]">Event enquiries on WhatsApp: <span className="font-semibold">6009044450</span></div>
+            <a
+              href={whatsappEventLink}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl bg-[#2c7a59] px-5 py-3 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(26,89,67,0.22)] transition hover:bg-[#24684c]"
+            >
+              Enquire for Events on WhatsApp
+            </a>
           </article>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 sm:pb-12 lg:pb-16">
-        <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
-          <article className="rounded-2xl border border-[#dfd6c9] bg-[#fdfbf7] p-5">
-            <h2 className="font-serif text-3xl text-[#214531]">Dining at La Ki Trep</h2>
-            <p className="mt-2 text-sm text-[#546359]">Warm in-house meals and pre-planned dining for guests and approved reservations.</p>
-            <div className="mt-4 grid gap-2 text-sm text-[#3f5645] sm:grid-cols-3">
-              <p className="rounded-xl bg-[#f2ecdf] px-3 py-2">Breakfast: 8:00 AM – 10:30 AM</p>
-              <p className="rounded-xl bg-[#f2ecdf] px-3 py-2">Lunch: 12:30 PM – 3:00 PM</p>
-              <p className="rounded-xl bg-[#f2ecdf] px-3 py-2">Dinner: 7:00 PM – 10:00 PM</p>
-            </div>
-            <p className="mt-4 text-sm text-[#4c5d52]">Restaurant reservations are required. Non-staying guests may request pool access with dining reservation, subject to availability and management approval.</p>
-          </article>
-          {diningImage ? <img src={diningImage.url} alt={diningImage.alt} className="h-60 w-full rounded-2xl object-cover sm:h-full" loading="lazy" /> : null}
         </div>
       </section>
 

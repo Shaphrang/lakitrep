@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BookNowButton } from "@/components/public/booking/BookNowButton";
 import { notFound } from "next/navigation";
-import { getCottageBySlug, getFirstImage, getPrimaryProperty, getPublicCottages, getSeoByPageKey } from "@/lib/public-site";
+import { getCottageBySlug, getFirstImage, getPrimaryProperty, getPublicCottages, getSeoByPageKey, resolveMediaUrl } from "@/lib/public-site";
 
 export const revalidate = 300;
 
@@ -31,7 +31,10 @@ export default async function CottageDetailPage({ params }: Props) {
   const cottage = await getCottageBySlug(property.id, slug);
   if (!cottage) notFound();
 
-  const gallery = [getFirstImage(cottage.cover_image, cottage.gallery_images), ...cottage.gallery_images].slice(0, 6);
+  const gallery = [getFirstImage(cottage.cover_image, cottage.gallery_images), ...cottage.gallery_images]
+    .map((item) => resolveMediaUrl(item))
+    .filter((item): item is string => Boolean(item))
+    .slice(0, 6);
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
@@ -39,7 +42,11 @@ export default async function CottageDetailPage({ params }: Props) {
 
       <div className="mt-4 grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
         <section className="space-y-3">
-          <img src={gallery[0]} alt={cottage.name} className="h-72 w-full rounded-2xl border border-[#dfd6c9] object-cover sm:h-96" />
+          {gallery[0] ? (
+            <img src={gallery[0]} alt={cottage.name} className="h-72 w-full rounded-2xl border border-[#dfd6c9] object-cover sm:h-96" />
+          ) : (
+            <div className="flex h-72 w-full items-center justify-center rounded-2xl border border-[#dfd6c9] bg-[#efe7d9] text-sm text-[#5d6b63] sm:h-96">Image unavailable</div>
+          )}
           <div className="grid grid-cols-3 gap-2 sm:gap-3">
             {gallery.slice(1, 6).map((image, index) => (
               <img

@@ -16,6 +16,8 @@ export default function PublicHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
+  const isHome = pathname === "/";
+  const useTransparent = isHome && !scrolled && !menuOpen;
 
   useEffect(() => {
     const onScroll = () => {
@@ -27,34 +29,32 @@ export default function PublicHeader() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  useEffect(() => {
-    setMenuOpen(false);
-  }, [pathname]);
-
   return (
     <header className="fixed inset-x-0 top-0 z-50">
       <div
         className={[
           "transition-all duration-300",
-          scrolled
-            ? "w-full bg-[#132116]/92 shadow-[0_12px_40px_rgba(0,0,0,0.24)] backdrop-blur-xl"
-            : "bg-transparent",
+          useTransparent
+            ? "bg-transparent"
+            : isHome
+              ? "w-full bg-[#132116]/92 shadow-[0_12px_40px_rgba(0,0,0,0.24)] backdrop-blur-xl"
+              : "w-full border-b border-[#e2d8c8] bg-[#f8f3ea]/95 shadow-[0_8px_24px_rgba(29,45,33,0.08)] backdrop-blur-xl",
         ].join(" ")}
       >
         <div
           className={[
             "mx-auto flex items-center justify-between transition-all duration-300",
-            scrolled
+            !useTransparent
               ? "min-h-[78px] max-w-none px-4 sm:px-6 lg:px-10"
               : "min-h-[84px] max-w-7xl px-4 pt-4 sm:px-6 sm:pt-5 lg:px-8",
           ].join(" ")}
         >
           <Link href="/" className="min-w-0">
             <div className="flex flex-col">
-              <span className="font-serif text-[1.3rem] leading-none tracking-[0.01em] text-[#f7f1e7] sm:text-[1.55rem]">
+              <span className={`font-serif text-[1.3rem] leading-none tracking-[0.01em] sm:text-[1.55rem] ${isHome ? "text-[#f7f1e7]" : "text-[#234432]"}`}>
                 La Ki Trep
               </span>
-              <span className="mt-1 text-[0.62rem] font-medium uppercase tracking-[0.3em] text-[#dbcfae] sm:text-[0.68rem]">
+              <span className={`mt-1 text-[0.62rem] font-medium uppercase tracking-[0.3em] sm:text-[0.68rem] ${isHome ? "text-[#dbcfae]" : "text-[#6f816f]"}`}>
                 Resort
               </span>
             </div>
@@ -67,11 +67,16 @@ export default function PublicHeader() {
                 <Link
                   key={item.href}
                   href={item.href}
+                  onClick={() => setMenuOpen(false)}
                   className={[
                     "rounded-full px-4 py-2 text-sm font-medium transition",
                     active
-                      ? "bg-white/12 text-white"
-                      : "text-[#f6efe3] hover:bg-white/10 hover:text-white",
+                      ? isHome
+                        ? "bg-white/12 text-white"
+                        : "bg-[#214531] text-white"
+                      : isHome
+                        ? "text-[#f6efe3] hover:bg-white/10 hover:text-white"
+                        : "text-[#2f4f3b] hover:bg-[#e9e2d7]",
                   ].join(" ")}
                 >
                   {item.label}
@@ -85,7 +90,11 @@ export default function PublicHeader() {
             aria-label="Toggle menu"
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((prev) => !prev)}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-[#fffaf0] backdrop-blur-md transition hover:bg-white/15 lg:hidden"
+            className={`inline-flex h-11 w-11 items-center justify-center rounded-full backdrop-blur-md transition lg:hidden ${
+              isHome
+                ? "border border-white/15 bg-white/10 text-[#fffaf0] hover:bg-white/15"
+                : "border border-[#d8cdbb] bg-white text-[#214531] hover:bg-[#f7f2e8]"
+            }`}
           >
             {menuOpen ? (
               <svg
@@ -127,6 +136,7 @@ export default function PublicHeader() {
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={() => setMenuOpen(false)}
                     className={[
                       "rounded-xl px-4 py-3 text-sm font-medium transition",
                       active
