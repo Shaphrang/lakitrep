@@ -23,9 +23,9 @@ export default async function BookPage() {
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
-      <h1 className="text-3xl font-semibold text-white sm:text-4xl">Request a booking</h1>
-      <p className="mt-2 text-sm text-stone-200 sm:text-base">
-        {property.booking_note || "Submit your preferred dates and cottage. Our team confirms availability shortly."}
+      <h1 className="font-serif text-4xl text-[#214531] sm:text-5xl">Request a booking</h1>
+      <p className="mt-2 text-sm text-[#59665d] sm:text-base">
+        {property.booking_note || "Share your preferred dates and cottage. Our team confirms availability shortly."}
       </p>
 
       <div className="mt-6">

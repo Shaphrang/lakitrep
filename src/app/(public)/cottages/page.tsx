@@ -23,21 +23,27 @@ export default async function CottagesPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      <h1 className="text-3xl font-semibold text-white sm:text-4xl">Our cottages</h1>
-      <p className="mt-2 max-w-2xl text-sm text-stone-200 sm:text-base">Choose from our available cottages. Every stay includes quiet surroundings and personalized support.</p>
+      <h1 className="font-serif text-4xl text-[#214531] sm:text-5xl">Our cottages</h1>
+      <p className="mt-2 max-w-2xl text-sm text-[#53645a] sm:text-base">
+        Quiet, private cottages designed for restful stays with thoughtful comfort.
+      </p>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {cottages.map((cottage) => (
-          <article key={cottage.id} className="overflow-hidden rounded-2xl bg-white text-emerald-950">
-            <img src={getFirstImage(cottage.cover_image, cottage.gallery_images)} alt={cottage.name} className="h-44 w-full object-cover" />
+          <article key={cottage.id} className="overflow-hidden rounded-2xl border border-[#dfd6c9] bg-[#fdfbf7] shadow-sm">
+            <img src={getFirstImage(cottage.cover_image, cottage.gallery_images)} alt={cottage.name} className="h-48 w-full object-cover" />
             <div className="space-y-2 p-4">
-              <h2 className="text-lg font-semibold">{cottage.name}</h2>
-              <p className="text-xs uppercase tracking-wide text-emerald-700">{cottage.category}</p>
-              <p className="line-clamp-3 text-sm text-stone-600">{cottage.short_description || cottage.full_description || "Comfortable and practical stay option."}</p>
-              <p className="text-sm font-medium">Up to {cottage.max_total_guests} guests</p>
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-emerald-800">₹{Number(cottage.weekday_price).toLocaleString("en-IN")}/night</p>
-                <Link href={`/cottages/${cottage.slug}`} className="text-sm font-semibold text-emerald-900">Details →</Link>
+              <h2 className="font-serif text-2xl text-[#214531]">{cottage.name}</h2>
+              <p className="text-xs uppercase tracking-wide text-[#567360]">{cottage.category}</p>
+              <p className="line-clamp-3 text-sm text-[#58665d]">
+                {cottage.short_description || cottage.full_description || "Comfortable and practical stay option."}
+              </p>
+              <p className="text-sm text-[#31533d]">Up to {cottage.max_total_guests} guests</p>
+              <div className="flex items-center justify-between border-t border-[#e5dccf] pt-2">
+                <p className="text-sm font-semibold text-[#244734]">₹{Number(cottage.weekday_price).toLocaleString("en-IN")}/night</p>
+                <Link href={`/cottages/${cottage.slug}`} className="text-sm font-semibold text-[#2c5c3c]">
+                  Details →
+                </Link>
               </div>
             </div>
           </article>
