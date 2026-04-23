@@ -6,8 +6,11 @@ import {
   getFirstImage,
   getPolicies,
   getPrimaryProperty,
+  getPublicCottages,
   getSeoByPageKey,
 } from "@/lib/public-site";
+import { BookNowButton } from "@/components/public/booking/BookNowButton";
+import { HeroBookingWidget } from "@/components/public/booking/HeroBookingWidget";
 
 export const revalidate = 300;
 
@@ -34,10 +37,11 @@ export default async function HomePage() {
     return <main className="mx-auto max-w-6xl px-4 py-16 sm:px-6">Property details are not available yet.</main>;
   }
 
-  const [featuredCottages, attractions, policies] = await Promise.all([
+  const [featuredCottages, attractions, policies, cottages] = await Promise.all([
     getFeaturedCottages(property.id, 4),
     getAttractions(property.id),
     getPolicies(property.id),
+    getPublicCottages(property.id),
   ]);
 
   return (
@@ -50,24 +54,31 @@ export default async function HomePage() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#1d3327]/90 via-[#1d3327]/45 to-[#1d3327]/10" />
         <div className="absolute inset-x-0 bottom-0 mx-auto max-w-6xl px-4 pb-8 sm:px-6 sm:pb-10">
-          <div className="max-w-2xl space-y-4 text-[#f8f4ec]">
-            <p className="text-xs uppercase tracking-[0.28em] text-[#f0debc]">La Ki Trep Resort</p>
-            <h1 className="font-serif text-4xl leading-tight sm:text-5xl md:text-6xl">
-              {property.tagline || "A quiet boutique escape in Meghalaya"}
-            </h1>
-            <p className="max-w-xl text-sm text-[#ece6d8] sm:text-base">
-              {property.short_intro || "Private cottages, peaceful views, and intentionally limited stays in the hills of Umran."}
-            </p>
-            <div className="flex flex-wrap gap-3 pt-1">
-              <Link href="/book" className="rounded-full bg-[#2c5a3b] px-5 py-2.5 text-sm font-semibold text-white">
-                Book via WhatsApp
-              </Link>
-              <Link href="/cottages" className="rounded-full border border-[#ece6d8]/70 px-5 py-2.5 text-sm font-semibold text-white">
-                Explore cottages
-              </Link>
+          <div className="grid items-end gap-5 lg:grid-cols-[1fr_380px]">
+            <div className="max-w-2xl space-y-4 text-[#f8f4ec]">
+              <p className="text-xs uppercase tracking-[0.28em] text-[#f0debc]">La Ki Trep Resort</p>
+              <h1 className="font-serif text-4xl leading-tight sm:text-5xl md:text-6xl">
+                {property.tagline || "A quiet boutique escape in Meghalaya"}
+              </h1>
+              <p className="max-w-xl text-sm text-[#ece6d8] sm:text-base">
+                {property.short_intro || "Private cottages, peaceful views, and intentionally limited stays in the hills of Umran."}
+              </p>
+              <div className="flex flex-wrap gap-3 pt-1">
+                <BookNowButton className="rounded-full bg-[#2c5a3b] px-5 py-2.5 text-sm font-semibold text-white" label="Book now" lockCottage={false} />
+                <Link href="/cottages" className="rounded-full border border-[#ece6d8]/70 px-5 py-2.5 text-sm font-semibold text-white">
+                  Explore cottages
+                </Link>
+              </div>
+            </div>
+            <div className="hidden lg:block">
+              <HeroBookingWidget cottages={cottages} />
             </div>
           </div>
         </div>
+      </section>
+
+      <section className="mx-auto -mt-3 max-w-6xl px-4 sm:px-6 lg:hidden">
+        <HeroBookingWidget cottages={cottages} />
       </section>
 
       <section className="mx-auto grid max-w-6xl gap-5 px-4 py-8 sm:px-6 sm:py-12 lg:grid-cols-[1.1fr_0.9fr]">
@@ -109,11 +120,16 @@ export default async function HomePage() {
                 <h3 className="font-serif text-2xl text-[#224331]">{cottage.name}</h3>
                 <p className="text-sm text-[#5c6a61] line-clamp-3">{cottage.short_description || cottage.full_description || "Comfortable stay with curated amenities."}</p>
                 <p className="text-sm text-[#355740]">Up to {cottage.max_total_guests} guests</p>
-                <div className="flex items-center justify-between border-t border-[#e6ddcf] pt-2">
-                  <p className="text-sm font-semibold text-[#234a34]">₹{Number(cottage.weekday_price).toLocaleString("en-IN")}</p>
-                  <Link href={`/cottages/${cottage.slug}`} className="text-sm font-semibold text-[#2e5f3e]">
-                    Details →
-                  </Link>
+                <div className="space-y-2 border-t border-[#e6ddcf] pt-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-[#234a34]">From ₹{Number(cottage.weekday_price).toLocaleString("en-IN")}/night</p>
+                    <Link href={`/cottages/${cottage.slug}`} className="text-sm font-semibold text-[#2e5f3e]">
+                      Details →
+                    </Link>
+                  </div>
+                  <div className="rounded-xl bg-[#f4efe6] p-2">
+                    <BookNowButton cottageSlug={cottage.slug} className="w-full rounded-lg bg-[#2f5a3d] px-3 py-2 text-sm font-semibold text-white" />
+                  </div>
                 </div>
               </div>
             </article>
@@ -158,9 +174,7 @@ export default async function HomePage() {
             <Link href="/policies" className="rounded-full border border-[#2f5a3d] px-4 py-2 text-sm font-semibold text-[#2f5a3d]">
               Read policies
             </Link>
-            <Link href="/book" className="rounded-full bg-[#2f5a3d] px-4 py-2 text-sm font-semibold text-white">
-              Send booking request
-            </Link>
+            <BookNowButton className="rounded-full bg-[#2f5a3d] px-4 py-2 text-sm font-semibold text-white" label="Send booking request" lockCottage={false} />
           </div>
         </article>
       </section>

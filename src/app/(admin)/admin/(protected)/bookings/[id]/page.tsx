@@ -23,7 +23,10 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
           <div><dt className="text-slate-500">Check-in</dt><dd className="font-medium">{booking.check_in_date}</dd></div>
           <div><dt className="text-slate-500">Check-out</dt><dd className="font-medium">{booking.check_out_date}</dd></div>
           <div><dt className="text-slate-500">Guests</dt><dd className="font-medium">A:{booking.adults} C:{booking.children} I:{booking.infants}</dd></div>
+          <div><dt className="text-slate-500">Nights</dt><dd className="font-medium">{booking.nights ?? "-"}</dd></div>
+          <div><dt className="text-slate-500">Estimated amount</dt><dd className="font-medium">₹{Number(booking.total_amount ?? 0).toLocaleString("en-IN")}</dd></div>
           <div><dt className="text-slate-500">Status</dt><dd className="font-medium"><StatusBadge status={booking.status} /></dd></div>
+          <div><dt className="text-slate-500">Special requests</dt><dd className="font-medium">{booking.special_requests || "-"}</dd></div>
         </dl>
       </div>
       <form action={updateBookingsAction} className="flex items-end gap-3 rounded-lg border border-slate-200 bg-white p-4">

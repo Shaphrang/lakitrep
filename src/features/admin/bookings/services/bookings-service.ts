@@ -4,7 +4,7 @@ export async function getAllBookings() {
   const supabase = await getSupabaseServerClient();
   const { data, error } = await supabase
     .from("bookings")
-    .select("id,booking_code,status,check_in_date,check_out_date,adults,children,infants,properties(name),cottages(name),booking_guests(full_name,phone)")
+    .select("id,booking_code,status,check_in_date,check_out_date,adults,children,infants,nights,total_amount,properties(name),cottages(name),booking_guests(full_name,phone)")
     .order("created_at", { ascending: false });
   if (error) throw new Error(`Failed to fetch bookings: ${error.message}`);
 
@@ -17,6 +17,8 @@ export async function getAllBookings() {
     adults: row.adults,
     children: row.children,
     infants: row.infants,
+    nights: row.nights ?? 0,
+    total_amount: Number(row.total_amount ?? 0),
     property_name: (row.properties as { name?: string } | null)?.name ?? "-",
     cottage_name: (row.cottages as { name?: string } | null)?.name ?? "-",
     guest_name: (row.booking_guests as { full_name?: string } | null)?.full_name ?? "-",

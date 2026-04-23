@@ -295,6 +295,11 @@ create table if not exists public.bookings (
   special_requests text,
   admin_notes text,
 
+  nights integer not null default 1 check (nights >= 1),
+  base_amount numeric(10,2) not null default 0 check (base_amount >= 0),
+  child_amount numeric(10,2) not null default 0 check (child_amount >= 0),
+  total_amount numeric(10,2) not null default 0 check (total_amount >= 0),
+
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
 
@@ -338,6 +343,14 @@ declare
   v_guest_id uuid;
   v_booking_id uuid;
   v_total_guests integer;
+  v_nights integer;
+  v_weekday_nights integer := 0;
+  v_weekend_nights integer := 0;
+  v_base_amount numeric(10,2) := 0;
+  v_child_amount numeric(10,2) := 0;
+  v_total_amount numeric(10,2) := 0;
+  v_date date;
+  i integer;
 begin
   if p_check_in_date is null or p_check_out_date is null then
     raise exception 'Check-in and check-out are required';
@@ -397,6 +410,32 @@ begin
     raise exception 'Total guest count exceeds cottage limit';
   end if;
 
+  if exists (
+    select 1
+    from public.bookings b
+    where b.cottage_id = v_cottage.id
+      and b.status = 'confirmed'
+      and b.check_in_date < p_check_out_date
+      and b.check_out_date > p_check_in_date
+  ) then
+    raise exception 'Selected dates are unavailable for confirmed bookings';
+  end if;
+
+  v_nights := (p_check_out_date - p_check_in_date);
+
+  for i in 0..(v_nights - 1) loop
+    v_date := p_check_in_date + i;
+    if extract(dow from v_date) in (0, 6) then
+      v_weekend_nights := v_weekend_nights + 1;
+    else
+      v_weekday_nights := v_weekday_nights + 1;
+    end if;
+  end loop;
+
+  v_base_amount := (v_weekday_nights * v_cottage.weekday_price) + (v_weekend_nights * v_cottage.weekend_price);
+  v_child_amount := coalesce(p_children, 0) * v_cottage.child_price * v_nights;
+  v_total_amount := v_base_amount + v_child_amount;
+
   insert into public.booking_guests (
     full_name,
     phone,
@@ -426,7 +465,11 @@ begin
     adults,
     children,
     infants,
-    special_requests
+    special_requests,
+    nights,
+    base_amount,
+    child_amount,
+    total_amount
   )
   values (
     v_property.id,
@@ -437,7 +480,11 @@ begin
     p_adults,
     coalesce(p_children, 0),
     coalesce(p_infants, 0),
-    nullif(trim(coalesce(p_special_requests, '')), '')
+    nullif(trim(coalesce(p_special_requests, '')), ''),
+    v_nights,
+    v_base_amount,
+    v_child_amount,
+    v_total_amount
   )
   returning id into v_booking_id;
 
@@ -446,6 +493,8 @@ begin
     'booking_id', v_booking_id,
     'booking_code', (select booking_code from public.bookings where id = v_booking_id),
     'status', 'pending',
+    'nights', v_nights,
+    'total_amount', v_total_amount,
     'message', 'Booking request submitted successfully'
   );
 end;

@@ -9,6 +9,8 @@ export type Booking = {
   adults: number;
   children: number;
   infants: number;
+  nights: number;
+  total_amount: number;
   property_name: string;
   cottage_name: string;
   guest_name: string;
