@@ -12,7 +12,7 @@ export function BookingTable({ bookings }: { bookings: Booking[] }) {
           key: "booking_code",
           header: "Code",
           render: (row) => (
-            <Link href={`/admin/bookings/${row.id}`} className="underline">
+            <Link href={`/admin/bookings/${row.id}`} className="font-medium text-[#2b5a3b] underline-offset-4 hover:underline">
               {row.booking_code}
             </Link>
           ),
