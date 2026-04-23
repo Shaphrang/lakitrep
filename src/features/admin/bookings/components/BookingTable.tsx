@@ -1,19 +1,28 @@
 import Link from "next/link";
 import { DataTable } from "@/components/admin/shared/DataTable";
 import { StatusBadge } from "@/components/admin/shared/StatusBadge";
+import type { Booking } from "@/features/admin/bookings/types";
 
-export function BookingTable({ bookings }: { bookings: Array<Record<string, unknown>> }) {
+export function BookingTable({ bookings }: { bookings: Booking[] }) {
   return (
     <DataTable
-      rows={bookings as Array<{ id: string }>}
+      rows={bookings}
       columns={[
-        { key: "booking_code", header: "Code", render: (row: any) => <Link href={`/admin/bookings/${String(row.id)}`} className="underline">{String(row.booking_code)}</Link> },
+        {
+          key: "booking_code",
+          header: "Code",
+          render: (row) => (
+            <Link href={`/admin/bookings/${row.id}`} className="underline">
+              {row.booking_code}
+            </Link>
+          ),
+        },
         { key: "guest_name", header: "Guest" },
         { key: "guest_phone", header: "Phone" },
         { key: "cottage_name", header: "Cottage" },
         { key: "check_in_date", header: "Check-in" },
         { key: "check_out_date", header: "Check-out" },
-        { key: "status", header: "Status", render: (row: any) => <StatusBadge status={String(row.status)} /> },
+        { key: "status", header: "Status", render: (row) => <StatusBadge status={row.status} /> },
       ]}
     />
   );

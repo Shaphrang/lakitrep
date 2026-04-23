@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useTransition } from "react";
 import { uploadAdminImageFromClient } from "@/lib/supabase/upload-admin-image";
 
@@ -89,12 +90,12 @@ export function MultiImageUploadField({ label, folder, name, defaultValues = [] 
       {error ? <p className="text-xs text-red-600">{error}</p> : null}
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
         {images.map((image, index) => (
-          <div key={`${image}-${index}`} className="relative">
-            <img src={image} alt="Gallery" className="h-20 w-full rounded-md object-cover" />
+          <div key={`${image}-${index}`} className="relative h-20">
+            <Image src={image} alt="Gallery" className="rounded-md object-cover" fill sizes="(max-width: 768px) 50vw, 25vw" unoptimized />
             <button
               type="button"
               onClick={() => setImages((prev) => prev.filter((_, currentIndex) => currentIndex !== index))}
-              className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-xs font-bold text-white"
+              className="absolute right-1 top-1 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-xs font-bold text-white"
               aria-label="Remove image"
             >
               ×

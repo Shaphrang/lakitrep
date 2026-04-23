@@ -9,9 +9,11 @@ export type DataTableColumn<T> = {
 export function DataTable<T extends { id: string }>({
   columns,
   rows,
+  emptyMessage = "No records found.",
 }: {
   columns: DataTableColumn<T>[];
   rows: T[];
+  emptyMessage?: string;
 }) {
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
@@ -26,15 +28,23 @@ export function DataTable<T extends { id: string }>({
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
-          {rows.map((row) => (
-            <tr key={row.id}>
-              {columns.map((col) => (
-                <td key={String(col.key)} className="px-4 py-3 text-slate-700">
-                  {col.render ? col.render(row) : String((row as Record<string, unknown>)[String(col.key)] ?? "-")}
-                </td>
-              ))}
+          {rows.length === 0 ? (
+            <tr>
+              <td colSpan={columns.length} className="px-4 py-6 text-center text-slate-500">
+                {emptyMessage}
+              </td>
             </tr>
-          ))}
+          ) : (
+            rows.map((row) => (
+              <tr key={row.id}>
+                {columns.map((col) => (
+                  <td key={String(col.key)} className="px-4 py-3 text-slate-700">
+                    {col.render ? col.render(row) : String((row as Record<string, unknown>)[String(col.key)] ?? "-")}
+                  </td>
+                ))}
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>
