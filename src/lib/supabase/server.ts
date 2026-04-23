@@ -13,9 +13,14 @@ export async function getSupabaseServerClient() {
           return cookieStore.getAll();
         },
         setAll(cookieList) {
-          cookieList.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, options);
-          });
+          try {
+            cookieList.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          } catch {
+            // In Server Components, cookie mutation is not allowed.
+            // Middleware/Server Actions should handle session refresh writes.
+          }
         },
       },
     },
