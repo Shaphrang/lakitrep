@@ -10,9 +10,14 @@ type Props = {
   defaultValue?: string | null;
 };
 
+function formatKilobytes(bytes: number) {
+  return `${Math.round(bytes / 1024)} KB`;
+}
+
 export function ImageUploadField({ label, folder, name, defaultValue }: Props) {
   const [url, setUrl] = useState(defaultValue ?? "");
   const [error, setError] = useState("");
+  const [uploadMessage, setUploadMessage] = useState("");
   const [isPending, startTransition] = useTransition();
 
   const uploadFile = (file: File | null) => {
@@ -20,16 +25,22 @@ export function ImageUploadField({ label, folder, name, defaultValue }: Props) {
       return;
     }
 
+    setUploadMessage("Optimizing image...");
+
     startTransition(async () => {
       const result = await uploadAdminImageFromClient(file, folder);
 
       if (!result.success) {
         setError(result.error ?? "Upload failed");
+        setUploadMessage("");
         return;
       }
 
       setError("");
       setUrl(result.url);
+      setUploadMessage(
+        `Uploaded optimized image (${formatKilobytes(result.originalSizeBytes)} → ${formatKilobytes(result.uploadedSizeBytes)}).`,
+      );
     });
   };
 
@@ -41,11 +52,15 @@ export function ImageUploadField({ label, folder, name, defaultValue }: Props) {
         <input
           type="file"
           accept="image/*"
-          onChange={(e) => uploadFile(e.target.files?.[0] ?? null)}
+          onChange={(e) => {
+            uploadFile(e.target.files?.[0] ?? null);
+            e.currentTarget.value = "";
+          }}
           className="w-full rounded-md border border-slate-300 px-3 py-2"
         />
       </label>
-      {isPending ? <p className="text-xs text-slate-500">Uploading...</p> : null}
+      {isPending ? <p className="text-xs text-slate-500">Optimizing and uploading...</p> : null}
+      {uploadMessage ? <p className="text-xs text-emerald-700">{uploadMessage}</p> : null}
       {error ? <p className="text-xs text-red-600">{error}</p> : null}
       {url ? (
         <div className="relative inline-block">
