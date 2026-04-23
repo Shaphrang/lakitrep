@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getFirstImage, getPrimaryProperty, getPublicCottages, getSeoByPageKey } from "@/lib/public-site";
+import { getFirstImage, getPrimaryProperty, getPublicCottages, getSeoByPageKey, resolveMediaUrl } from "@/lib/public-site";
 import { BookNowButton } from "@/components/public/booking/BookNowButton";
 
 export const revalidate = 300;
@@ -32,7 +32,13 @@ export default async function CottagesPage() {
       <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {cottages.map((cottage) => (
           <article key={cottage.id} className="overflow-hidden rounded-2xl border border-[#dfd6c9] bg-[#fdfbf7] shadow-sm">
-            <img src={getFirstImage(cottage.cover_image, cottage.gallery_images)} alt={cottage.name} className="h-48 w-full object-cover" />
+            <img
+              src={resolveMediaUrl(getFirstImage(cottage.cover_image, cottage.gallery_images)) ?? "/window.svg"}
+              alt={cottage.name}
+              className="h-48 w-full object-cover"
+              loading="lazy"
+              decoding="async"
+            />
             <div className="space-y-2 p-4">
               <h2 className="font-serif text-2xl text-[#214531]">{cottage.name}</h2>
               <p className="text-xs uppercase tracking-wide text-[#567360]">{cottage.category}</p>

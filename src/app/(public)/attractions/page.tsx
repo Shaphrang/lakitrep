@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getAttractions, getFirstImage, getPrimaryProperty, getSeoByPageKey } from "@/lib/public-site";
+import { getAttractions, getFirstImage, getPrimaryProperty, getSeoByPageKey, resolveMediaUrl } from "@/lib/public-site";
 
 export const revalidate = 300;
 
@@ -28,7 +28,13 @@ export default async function AttractionsPage() {
       <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {attractions.map((attraction) => (
           <article key={attraction.id} className="overflow-hidden rounded-2xl border border-[#dfd6c9] bg-[#fdfbf7]">
-            <img src={getFirstImage(attraction.cover_image, attraction.gallery_images)} alt={attraction.name} className="h-48 w-full object-cover" />
+            <img
+              src={resolveMediaUrl(getFirstImage(attraction.cover_image, attraction.gallery_images)) ?? "/window.svg"}
+              alt={attraction.name}
+              className="h-48 w-full object-cover"
+              loading="lazy"
+              decoding="async"
+            />
             <div className="p-4">
               <h2 className="font-serif text-2xl text-[#234633]">{attraction.name}</h2>
               <p className="mt-1 text-sm text-[#3d5a47]">{attraction.distance_text || "Near the resort"}</p>
