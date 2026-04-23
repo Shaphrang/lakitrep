@@ -10,9 +10,15 @@ type Props = {
   defaultValues?: string[];
 };
 
+function formatKilobytes(bytes: number) {
+  return `${Math.round(bytes / 1024)} KB`;
+}
+
 export function MultiImageUploadField({ label, folder, name, defaultValues = [] }: Props) {
   const [images, setImages] = useState<string[]>(defaultValues);
   const [error, setError] = useState("");
+  const [uploadMessage, setUploadMessage] = useState("");
+  const [progress, setProgress] = useState("");
   const [isPending, startTransition] = useTransition();
 
   const uploadFiles = (files: FileList | null) => {
@@ -20,23 +26,43 @@ export function MultiImageUploadField({ label, folder, name, defaultValues = [] 
       return;
     }
 
+    const selectedFiles = Array.from(files);
+
     startTransition(async () => {
       const uploadedUrls: string[] = [];
+      const failedFiles: string[] = [];
+      let totalOriginalBytes = 0;
+      let totalUploadedBytes = 0;
 
-      for (const file of Array.from(files)) {
+      setError("");
+      setUploadMessage("");
+
+      for (const [index, file] of selectedFiles.entries()) {
+        setProgress(`Optimizing and uploading ${index + 1} of ${selectedFiles.length}...`);
+
         const result = await uploadAdminImageFromClient(file, folder);
 
         if (!result.success) {
-          setError(result.error ?? "Upload failed");
+          failedFiles.push(file.name);
           continue;
         }
 
         uploadedUrls.push(result.url);
+        totalOriginalBytes += result.originalSizeBytes;
+        totalUploadedBytes += result.uploadedSizeBytes;
       }
+
+      setProgress("");
 
       if (uploadedUrls.length > 0) {
         setImages((prev) => [...prev, ...uploadedUrls]);
-        setError("");
+        setUploadMessage(
+          `Uploaded ${uploadedUrls.length} optimized image(s) (${formatKilobytes(totalOriginalBytes)} → ${formatKilobytes(totalUploadedBytes)}).`,
+        );
+      }
+
+      if (failedFiles.length > 0) {
+        setError(`Failed to upload ${failedFiles.length} file(s). Please retry.`);
       }
     });
   };
@@ -50,11 +76,16 @@ export function MultiImageUploadField({ label, folder, name, defaultValues = [] 
           type="file"
           accept="image/*"
           multiple
-          onChange={(e) => uploadFiles(e.target.files)}
+          onChange={(e) => {
+            uploadFiles(e.target.files);
+            e.currentTarget.value = "";
+          }}
           className="w-full rounded-md border border-slate-300 px-3 py-2"
         />
       </label>
-      {isPending ? <p className="text-xs text-slate-500">Uploading...</p> : null}
+      {isPending ? <p className="text-xs text-slate-500">Optimizing and uploading images...</p> : null}
+      {progress ? <p className="text-xs text-slate-500">{progress}</p> : null}
+      {uploadMessage ? <p className="text-xs text-emerald-700">{uploadMessage}</p> : null}
       {error ? <p className="text-xs text-red-600">{error}</p> : null}
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
         {images.map((image, index) => (

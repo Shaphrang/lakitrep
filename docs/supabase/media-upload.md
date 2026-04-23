@@ -7,6 +7,7 @@ This project stores admin-managed images in a **single public bucket** and saves
 - Bucket name: `lakitrep-media` (override via `NEXT_PUBLIC_SUPABASE_MEDIA_BUCKET`)
 - Bucket visibility: **public**
 - Browser upload utility: `src/lib/supabase/upload-admin-image.ts`
+- Browser optimization utility: `src/lib/supabase/optimize-admin-image.ts`
 
 ## Folder/path convention
 
@@ -24,6 +25,34 @@ File names are generated as:
 
 `{folder}/{timestamp}-{uuid}.{ext}`
 
+## Client-side optimization before upload
+
+All admin image uploads are optimized in the browser **before** uploading to Supabase Storage.
+
+### What happens
+
+1. Admin selects one or more images.
+2. The app validates that each file is an image.
+3. The browser resizes each image without upscaling (aspect ratio preserved).
+4. The browser compresses output and converts it to `image/webp`.
+5. The optimized WebP file is uploaded to `lakitrep-media`.
+6. Returned public URL is saved to form state and then persisted in DB.
+
+### Sizing and format strategy
+
+- Output format: **WebP** (`image/webp`)
+- Cover/OG style uploads (`*/cover`, `seo/og`): max width **1600px**
+- Gallery uploads (`*/gallery`): max width **1400px**
+- Height scales automatically to preserve aspect ratio
+- Smaller source images are **not upscaled**
+
+### Compression targets
+
+- Target output size: around **450 KB**
+- Soft ceiling: around **500 KB** when possible
+- Quality is reduced in a few safe steps to keep images visually strong while reducing file size
+- If an image is still above 500 KB after resizing/compression, the best available optimized output is uploaded
+
 ## How DB columns are stored
 
 - `cover_image` / `og_image`: one public URL string
@@ -40,11 +69,12 @@ Reusable components:
 
 Flow:
 
-1. Admin selects a file.
-2. Component uploads directly to Supabase Storage from the browser.
-3. Public URL is returned to the component.
-4. URL is written into hidden form inputs.
-5. Normal create/update action persists URL(s) to DB.
+1. Admin selects file(s).
+2. UI shows optimizing/uploading state.
+3. Optimized file(s) upload directly to Supabase Storage from browser.
+4. Public URL(s) are returned to the component.
+5. URL(s) are written into hidden form inputs.
+6. Normal create/update action persists URL(s) to DB.
 
 ## Preview/display behavior
 
@@ -58,5 +88,12 @@ Flow:
 - Add gallery images: upload more and save form.
 - Remove gallery images: click remove for each entry and save form.
 - Remove cover image: click remove and save form.
+
+## Admin usage recommendations
+
+- Upload good quality originals from your local archive; the dashboard creates the web-ready version automatically.
+- Prefer landscape images for cover/gallery slots for better visual consistency.
+- If a photo looks too soft after upload, retry with a sharper source image/crop.
+- Keep your full-resolution master files offline; Supabase stores the website-ready optimized versions only.
 
 > Note: Current flow does not delete old files from the bucket automatically. If needed, remove old files manually from Supabase Storage.
