@@ -12,19 +12,20 @@ export async function getAuthenticatedAdmin(): Promise<AuthenticatedAdmin | null
   const supabase = await getSupabaseServerClient();
   const {
     data: { user },
+    error: userError,
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (userError || !user) {
     return null;
   }
 
-  const { data: admin, error } = await supabase
+  const { data: admin, error: adminError } = await supabase
     .from("admin_users")
     .select("id,email,full_name,is_active")
     .eq("id", user.id)
     .maybeSingle();
 
-  if (error || !admin || !admin.is_active) {
+  if (adminError || !admin || !admin.is_active) {
     return null;
   }
 
@@ -34,6 +35,18 @@ export async function getAuthenticatedAdmin(): Promise<AuthenticatedAdmin | null
     fullName: admin.full_name,
     isActive: admin.is_active,
   };
+}
+
+export async function isActiveAdminUser(userId: string): Promise<boolean> {
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("admin_users")
+    .select("id")
+    .eq("id", userId)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  return !error && Boolean(data);
 }
 
 export async function requireAdmin(): Promise<AuthenticatedAdmin> {

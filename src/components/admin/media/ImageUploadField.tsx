@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useTransition } from "react";
 import { uploadAdminImageFromClient } from "@/lib/supabase/upload-admin-image";
 
@@ -64,7 +65,7 @@ export function ImageUploadField({ label, folder, name, defaultValue }: Props) {
       {error ? <p className="text-xs text-red-600">{error}</p> : null}
       {url ? (
         <div className="relative inline-block">
-          <img src={url} alt={label} className="h-24 rounded-md object-cover" />
+          <Image src={url} alt={label} className="h-24 w-24 rounded-md object-cover" width={96} height={96} unoptimized />
           <button
             type="button"
             onClick={() => setUrl("")}
