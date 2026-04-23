@@ -16,37 +16,39 @@ export function DataTable<T extends { id: string }>({
   emptyMessage?: string;
 }) {
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-      <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
-        <thead className="bg-slate-50">
-          <tr>
-            {columns.map((col) => (
-              <th key={String(col.key)} className="px-4 py-3 font-medium text-slate-600">
-                {col.header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-100">
-          {rows.length === 0 ? (
+    <div className="overflow-hidden rounded-2xl border border-[#ddd4c6] bg-white/95 shadow-[0_12px_36px_-30px_rgba(12,23,16,0.85)]">
+      <div className="overflow-x-auto">
+        <table className="min-w-full text-left text-sm">
+          <thead className="bg-[#f4efe4] text-[#536458]">
             <tr>
-              <td colSpan={columns.length} className="px-4 py-6 text-center text-slate-500">
-                {emptyMessage}
-              </td>
+              {columns.map((col) => (
+                <th key={String(col.key)} className="whitespace-nowrap px-4 py-3.5 text-xs font-semibold uppercase tracking-[0.16em]">
+                  {col.header}
+                </th>
+              ))}
             </tr>
-          ) : (
-            rows.map((row) => (
-              <tr key={row.id}>
-                {columns.map((col) => (
-                  <td key={String(col.key)} className="px-4 py-3 text-slate-700">
-                    {col.render ? col.render(row) : String((row as Record<string, unknown>)[String(col.key)] ?? "-")}
-                  </td>
-                ))}
+          </thead>
+          <tbody>
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={columns.length} className="px-4 py-10 text-center text-[#6f7d74]">
+                  {emptyMessage}
+                </td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            ) : (
+              rows.map((row) => (
+                <tr key={row.id} className="border-t border-[#eee6da] align-top transition hover:bg-[#faf7f1]">
+                  {columns.map((col) => (
+                    <td key={String(col.key)} className="px-4 py-3.5 text-[#2f4137]">
+                      {col.render ? col.render(row) : String((row as Record<string, unknown>)[String(col.key)] ?? "-")}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

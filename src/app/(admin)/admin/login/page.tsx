@@ -5,26 +5,27 @@ export default async function AdminLoginPage({ searchParams }: { searchParams: P
   const { error } = await searchParams;
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md items-center px-6">
-      <div className="w-full rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="text-xl font-semibold">Admin Login</h1>
-        <p className="mt-1 text-sm text-slate-600">Sign in with your Supabase admin account.</p>
-        {error ? <p className="mt-3 rounded-md bg-red-50 p-2 text-sm text-red-700">{error}</p> : null}
+    <main className="mx-auto flex min-h-screen max-w-md items-center px-5 py-8">
+      <div className="w-full rounded-2xl border border-[#dacfbf] bg-[linear-gradient(135deg,#fdfbf6_0%,#f3ecdf_100%)] p-6 shadow-[0_20px_40px_-34px_rgba(10,20,14,0.95)]">
+        <p className="text-[0.68rem] uppercase tracking-[0.24em] text-[#6b7d71]">La Ki Trep Resort</p>
+        <h1 className="mt-2 font-serif text-3xl text-[#214531]">Admin Login</h1>
+        <p className="mt-1 text-sm text-[#5a6a60]">Sign in with your Supabase admin account.</p>
+        {error ? <p className="mt-3 rounded-xl border border-[#e7b6b6] bg-[#fdf0f0] p-2 text-sm text-[#9a4040]">{error}</p> : null}
         <form action={loginAdminAction} className="mt-5 space-y-4">
           <label className="block text-sm">
-            <span className="mb-1 block text-slate-700">Email</span>
-            <input name="email" className="w-full rounded-md border border-slate-300 px-3 py-2" type="email" required />
+            <span className="mb-1 block text-[#33533f]">Email</span>
+            <input name="email" className="w-full rounded-xl border border-[#d8cfbf] bg-white px-3 py-2.5" type="email" required />
           </label>
           <label className="block text-sm">
-            <span className="mb-1 block text-slate-700">Password</span>
-            <input name="password" className="w-full rounded-md border border-slate-300 px-3 py-2" type="password" required />
+            <span className="mb-1 block text-[#33533f]">Password</span>
+            <input name="password" className="w-full rounded-xl border border-[#d8cfbf] bg-white px-3 py-2.5" type="password" required />
           </label>
-          <button className="w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white" type="submit">
+          <button className="w-full rounded-xl bg-[linear-gradient(135deg,#2e5a3d_0%,#1f3f2f_100%)] px-4 py-2.5 text-sm font-semibold text-white" type="submit">
             Sign In
           </button>
         </form>
-        <p className="mt-3 text-xs text-slate-500">Admin users are validated against <code>public.admin_users</code>.</p>
-        <Link href="/" className="mt-4 inline-block text-xs text-slate-600 underline">Back to site</Link>
+        <p className="mt-3 text-xs text-[#66776c]">Admin users are validated against <code>public.admin_users</code>.</p>
+        <Link href="/" className="mt-4 inline-block text-xs font-medium text-[#355740] underline">Back to site</Link>
       </div>
     </main>
   );

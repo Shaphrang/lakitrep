@@ -14,7 +14,7 @@ export function CottageTable({ cottages }: { cottages: CottageListItem[] }) {
           key: "name",
           header: "Name",
           render: (row) => (
-            <Link href={`/admin/cottages/${row.id}`} className="underline">
+            <Link href={`/admin/cottages/${row.id}`} className="font-medium text-[#2b5a3b] underline-offset-4 hover:underline">
               {row.name}
             </Link>
           ),
