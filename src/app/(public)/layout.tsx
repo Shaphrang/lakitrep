@@ -1,15 +1,7 @@
 //src\app\(public)\layout.tsx
-import Link from "next/link";
 import { BookingFlowProvider } from "@/components/public/booking/BookingFlowProvider";
+import PublicHeader from "@/components/public/PublicHeader";
 import { getPrimaryProperty, getPublicCottages } from "@/lib/public-site";
-
-const nav = [
-  { href: "/", label: "Home" },
-  { href: "/cottages", label: "Cottages" },
-  { href: "/attractions", label: "Attractions" },
-  { href: "/policies", label: "Policies" },
-  { href: "/book", label: "Book" },
-];
 
 export default async function PublicLayout({
   children,
@@ -21,66 +13,7 @@ export default async function PublicLayout({
 
   return (
     <div className="min-h-screen bg-[#f7f3ec] text-[#1f3529]">
-      <header className="fixed inset-x-0 top-0 z-50">
-        <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 sm:pt-5">
-          <div className="rounded-2xl border border-white/15 bg-[#132116]/45 shadow-[0_10px_35px_rgba(0,0,0,0.18)] backdrop-blur-xl">
-            <div className="flex min-h-[68px] items-center justify-between px-4 sm:px-5">
-              <Link href="/" className="min-w-0">
-                <div className="flex flex-col">
-                  <span className="font-serif text-[1.3rem] leading-none tracking-[0.01em] text-[#f7f1e7] sm:text-[1.55rem]">
-                    La Ki Trep
-                  </span>
-                  <span className="mt-1 text-[0.62rem] font-medium uppercase tracking-[0.3em] text-[#dbcfae] sm:text-[0.68rem]">
-                    Resort
-                  </span>
-                </div>
-              </Link>
-
-              <div className="hidden items-center gap-2 lg:flex">
-                <nav className="flex items-center gap-1">
-                  {nav.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className="rounded-full px-4 py-2 text-sm font-medium text-[#f6efe3] transition hover:bg-white/10 hover:text-white"
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
-                </nav>
-
-                <Link
-                  href="/book"
-                  className="inline-flex items-center rounded-full border border-[#d8cda8]/50 bg-[#335c38]/90 px-5 py-2.5 text-sm font-semibold text-[#fffaf0] shadow-sm transition hover:bg-[#284b2d]"
-                >
-                  Book on WhatsApp
-                </Link>
-              </div>
-
-              <div className="flex items-center gap-2 lg:hidden">
-                <Link
-                  href="/book"
-                  className="inline-flex items-center rounded-full border border-[#d8cda8]/40 bg-[#335c38]/90 px-4 py-2 text-sm font-semibold text-[#fffaf0] shadow-sm transition hover:bg-[#284b2d]"
-                >
-                  Book
-                </Link>
-              </div>
-            </div>
-
-            <nav className="flex gap-2 overflow-x-auto px-3 pb-3 lg:hidden">
-              {nav.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="whitespace-nowrap rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm font-medium text-[#f7efe3] transition hover:bg-white/15"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
-        </div>
-      </header>
+      <PublicHeader />
 
       <BookingFlowProvider cottages={cottages}>
         <main>{children}</main>
@@ -115,11 +48,17 @@ export default async function PublicLayout({
                 Explore
               </p>
               <ul className="mt-4 space-y-3 text-sm text-[#d9d1c4]">
-                {nav.map((item) => (
+                {[
+                  { href: "/", label: "Home" },
+                  { href: "/cottages", label: "Cottages" },
+                  { href: "/attractions", label: "Attractions" },
+                  { href: "/policies", label: "Policies" },
+                  { href: "/book", label: "Book" },
+                ].map((item) => (
                   <li key={item.href}>
-                    <Link href={item.href} className="inline-flex transition hover:text-white">
+                    <a href={item.href} className="inline-flex transition hover:text-white">
                       {item.label}
-                    </Link>
+                    </a>
                   </li>
                 ))}
               </ul>
@@ -132,16 +71,16 @@ export default async function PublicLayout({
               <div className="mt-4 space-y-3 text-sm leading-7 text-[#d9d1c4]">
                 <p>Umran, Ri Bhoi District, Meghalaya</p>
                 <p>Precise location shared after booking confirmation.</p>
-                <p>WhatsApp booking available for direct reservations and stay enquiries.</p>
+                <p>Direct reservations and stay enquiries available.</p>
               </div>
 
               <div className="mt-5">
-                <Link
+                <a
                   href="/book"
                   className="inline-flex items-center rounded-full bg-[#f3eadb] px-5 py-2.5 text-sm font-semibold text-[#1f3529] transition hover:bg-white"
                 >
                   Plan Your Stay
-                </Link>
+                </a>
               </div>
             </div>
           </div>
