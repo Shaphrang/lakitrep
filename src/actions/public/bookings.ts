@@ -25,6 +25,7 @@ export type BookingFormState = {
   success: boolean;
   message: string;
   bookingCode?: string;
+  estimatedTotal?: number;
 };
 
 export async function submitBookingRequest(
@@ -84,5 +85,6 @@ export async function submitBookingRequest(
     success: true,
     message: "Booking request submitted successfully.",
     bookingCode: data?.booking_code,
+    estimatedTotal: typeof data?.total_amount === "number" ? data.total_amount : undefined,
   };
 }

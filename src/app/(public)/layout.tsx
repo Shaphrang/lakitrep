@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { BookingFlowProvider } from "@/components/public/booking/BookingFlowProvider";
+import { getPrimaryProperty, getPublicCottages } from "@/lib/public-site";
 
 const nav = [
   { href: "/", label: "Home" },
@@ -8,7 +10,10 @@ const nav = [
   { href: "/book", label: "Book" },
 ];
 
-export default function PublicLayout({ children }: { children: React.ReactNode }) {
+export default async function PublicLayout({ children }: { children: React.ReactNode }) {
+  const property = await getPrimaryProperty();
+  const cottages = property ? await getPublicCottages(property.id) : [];
+
   return (
     <div className="min-h-screen bg-[#f6f3ec] text-[#1f3529]">
       <header className="sticky top-0 z-30 border-b border-[#d9d1c4] bg-[#f6f3ec]/95 backdrop-blur">
@@ -34,7 +39,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         </div>
       </header>
 
-      {children}
+      <BookingFlowProvider cottages={cottages}>{children}</BookingFlowProvider>
 
       <footer className="border-t border-[#d9d1c4] bg-[#244331] text-[#f4efe6]">
         <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 sm:grid-cols-3 sm:px-6 sm:py-10">

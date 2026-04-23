@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BookNowButton } from "@/components/public/booking/BookNowButton";
 import { notFound } from "next/navigation";
 import { getCottageBySlug, getFirstImage, getPrimaryProperty, getPublicCottages, getSeoByPageKey } from "@/lib/public-site";
 
@@ -77,9 +78,12 @@ export default async function CottageDetailPage({ params }: Props) {
             </div>
           ) : null}
 
-          <Link href="/book" className="mt-6 inline-flex rounded-full bg-[#2f5a3d] px-5 py-2.5 text-sm font-semibold text-white">
-            Request booking
-          </Link>
+          <div className="mt-6 flex flex-wrap gap-2">
+            <BookNowButton cottageSlug={cottage.slug} className="inline-flex rounded-full bg-[#2f5a3d] px-5 py-2.5 text-sm font-semibold text-white" label="Book Now" />
+            <Link href="/book" className="inline-flex rounded-full border border-[#2f5a3d] px-5 py-2.5 text-sm font-semibold text-[#2f5a3d]">
+              Full booking form
+            </Link>
+          </div>
         </article>
       </div>
     </main>

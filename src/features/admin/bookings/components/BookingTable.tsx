@@ -22,6 +22,8 @@ export function BookingTable({ bookings }: { bookings: Booking[] }) {
         { key: "cottage_name", header: "Cottage" },
         { key: "check_in_date", header: "Check-in" },
         { key: "check_out_date", header: "Check-out" },
+        { key: "nights", header: "Nights" },
+        { key: "total_amount", header: "Amount", render: (row) => `₹${Number(row.total_amount).toLocaleString("en-IN")}` },
         { key: "status", header: "Status", render: (row) => <StatusBadge status={row.status} /> },
       ]}
     />

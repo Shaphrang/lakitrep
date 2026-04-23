@@ -40,6 +40,9 @@ export type PublicCottage = {
   amenities: string[];
   weekday_price: number;
   weekend_price: number;
+  child_price: number;
+  breakfast_included: boolean;
+  pricing_note: string | null;
   cover_image: string | null;
   gallery_images: string[];
   is_featured: boolean;
@@ -89,7 +92,7 @@ export const getPublicCottages = cache(async (propertyId: string): Promise<Publi
   const { data, error } = await supabase
     .from("cottages")
     .select(
-      "id,property_id,name,slug,category,short_description,full_description,bed_type,max_adults,max_children,max_infants,max_total_guests,amenities,weekday_price,weekend_price,cover_image,gallery_images,is_featured",
+      "id,property_id,name,slug,category,short_description,full_description,bed_type,max_adults,max_children,max_infants,max_total_guests,amenities,weekday_price,weekend_price,child_price,breakfast_included,pricing_note,cover_image,gallery_images,is_featured",
     )
     .eq("property_id", propertyId)
     .order("is_featured", { ascending: false })
