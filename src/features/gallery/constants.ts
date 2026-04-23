@@ -14,6 +14,4 @@ export const GALLERY_CATEGORY_OPTIONS = [
 
 export const GALLERY_CATEGORY_SLUGS = GALLERY_CATEGORY_OPTIONS.map((item) => item.slug);
 
-export const MAX_GALLERY_UPLOAD_MB = 8;
-export const MAX_GALLERY_UPLOAD_BYTES = MAX_GALLERY_UPLOAD_MB * 1024 * 1024;
 export const ALLOWED_GALLERY_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;

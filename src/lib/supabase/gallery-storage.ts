@@ -1,6 +1,6 @@
 "use client";
 
-import { ALLOWED_GALLERY_MIME_TYPES, GALLERY_BUCKET, MAX_GALLERY_UPLOAD_BYTES } from "@/features/gallery/constants";
+import { ALLOWED_GALLERY_MIME_TYPES, GALLERY_BUCKET } from "@/features/gallery/constants";
 import type { GalleryCategorySlug, PropertyGalleryMedia } from "@/features/gallery/types";
 import { optimizeAdminImage } from "@/lib/supabase/optimize-admin-image";
 import { getSupabaseClient } from "@/lib/supabase/client";
@@ -26,10 +26,6 @@ function validateGalleryFile(file: File): string | null {
     return `${file.name}: Invalid file type. Only JPEG, PNG, and WebP are supported.`;
   }
 
-  if (file.size > MAX_GALLERY_UPLOAD_BYTES) {
-    return `${file.name}: File is too large. Max size is ${Math.floor(MAX_GALLERY_UPLOAD_BYTES / (1024 * 1024))}MB.`;
-  }
-
   return null;
 }
 
@@ -40,7 +36,6 @@ export async function uploadGalleryImages(options: GalleryUploadOptions): Promis
   }>
 > {
   const supabase = getSupabaseClient();
-  const uploaded: Array<{ storagePath: string }> = [];
   const createdRows: Array<{ media: PropertyGalleryMedia; previewUrl: string }> = [];
 
   for (const file of options.files) {
@@ -65,8 +60,6 @@ export async function uploadGalleryImages(options: GalleryUploadOptions): Promis
     if (uploadResult.error) {
       throw new Error(`Storage upload failed (${file.name}): ${uploadResult.error.message}`);
     }
-
-    uploaded.push({ storagePath });
 
     const metadataResponse = await fetch(`/api/admin/properties/${options.propertyId}/gallery`, {
       method: "POST",
