@@ -21,14 +21,14 @@ export default async function PoliciesPage() {
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
-      <h1 className="text-3xl font-semibold text-white sm:text-4xl">Policies</h1>
-      <p className="mt-2 text-sm text-stone-200 sm:text-base">Please review before confirming your stay.</p>
+      <h1 className="font-serif text-4xl text-[#214531] sm:text-5xl">Policies</h1>
+      <p className="mt-2 text-sm text-[#59665d] sm:text-base">Please review these notes before confirming your stay.</p>
 
       <div className="mt-6 space-y-3">
         {policies.map((policy) => (
-          <article key={policy.id} className="rounded-2xl bg-white p-5 text-emerald-950 sm:p-6">
-            <h2 className="text-lg font-semibold">{policy.title}</h2>
-            <p className="mt-2 whitespace-pre-line text-sm text-stone-700 sm:text-base">{policy.content}</p>
+          <article key={policy.id} className="rounded-2xl border border-[#dfd6c9] bg-[#fdfbf7] p-5 sm:p-6">
+            <h2 className="font-serif text-2xl text-[#234633]">{policy.title}</h2>
+            <p className="mt-2 whitespace-pre-line text-sm text-[#59665d] sm:text-base">{policy.content}</p>
           </article>
         ))}
       </div>

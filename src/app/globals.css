@@ -5,5 +5,11 @@
 }
 
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+  @apply antialiased;
+  background: #f6f3ec;
+  color: #1f3529;
+}
+
+.font-serif {
+  font-family: Georgia, "Times New Roman", serif;
 }
