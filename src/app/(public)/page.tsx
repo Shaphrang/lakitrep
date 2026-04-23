@@ -23,12 +23,31 @@ type GalleryImage = {
 };
 
 const QUICK_HIGHLIGHTS = [
-  "Boutique resort in Umran, Ri Bhoi",
-  "Swimming pool",
-  "In-house restaurant",
-  "4-acre outdoor setting",
-  "Private group stays",
-  "Near Umiam experiences",
+  {
+    title: "Boutique Stay",
+    note: "Five private cottages for quiet and restful stays.",
+    icon: "stay",
+  },
+  {
+    title: "Swimming Pool",
+    note: "Relax and unwind with refreshing pool access.",
+    icon: "pool",
+  },
+  {
+    title: "In-house Dining",
+    note: "Warm meals and pre-planned reservations.",
+    icon: "dining",
+  },
+  {
+    title: "4-Acre Setting",
+    note: "Open greens and slow mornings in nature.",
+    icon: "nature",
+  },
+  {
+    title: "Near Umiam",
+    note: "Easy access to scenic drives and day plans.",
+    icon: "scenic",
+  },
 ] as const;
 
 const FALLBACK_EXPERIENCES = [
@@ -106,6 +125,10 @@ function firstGalleryImage(images: Array<{ public_url: string; alt_text: string 
   return mapGalleryImage(images[0]);
 }
 
+function getGalleryUrl(items?: Array<{ public_url: string; alt_text: string | null; caption: string | null }>): string | null {
+  return items?.[0]?.public_url ?? null;
+}
+
 function getCottageByKeywords(cottages: PublicCottage[], keywords: string[]): PublicCottage | null {
   return (
     cottages.find((cottage) => {
@@ -130,6 +153,88 @@ export async function generateMetadata(): Promise<Metadata> {
     description: seo?.meta_description || property.short_intro || "Quiet cottage stay in Meghalaya.",
   };
 }
+
+type HighlightIconType = (typeof QUICK_HIGHLIGHTS)[number]["icon"];
+
+function QuickHighlightIcon({ type }: { type: HighlightIconType }) {
+  const baseClass = "h-12 w-12 text-[#c49a56]";
+
+  switch (type) {
+    case "stay":
+      return (
+        <svg viewBox="0 0 64 64" fill="none" className={baseClass}>
+          <path d="M10 30.5L32 13l22 17.5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M16 27v22h32V27" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M26 49V37h12v12" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M20 33h.01M44 33h.01" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+          <path d="M52 45c2-5 1-11-3-15" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+          <path d="M55 51c4-2 6-5 7-9" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+        </svg>
+      );
+
+    case "pool":
+      return (
+        <svg viewBox="0 0 64 64" fill="none" className={baseClass}>
+          <path d="M23 14v24" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+          <path d="M35 14v24" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+          <path d="M23 18c0-2.2 1.8-4 4-4h4c2.2 0 4 1.8 4 4" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+          <path d="M23 26h12M23 34h12" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+          <path d="M10 46c3 2 5 3 9 3s6-1 9-3c3 2 5 3 9 3s6-1 9-3c3 2 5 3 9 3" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M10 54c3 2 5 3 9 3s6-1 9-3c3 2 5 3 9 3s6-1 9-3c3 2 5 3 9 3" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+
+    case "dining":
+      return (
+        <svg viewBox="0 0 64 64" fill="none" className={baseClass}>
+          <path d="M18 44h28" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+          <path d="M22 44c0-9 7-16 16-16s16 7 16 16" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+          <path d="M26 49h20" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+          <path d="M30 22c0-3 2-5 2-8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+          <path d="M38 22c0-3 2-5 2-8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+          <path d="M34 20c0-3 2-5 2-8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+        </svg>
+      );
+
+    case "nature":
+      return (
+        <svg viewBox="0 0 64 64" fill="none" className={baseClass}>
+          <path d="M8 48c8-8 16-12 24-12 7 0 14 2 24 12" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M22 42V24" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+          <path d="M22 24c4 1 7 4 8 8-5 1-9-1-11-5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M22 29c-4 1-7 4-8 8 5 1 9-1 11-5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M42 42V20" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+          <path d="M42 20c4 1 7 4 8 8-5 1-9-1-11-5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M42 25c-4 1-7 4-8 8 5 1 9-1 11-5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+
+    case "scenic":
+      return (
+        <svg viewBox="0 0 64 64" fill="none" className={baseClass}>
+          <path d="M10 46c10-10 20-14 30-14 5 0 9 1 14 3" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+          <path d="M16 52c7-7 15-11 24-11 6 0 11 1 18 4" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+          <path d="M22 56c4-9 8-15 14-21 4-4 8-7 14-10" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+          <circle cx="46" cy="18" r="3.5" stroke="currentColor" strokeWidth="2.2" />
+        </svg>
+      );
+
+    default:
+      return null;
+  }
+}
+
+function QuickHighlightsOrnament() {
+  return (
+    <div className="hidden sm:flex items-center justify-center text-[#c49a56]">
+      <svg viewBox="0 0 40 40" fill="none" className="h-10 w-10">
+        <path d="M20 7c0 5-3 8-8 8 5 0 8 3 8 8 0-5 3-8 8-8-5 0-8-3-8-8Z" stroke="currentColor" strokeWidth="1.8" />
+        <path d="M20 17c0 5-3 8-8 8 5 0 8 3 8 8 0-5 3-8 8-8-5 0-8-3-8-8Z" stroke="currentColor" strokeWidth="1.8" />
+      </svg>
+    </div>
+  );
+}
+
 
 export default async function HomePage() {
   const property = await getPrimaryProperty();
@@ -165,15 +270,69 @@ export default async function HomePage() {
     firstGalleryImage(groupedGallery.outdoorGarden) ||
     firstGalleryImage(groupedGallery.scenicViews);
 
-  const galleryShowcase = [
-    firstGalleryImage(groupedGallery.exteriorView),
-    firstGalleryImage(groupedGallery.premiumCottage),
-    firstGalleryImage(groupedGallery.standardCottage),
-    firstGalleryImage(groupedGallery.swimmingPool),
-    firstGalleryImage(groupedGallery.restaurantDining),
-    firstGalleryImage(groupedGallery.outdoorGarden),
-    firstGalleryImage(groupedGallery.scenicViews),
-  ].filter(Boolean) as GalleryImage[];
+const galleryPreviewCards = [
+  {
+    key: "exterior-view",
+    label: "Hero exterior / aerial photo",
+    image:
+      firstGalleryImage(groupedGallery.exteriorView) ||
+      firstGalleryImage(groupedGallery.outdoorGarden),
+    className: "md:col-span-6 min-h-[320px]",
+  },
+  {
+    key: "premium-cottage",
+    label: "Premium cottage balcony / sit-out",
+    image:
+      firstGalleryImage(groupedGallery.premiumCottage) ||
+      firstGalleryImage(groupedGallery.interiorView),
+    className: "md:col-span-3 min-h-[320px]",
+  },
+  {
+    key: "swimming-pool",
+    label: "Swimming pool during golden hour",
+    image: firstGalleryImage(groupedGallery.swimmingPool),
+    className: "md:col-span-3 min-h-[320px]",
+  },
+  {
+    key: "restaurant-dining",
+    label: "Restaurant dining ambience",
+    image: firstGalleryImage(groupedGallery.restaurantDining),
+    className: "md:col-span-4 min-h-[240px]",
+  },
+  {
+    key: "outdoor-garden",
+    label: "Garden & outdoor spaces",
+    image: firstGalleryImage(groupedGallery.outdoorGarden),
+    className: "md:col-span-4 min-h-[240px]",
+  },
+  {
+    key: "scenic-views",
+    label: "Scenic surroundings / hills / trees",
+    image: firstGalleryImage(groupedGallery.scenicViews),
+    className: "md:col-span-4 min-h-[240px]",
+  },
+].filter(
+  (
+    item,
+  ): item is {
+    key: string;
+    label: string;
+    image: GalleryImage;
+    className: string;
+  } => Boolean(item.image),
+);
+
+const totalGalleryImages = [
+  groupedGallery.exteriorView,
+  groupedGallery.interiorView,
+  groupedGallery.premiumCottage,
+  groupedGallery.standardCottage,
+  groupedGallery.swimmingPool,
+  groupedGallery.restaurantDining,
+  groupedGallery.outdoorGarden,
+  groupedGallery.scenicViews,
+  groupedGallery.activitiesExperiences,
+].reduce((sum, items) => sum + items.length, 0);
 
   const topPolicies = policies.slice(0, 3);
 
@@ -238,157 +397,292 @@ export default async function HomePage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
-        <div className="overflow-x-auto rounded-2xl border border-[#ddd2c2] bg-gradient-to-r from-[#f7f2e8] via-[#fbf8f2] to-[#f4ede1] p-3 shadow-sm">
-          <div className="grid min-w-[720px] grid-cols-6 gap-2 sm:min-w-0 sm:grid-cols-3 lg:grid-cols-6">
-            {QUICK_HIGHLIGHTS.map((highlight) => (
-              <div key={highlight} className="rounded-xl border border-[#e7dccb] bg-white/70 px-3 py-3 text-center text-xs font-medium text-[#39553f] sm:text-sm">
-                {highlight}
+        <div className="relative overflow-hidden rounded-[32px] border border-[#dcc8a2] bg-[#fcf8f0] px-5 py-6 shadow-[0_12px_30px_rgba(35,57,42,0.06)] sm:px-7 sm:py-7 lg:px-8 lg:py-8">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(200,163,92,0.08),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(44,84,58,0.05),transparent_24%)]" />
+          <div className="relative">
+            <div className="flex items-start justify-between gap-4">
+              <div className="max-w-3xl">
+                <div className="flex items-center gap-3">
+                  <p className="text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-[#b8893e]">
+                    Quick Highlights
+                  </p>
+                  <span className="h-px w-12 bg-[#cda863]" />
+                </div>
+
+                <h2 className="mt-3 font-serif text-[2rem] leading-tight text-[#214531] sm:text-[2.35rem] lg:text-[2.6rem]">
+                  Why guests love La Ki Trep
+                </h2>
+
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-[#5a665e] sm:text-[15px]">
+                  Boutique hospitality, nature-led spaces, and stays designed for calm and connection.
+                </p>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 sm:pb-12 lg:pb-16">
-        <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
-          <div className="order-2 lg:order-1">
-            <p className="text-xs uppercase tracking-[0.22em] text-[#6d7f70]">Our Story</p>
-            <h2 className="mt-2 font-serif text-3xl text-[#214531] sm:text-4xl lg:text-5xl">Small by choice, private by design.</h2>
-            <p className="mt-4 text-sm leading-7 text-[#4f5f54] sm:text-base">
-              {property.full_description ||
-                "La Ki Trep is a boutique retreat in Umran, Ri Bhoi—created for guests who prefer quiet spaces, thoughtful hosting, and slower days in nature."}
-            </p>
-            <p className="mt-3 text-sm leading-7 text-[#4f5f54] sm:text-base">
-              Ideal for couples, families, and close-knit groups, the property stays intentionally limited so every stay feels calm, personal, and unhurried—close enough to Umiam for day experiences, yet tucked away enough to truly switch off.
-            </p>
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-xl border border-[#e5dbc9] bg-[#fcf8f0] px-4 py-3 text-sm text-[#31513d]">Intimate boutique scale with only five cottages.</div>
-              <div className="rounded-xl border border-[#e5dbc9] bg-[#fcf8f0] px-4 py-3 text-sm text-[#31513d]">Best suited for meaningful getaways and private group stays.</div>
+              <QuickHighlightsOrnament />
             </div>
-          </div>
 
-          <div className="order-1 lg:order-2">
-            <div className="relative grid gap-3 sm:grid-cols-2">
-              {aboutImagePrimary ? (
-                <img src={aboutImagePrimary.url} alt={aboutImagePrimary.alt} className="h-52 w-full rounded-2xl object-cover shadow-md sm:col-span-2 sm:h-64" loading="lazy" />
-              ) : null}
-              {aboutImageSecondary ? <img src={aboutImageSecondary.url} alt={aboutImageSecondary.alt} className="h-40 w-full rounded-2xl object-cover shadow-sm sm:h-48" loading="lazy" /> : null}
-              {aboutImageAccent ? <img src={aboutImageAccent.url} alt={aboutImageAccent.alt} className="h-40 w-full rounded-2xl object-cover shadow-sm sm:h-48" loading="lazy" /> : null}
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+              {QUICK_HIGHLIGHTS.map((highlight) => (
+                <article
+                  key={highlight.title}
+                  className="rounded-[24px] border border-[#e2d4b8] bg-[#fffdf8] px-5 py-6 text-center shadow-[0_8px_20px_rgba(39,70,52,0.04)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_30px_rgba(39,70,52,0.08)]"
+                >
+                  <div className="flex justify-center">
+                    <QuickHighlightIcon type={highlight.icon} />
+                  </div>
+
+                  <h3 className="mt-4 font-serif text-[1.6rem] leading-tight text-[#234331]">
+                    {highlight.title}
+                  </h3>
+
+                  <p className="mt-3 text-sm leading-6 text-[#5d695f]">
+                    {highlight.note}
+                  </p>
+                </article>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
+<section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 sm:pb-12 lg:pb-16">
+  <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-stretch">
+    <div className="order-2 flex h-full flex-col justify-between lg:order-1">
+      <div>
+        <p className="text-xs uppercase tracking-[0.22em] text-[#6d7f70]">Our Story</p>
+        <h2 className="mt-2 font-serif text-3xl text-[#214531] sm:text-4xl lg:text-5xl">
+          Small by choice, private by design.
+        </h2>
+        <p
+          className="mt-4 text-sm leading-7 text-[#4f5f54] sm:text-base"
+          style={{ textAlign: "justify" }}
+        >
+          {property.full_description ||
+            "La Ki Trep is a boutique retreat in Umran, Ri Bhoi—created for guests who prefer quiet spaces, thoughtful hosting, and slower days in nature."}
+        </p>
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-xl border border-[#e5dbc9] bg-[#fcf8f0] px-4 py-3 text-sm text-[#31513d]">
+          Intimate boutique scale with only five cottages.
+        </div>
+        <div className="rounded-xl border border-[#e5dbc9] bg-[#fcf8f0] px-4 py-3 text-sm text-[#31513d]">
+          Best suited for meaningful getaways and private group stays.
+        </div>
+      </div>
+    </div>
+
+    <div className="order-1 lg:order-2">
+      <div className="relative grid gap-3 sm:grid-cols-2">
+        {aboutImagePrimary ? (
+          <img
+            src={aboutImagePrimary.url}
+            alt={aboutImagePrimary.alt}
+            className="h-52 w-full rounded-2xl object-cover shadow-md sm:col-span-2 sm:h-64"
+            loading="lazy"
+          />
+        ) : null}
+
+        {aboutImageSecondary ? (
+          <img
+            src={aboutImageSecondary.url}
+            alt={aboutImageSecondary.alt}
+            className="h-40 w-full rounded-2xl object-cover shadow-sm sm:h-48"
+            loading="lazy"
+          />
+        ) : null}
+
+        {aboutImageAccent ? (
+          <img
+            src={aboutImageAccent.url}
+            alt={aboutImageAccent.alt}
+            className="h-40 w-full rounded-2xl object-cover shadow-sm sm:h-48"
+            loading="lazy"
+          />
+        ) : null}
+      </div>
+    </div>
+  </div>
+</section>
+
       <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 sm:pb-12 lg:pb-16">
-        <div className="mb-5 flex items-center justify-between">
-          <h2 className="font-serif text-3xl text-[#214531] sm:text-4xl">Stay in Our Cottages</h2>
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#6c7d70]">
+              Stay with us
+            </p>
+            <h2 className="mt-1 font-serif text-3xl text-[#214531] sm:text-4xl">
+              Stay in Our Cottages
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#59665d] sm:text-base">
+              Thoughtfully designed private stays with breakfast, curated amenities, and a calm resort setting.
+            </p>
+          </div>
+
           <Link href="/cottages" className="text-sm font-semibold text-[#2d593b]">
             View all stays
           </Link>
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-3">
-          {stayCards.map((cottage) => {
-            const fallbackByCategory = cottage.category.toLowerCase().includes("premium")
-              ? groupedGallery.premiumCottage[0]?.public_url
-              : cottage.category.toLowerCase().includes("standard")
-                ? groupedGallery.standardCottage[0]?.public_url
-                : groupedGallery.interiorView[0]?.public_url;
+<div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+    {stayCards.map((cottage) => {
+      const category = String(cottage.category || "").toLowerCase();
 
-            const heroImage = getFirstImage(cottage.cover_image || fallbackByCategory || null, cottage.gallery_images);
-            const supportOne = cottage.gallery_images[1] || groupedGallery.interiorView[0]?.public_url || heroImage;
-            const supportTwo = cottage.gallery_images[2] || groupedGallery.outdoorGarden[0]?.public_url || heroImage;
+      const fallbackByCategory = category.includes("premium")
+        ? getGalleryUrl(groupedGallery.premiumCottage)
+        : category.includes("standard")
+          ? getGalleryUrl(groupedGallery.standardCottage)
+          : getGalleryUrl(groupedGallery.interiorView);
 
-            return (
-              <article key={cottage.id} className="overflow-hidden rounded-3xl border border-[#dfd6c9] bg-[#fdfbf7] shadow-sm transition hover:shadow-lg">
-                <img src={heroImage} alt={`${cottage.name} cover`} className="h-52 w-full object-cover" loading="lazy" />
-                <div className="grid grid-cols-2 gap-2 p-3">
-                  <img src={supportOne} alt={`${cottage.name} interior`} className="h-24 w-full rounded-xl object-cover" loading="lazy" />
-                  <img src={supportTwo} alt={`${cottage.name} sit-out and surroundings`} className="h-24 w-full rounded-xl object-cover" loading="lazy" />
-                </div>
-                <div className="space-y-3 px-4 pb-5">
-                  <h3 className="font-serif text-2xl text-[#224331]">{cottage.name}</h3>
-                  <p className="text-sm text-[#5b695f]">{cottage.short_description || cottage.full_description || "Comfortable, private cottage with resort amenities."}</p>
-                  <div className="grid grid-cols-2 gap-2 text-xs text-[#3a5441] sm:text-sm">
-                    <p className="rounded-lg bg-[#f1ebe1] px-3 py-2">Occupancy: up to {cottage.max_total_guests}</p>
-                    <p className="rounded-lg bg-[#f1ebe1] px-3 py-2">Bed: {cottage.bed_type || "On request"}</p>
-                  </div>
-                  <p className="text-sm text-[#3b5443]">Amenities: {cottage.amenities.slice(0, 4).join(" • ") || "Breakfast, private sit-out, and curated essentials"}</p>
-                  <div className="rounded-xl border border-[#e7dece] bg-[#faf5eb] p-3 text-sm text-[#2f4e3a]">
-                    <p>Weekday from ₹{Number(cottage.weekday_price).toLocaleString("en-IN")}/night</p>
-                    <p>Weekend from ₹{Number(cottage.weekend_price).toLocaleString("en-IN")}/night</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Link href={`/cottages/${cottage.slug}`} className="flex-1 rounded-xl border border-[#2f5a3d] px-3 py-2 text-center text-sm font-semibold text-[#2f5a3d]">
-                      View details
-                    </Link>
-                    <BookNowButton cottageSlug={cottage.slug} className="flex-1 rounded-xl bg-[#2f5a3d] px-3 py-2 text-sm font-semibold text-white" label="Enquire now" />
-                  </div>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </section>
+      const heroImage = getFirstImage(
+        cottage.cover_image || fallbackByCategory || null,
+        cottage.gallery_images
+      );
 
-      <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 sm:pb-12 lg:pb-16">
-        <h2 className="mb-5 font-serif text-3xl text-[#214531] sm:text-4xl">Amenities & Facilities</h2>
-        <div className="grid gap-4 lg:grid-cols-2">
-          <article className="grid gap-3 rounded-2xl border border-[#dfd6c9] bg-[#fdfbf7] p-4 sm:grid-cols-[150px_1fr] sm:p-5">
-            {firstGalleryImage(groupedGallery.swimmingPool) ? (
-              <img src={groupedGallery.swimmingPool[0].public_url} alt={groupedGallery.swimmingPool[0].alt_text || "Swimming pool at La Ki Trep"} className="h-28 w-full rounded-xl object-cover sm:h-full" loading="lazy" />
-            ) : null}
-            <div>
-              <h3 className="font-serif text-2xl text-[#224331]">Comfort-focused essentials</h3>
-              <ul className="mt-2 grid gap-2 text-sm text-[#4d5e53] sm:grid-cols-2">
-                <li>Swimming pool access</li>
-                <li>Breakfast included</li>
-                <li>Parking on property</li>
-                <li>Outdoor and garden spaces</li>
-                <li>Balcony sit-outs</li>
-                <li>Bonfire on request</li>
-              </ul>
-            </div>
-          </article>
-          <article className="grid gap-3 rounded-2xl border border-[#dfd6c9] bg-[#fdfbf7] p-4 sm:grid-cols-[150px_1fr] sm:p-5">
-            {firstGalleryImage(groupedGallery.restaurantDining) ? (
-              <img src={groupedGallery.restaurantDining[0].public_url} alt={groupedGallery.restaurantDining[0].alt_text || "Dining area"} className="h-28 w-full rounded-xl object-cover sm:h-full" loading="lazy" />
-            ) : null}
-            <div>
-              <h3 className="font-serif text-2xl text-[#224331]">On-ground assistance</h3>
-              <ul className="mt-2 grid gap-2 text-sm text-[#4d5e53] sm:grid-cols-2">
-                <li>In-house restaurant timings</li>
-                <li>Sightseeing guidance support</li>
-                <li>Pickup / drop assistance on request</li>
-                <li>Private group coordination</li>
-                <li>Umiam day-experience recommendations</li>
-                <li>Pre-booking support via WhatsApp</li>
-              </ul>
-            </div>
-          </article>
-        </div>
-      </section>
+      const supportOne =
+        cottage.gallery_images?.[1] ||
+        getGalleryUrl(groupedGallery.interiorView) ||
+        heroImage;
 
-      <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 sm:pb-12 lg:pb-16">
-        <h2 className="mb-5 font-serif text-3xl text-[#214531] sm:text-4xl">Curated Property Gallery</h2>
-        {galleryShowcase.length > 0 ? (
-          <div className="grid gap-3">
-            <div className="grid gap-3 md:grid-cols-[2fr_1fr_1fr]">
-              {galleryShowcase[0] ? <img src={galleryShowcase[0].url} alt={galleryShowcase[0].alt} className="h-60 w-full rounded-2xl object-cover md:h-72" loading="lazy" /> : null}
-              {galleryShowcase[1] ? <img src={galleryShowcase[1].url} alt={galleryShowcase[1].alt} className="h-60 w-full rounded-2xl object-cover md:h-72" loading="lazy" /> : null}
-              {galleryShowcase[2] ? <img src={galleryShowcase[2].url} alt={galleryShowcase[2].alt} className="h-60 w-full rounded-2xl object-cover md:h-72" loading="lazy" /> : null}
-            </div>
-            <div className="grid gap-3 sm:grid-cols-3">
-              {galleryShowcase[3] ? <img src={galleryShowcase[3].url} alt={galleryShowcase[3].alt} className="h-48 w-full rounded-2xl object-cover" loading="lazy" /> : null}
-              {galleryShowcase[4] ? <img src={galleryShowcase[4].url} alt={galleryShowcase[4].alt} className="h-48 w-full rounded-2xl object-cover" loading="lazy" /> : null}
-              {galleryShowcase[5] ? <img src={galleryShowcase[5].url} alt={galleryShowcase[5].alt} className="h-48 w-full rounded-2xl object-cover" loading="lazy" /> : null}
-            </div>
-            {galleryShowcase[6] ? <img src={galleryShowcase[6].url} alt={galleryShowcase[6].alt} className="h-48 w-full rounded-2xl object-cover sm:h-56" loading="lazy" /> : null}
+      const supportTwo =
+        cottage.gallery_images?.[2] ||
+        getGalleryUrl(groupedGallery.outdoorGarden) ||
+        heroImage;
+
+      return (
+        <article
+          key={cottage.id}
+          className="overflow-hidden rounded-[28px] border border-[#dfd6c9] bg-[#fdfbf7] shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+        >
+          <div className="relative">
+            <img
+              src={heroImage}
+              alt={`${cottage.name} cover`}
+              className="h-52 w-full object-cover"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(16,28,20,0.02)_0%,rgba(16,28,20,0.12)_45%,rgba(16,28,20,0.35)_100%)]" />
           </div>
-        ) : (
-          <div className="rounded-2xl border border-dashed border-[#d8cdbd] bg-[#faf6ee] p-6 text-sm text-[#5a685e]">Gallery images will appear here once media is published.</div>
-        )}
+
+          <div className="grid grid-cols-2 gap-2 p-3">
+            <img
+              src={supportOne}
+              alt={`${cottage.name} interior`}
+              className="h-24 w-full rounded-2xl object-cover"
+              loading="lazy"
+            />
+            <img
+              src={supportTwo}
+              alt={`${cottage.name} sit-out and surroundings`}
+              className="h-24 w-full rounded-2xl object-cover"
+              loading="lazy"
+            />
+          </div>
+
+          <div className="space-y-2 p-4">
+            <h3 className="font-serif text-2xl text-[#224331]">
+              {cottage.name}
+            </h3>
+
+            <p className="line-clamp-3 text-sm text-[#5c6a61]">
+              {cottage.short_description ||
+                cottage.full_description ||
+                "Comfortable stay with curated amenities."}
+            </p>
+
+            <p className="text-sm text-[#355740]">
+              Up to {cottage.max_total_guests} guests
+            </p>
+
+            <div className="space-y-2 border-t border-[#e6ddcf] pt-3">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-[#234a34]">
+                  From ₹{Number(cottage.weekday_price).toLocaleString("en-IN")}/night
+                </p>
+
+                <Link
+                  href={`/cottages/${cottage.slug}`}
+                  className="text-sm font-semibold text-[#2e5f3e]"
+                >
+                  Details →
+                </Link>
+              </div>
+
+              <div className="rounded-xl bg-[#f4efe6] p-2">
+                <BookNowButton
+                  cottageSlug={cottage.slug}
+                  className="w-full rounded-lg bg-[#2f5a3d] px-3 py-2 text-sm font-semibold text-white"
+                  label="Book now"
+                />
+              </div>
+            </div>
+          </div>
+        </article>
+      );
+    })}
+  </div>
       </section>
+
+      <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 sm:pb-12 lg:pb-16">
+        <div>
+        <p className="text-xs uppercase tracking-[0.25em] text-[#0f7c69]">
+          Moments at La Ki Trep
+        </p>
+        <h2 className="mt-2 font-serif text-3xl text-[#214531] sm:text-4xl lg:text-5xl">
+          Explore the spaces, views, and experiences that shape the stay.
+        </h2>
+        <p className="mt-3 max-w-3xl text-sm leading-7 text-[#5a685e] sm:text-base">
+          From cottage corners and poolside afternoons to dining spaces and scenic
+          surroundings, take a closer look at the atmosphere of La Ki Trep.
+        </p>
+      </div>
+
+      {galleryPreviewCards.length > 0 ? (
+        <>
+          <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-12">
+            {galleryPreviewCards.map((item) => (
+              <Link
+                key={item.key}
+                href={`/gallery#${item.key}`}
+                className={`group relative overflow-hidden rounded-[28px] shadow-[0_12px_30px_rgba(34,67,49,0.10)] transition-transform duration-300 hover:-translate-y-0.5 ${item.className}`}
+              >
+                <img
+                  src={item.image.url}
+                  alt={item.image.alt}
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                  loading="lazy"
+                />
+
+                <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(17,41,31,0.08)_0%,rgba(26,74,54,0.22)_38%,rgba(22,70,49,0.78)_100%)]" />
+
+                <div className="absolute inset-x-0 bottom-0 p-4 text-white sm:p-5">
+                  <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-white/80">
+                    View gallery
+                  </p>
+                  <h3 className="mt-1 max-w-[85%] font-serif text-lg leading-6 sm:text-xl sm:leading-7">
+                    {item.label}
+                  </h3>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          <div className="mt-4 flex items-center justify-between gap-3 text-xs text-[#6b776f] sm:text-sm">
+            <p>
+              {totalGalleryImages} published images across cottage and property
+              categories
+            </p>
+            <Link href="/gallery" className="font-semibold text-[#2e5f3e]">
+              View all images →
+            </Link>
+          </div>
+        </>
+      ) : (
+        <div className="mt-8 rounded-2xl border border-dashed border-[#d8cdbd] bg-[#faf6ee] p-6 text-sm text-[#5a685e]">
+          Gallery images will appear here once media is published.
+        </div>
+      )}
+    </section>
 
       <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 sm:pb-12 lg:pb-16">
         <h2 className="font-serif text-3xl text-[#214531] sm:text-4xl">Around La Ki Trep</h2>

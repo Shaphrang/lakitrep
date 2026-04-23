@@ -1,3 +1,4 @@
+//src\app\(admin)\admin\(protected)\properties\[id]\gallery\page.tsx
 import Link from "next/link";
 import { AdminPageHeader } from "@/components/admin/shared/AdminPageHeader";
 import { GalleryManager } from "@/components/admin/gallery/GalleryManager";
