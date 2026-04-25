@@ -1,44 +1,72 @@
 # Resort Management Data Model Notes
 
-## Booking availability and overlap logic
+## Billing-related tables
 
-Availability checks block nights using:
-- Active booking statuses (`confirmed`, `advance_paid`, `checked_in`).
-- Cottage maintenance/blocked dates (`cottage_blocks`).
+### `bookings`
+Used billing summary fields:
+- `booking_total`
+- `total_amount` (room charge baseline)
+- `discount_amount`
+- `extra_charges_total`
+- `final_total`
+- `amount_paid`
+- `amount_pending`
+- `payment_status`
 
-Overlap logic treats checkout as non-blocking for next check-in:
-- Booking A: `check_in <= day < check_out`.
-- Conflict query uses `(existing.check_in < new.check_out) AND (existing.check_out > new.check_in)`.
+### `booking_charges`
+Stores multiple extra charges per booking:
+- `booking_id`
+- `charge_type`
+- `description`
+- `quantity`
+- `unit_price`
+- `amount`
 
-## Validation rules used in admin actions
+### `booking_payments`
+Stores immutable payment history records:
+- `booking_id`
+- `payment_date`
+- `amount`
+- `payment_mode`
+- `payment_type`
+- `reference_number`
+- `notes`
+- `received_by`
 
-### Customer
-- `full_name`: trimmed, min 2, max 100.
-- `phone`: numeric, exactly 10 digits.
-- `whatsapp_number`: optional, exactly 10 digits if provided.
-- `email`: optional, valid email if provided.
+### `invoices`
+Stores generated invoice snapshots:
+- `invoice_number`
+- `booking_id`
+- `invoice_date`
+- `subtotal`
+- `discount_amount`
+- `total_amount`
+- `amount_paid`
+- `amount_pending`
+- `status`
 
-### Manual booking
-- Required: customer, cottage, check-in, check-out.
-- Check-in date cannot be in the past.
-- Check-out must be after check-in.
-- Adults min 1; children/infants min 0.
-- Guest total must be <= cottage max guest capacity.
-- Discount cannot exceed room charges.
-- Server-side availability validation runs before insert.
+## Server-side recalculation contract
 
-### Billing
-- Extra charge quantity min 1.
-- Extra charge unit price must be > 0.
-- Payment amount must be > 0.
-- Discount cannot exceed current bill total.
+After charge/payment/discount write operations, the server recalculates:
 
-### Check-in / checkout
-- Check-in only on exact check-in date and valid status.
-- Checkout only on exact checkout date, status `checked_in`, and zero pending amount.
+- `extra_charges_total`
+- `final_total`
+- `amount_paid`
+- `amount_pending`
+- `payment_status`
 
-## Schema impact
+This prevents relying only on client-side totals.
 
-No new tables or columns were added in this UX/validation pass.
-Behavior changes are implemented in server actions and admin pages.
+## Payment status rules
 
+- `unpaid` when amount paid is 0
+- `advance_paid` when paid > 0, pending > 0, latest non-refund payment type is `advance`
+- `partially_paid` when paid > 0, pending > 0
+- `paid` when pending <= 0
+
+## Checkout rule dependencies
+
+Checkout action depends on:
+- `bookings.status = checked_in`
+- `bookings.amount_pending = 0`
+- current date equals `bookings.check_out_date`

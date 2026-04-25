@@ -6,6 +6,7 @@ type BookingFilters = {
   pageSize?: number;
   status?: string;
   source?: string;
+  paymentStatus?: string;
   query?: string;
   cottageId?: string;
   from?: string;
@@ -29,6 +30,7 @@ export async function getAllBookings(filters: BookingFilters = {}) {
     .range(fromIdx, toIdx);
 
   if (filters.status) query = query.eq("status", filters.status);
+  if (filters.paymentStatus) query = query.eq("payment_status", filters.paymentStatus);
   if (filters.source) query = query.eq("source", filters.source);
   if (filters.cottageId) query = query.eq("cottage_id", filters.cottageId);
   if (filters.from) query = query.gte("check_in_date", filters.from);

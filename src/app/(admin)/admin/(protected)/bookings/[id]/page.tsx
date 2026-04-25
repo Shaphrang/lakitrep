@@ -73,7 +73,7 @@ export default async function BookingDetailPage({ params, searchParams }: { para
           <div><dt className="text-[#65756a]">Pending</dt><dd className="font-medium text-[#294736]">₹{Number(booking.amount_pending ?? 0).toLocaleString("en-IN")}</dd></div>
           <div className="sm:col-span-2 lg:col-span-3"><dt className="text-[#65756a]">Special requests</dt><dd className="font-medium text-[#294736]">{String(booking.special_requests ?? "-")}</dd></div>
         </dl>
-        <div className="mt-3"><Link href={`/admin/billing?booking_id=${booking.id}`} className="rounded-xl border border-[#2e5a3d] px-3 py-2 text-sm font-semibold text-[#2e5a3d]">Open Billing</Link></div>
+        <div className="mt-3"><Link href={`/admin/billing/${booking.id}`} className="rounded-xl border border-[#2e5a3d] px-3 py-2 text-sm font-semibold text-[#2e5a3d]">Open Billing</Link></div>
       </div>
 
       <form action={updateBookingsAction} className={`${detailCard} flex flex-col gap-3 sm:flex-row sm:items-end`}>
