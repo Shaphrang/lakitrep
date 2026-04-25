@@ -1,7 +1,7 @@
 //src\components\public\booking\BookingFlowProvider.tsx
 "use client";
 
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { BookingRequestForm } from "@/components/public/BookingRequestForm";
 import type { PublicCottage } from "@/lib/public-site";
 
@@ -20,11 +20,36 @@ type BookingFlowContextValue = {
 
 const BookingFlowContext = createContext<BookingFlowContextValue | null>(null);
 
-export function BookingFlowProvider({ children, cottages }: { children: React.ReactNode; cottages: PublicCottage[] }) {
+function isMobileViewport() {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(max-width: 639px)").matches;
+}
+
+export function BookingFlowProvider({
+  children,
+  cottages,
+}: {
+  children: React.ReactNode;
+  cottages: PublicCottage[];
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [seed, setSeed] = useState<BookingSeed>({});
   const [lockCottage, setLockCottage] = useState(false);
   const [version, setVersion] = useState(0);
+  const pushedMobileHistoryRef = useRef(false);
+
+  const closeBooking = useCallback(() => {
+    setIsOpen(false);
+
+    if (
+      typeof window !== "undefined" &&
+      pushedMobileHistoryRef.current &&
+      window.location.hash === "#booking"
+    ) {
+      pushedMobileHistoryRef.current = false;
+      window.history.back();
+    }
+  }, []);
 
   const value = useMemo(
     () => ({
@@ -32,57 +57,102 @@ export function BookingFlowProvider({ children, cottages }: { children: React.Re
         setSeed(nextSeed);
         setLockCottage(Boolean(options?.lockCottage));
         setVersion((current) => current + 1);
+
+        if (typeof window !== "undefined" && isMobileViewport() && !pushedMobileHistoryRef.current) {
+          const nextUrl = `${window.location.pathname}${window.location.search}#booking`;
+          window.history.pushState({ ...(window.history.state ?? {}), bookingFlow: true }, "", nextUrl);
+          pushedMobileHistoryRef.current = true;
+        }
+
         setIsOpen(true);
       },
     }),
     [],
   );
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    function handlePopState() {
+      if (pushedMobileHistoryRef.current) {
+        pushedMobileHistoryRef.current = false;
+        setIsOpen(false);
+      }
+    }
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
   return (
     <BookingFlowContext.Provider value={value}>
       {children}
+
       {isOpen ? (
-  <div className="fixed inset-0 z-50">
-    <button
-      type="button"
-      className="absolute inset-0 bg-black/55 backdrop-blur-[2px]"
-      onClick={() => setIsOpen(false)}
-      aria-label="Close booking"
-    />
-    <div className="absolute inset-x-0 bottom-0 max-h-[94vh] overflow-auto rounded-t-[28px] border border-[#d8cebf] bg-[#f8f4ec] p-4 shadow-2xl sm:inset-auto sm:left-1/2 sm:top-1/2 sm:w-[min(92vw,760px)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-[30px] sm:p-6">
-      <div className="mb-4 flex items-start justify-between gap-4">
-        <div>
-          <p className="text-[11px] uppercase tracking-[0.2em] text-[#6f7f75]">La Ki Trep</p>
-          <h3 className="font-serif text-2xl text-[#214531] sm:text-[2rem]">
-            Complete your booking request
-          </h3>
+        <div className="fixed inset-0 z-50 bg-[#f8f4ec] sm:bg-black/55 sm:backdrop-blur-[2px]">
+          <button
+            type="button"
+            className="hidden sm:absolute sm:inset-0 sm:block"
+            onClick={closeBooking}
+            aria-label="Close booking"
+          />
+
+          <section
+            role="dialog"
+            aria-modal="true"
+            className="absolute inset-0 flex min-h-0 flex-col bg-[#f8f4ec] text-[#264330] sm:inset-auto sm:left-1/2 sm:top-1/2 sm:w-[min(94vw,920px)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-[32px] sm:border sm:border-[#d8cebf] sm:bg-[#f8f4ec] sm:p-5 sm:shadow-2xl"
+          >
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[#ded4c6] bg-[#f8f4ec]/95 px-4 py-3 backdrop-blur sm:mb-4 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#6f7f75]">
+                  La Ki Trep
+                </p>
+                <h3 className="mt-0.5 truncate font-serif text-xl leading-tight text-[#214531] sm:text-[1.8rem]">
+                  Complete your booking request
+                </h3>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeBooking}
+                className="rounded-full border border-[#d8cdbd] bg-white px-3 py-1.5 text-xs font-semibold text-[#2d573b] shadow-sm transition hover:bg-[#f1eadf] sm:px-4 sm:py-2 sm:text-sm"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3 sm:overflow-visible sm:px-0 sm:py-0">
+              <BookingRequestForm
+                key={version}
+                cottages={cottages}
+                initialValues={seed}
+                cottageLocked={lockCottage}
+                compact
+                onCancel={closeBooking}
+              />
+            </div>
+          </section>
         </div>
-        <button
-          type="button"
-          onClick={() => setIsOpen(false)}
-          className="rounded-full border border-[#d8cdbd] px-3 py-1.5 text-sm text-[#2d573b]"
-        >
-          Close
-        </button>
-      </div>
-      <BookingRequestForm
-        key={version}
-        cottages={cottages}
-        initialValues={seed}
-        cottageLocked={lockCottage}
-        compact
-      />
-    </div>
-  </div>
-) : null}
+      ) : null}
     </BookingFlowContext.Provider>
   );
 }
 
 export function useBookingFlow() {
   const context = useContext(BookingFlowContext);
+
   if (!context) {
     throw new Error("useBookingFlow must be used inside BookingFlowProvider");
   }
+
   return context;
 }
