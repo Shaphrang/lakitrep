@@ -11,19 +11,26 @@
 - [ ] No raw booking UUID is shown in staff-facing controls.
 
 ## Dedicated billing page (`/admin/billing/[bookingId]`)
+- [ ] Only one page title is shown: **Billing & Final Amount**.
+- [ ] “How this billing works” section is not present.
 - [ ] Booking summary shows guest, phone, cottage, stay, statuses, and source.
 - [ ] Room charge, extra charges, discount, final total, paid, pending are correct.
 - [ ] Pending `0` displays fully paid state.
 - [ ] Missing booking shows friendly not-found message.
+- [ ] Row 1 has 3 cards (Summary, Breakdown, Payment History) on desktop.
+- [ ] Row 2 has 3 cards (Extra Charges, Record Payment, Discount) on desktop.
 
 ## Extra charges
+- [ ] Open `+ Add Charge` modal.
 - [ ] Add Extra Bed charge.
 - [ ] Add Bonfire charge.
-- [ ] Add Food charge.
+- [ ] Add Food Bill charge.
 - [ ] Delete one charge with confirmation.
 - [ ] Totals update after add/delete.
 - [ ] Invalid quantity is blocked.
 - [ ] Negative unit price is blocked.
+- [ ] New charge appears in Extra Charges list.
+- [ ] New charge appears in Billing Breakdown line items.
 
 ## Discount
 - [ ] Apply valid discount.
@@ -44,7 +51,8 @@
 ## Invoice
 - [ ] Generate invoice from billing page.
 - [ ] Open latest invoice.
-- [ ] Print using browser print.
+- [ ] Print from billing page prints only invoice/billing print area.
+- [ ] Sidebar, navigation, forms, and action buttons are not printed.
 - [ ] Invoice values match billing summary.
 
 ## Checkout

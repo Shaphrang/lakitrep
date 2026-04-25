@@ -80,7 +80,7 @@ create table if not exists public.booking_payments (
 create table if not exists public.booking_charges (
   id uuid primary key default gen_random_uuid(),
   booking_id uuid not null references public.bookings(id) on delete cascade,
-  charge_type text not null default 'other' check (charge_type in ('room','extra_person','food','bonfire','transport','laundry','damage','discount_adjustment','other')),
+  charge_type text not null default 'other' check (charge_type in ('room','extra_bed','extra_person','food_bill','food','bonfire','transport','laundry','decoration','late_checkout','damage_charge','damage','discount_adjustment','other')),
   description text,
   quantity numeric(10,2) not null default 1 check (quantity > 0),
   unit_price numeric(10,2) not null default 0 check (unit_price >= 0),

@@ -21,7 +21,7 @@ export default async function BillingDetailPage({
   if (!billing.booking) {
     return (
       <div className="space-y-4">
-        <AdminPageHeader title="Billing & Final Amount" description="Simple, staff-friendly billing for one booking." />
+        <AdminPageHeader title="Billing & Final Amount" description="Manage charges, payments, invoice, and checkout for this booking." />
         <div className="rounded-2xl border border-[#ddd4c6] bg-white p-5 text-sm text-[#5e6f63]">
           Booking not found or no longer available.
           <div className="mt-3">
@@ -37,7 +37,7 @@ export default async function BillingDetailPage({
 
   return (
     <div className="space-y-4">
-      <AdminPageHeader title="Billing & Final Amount" description="Simple, staff-friendly billing for one booking." />
+      <AdminPageHeader title="Billing & Final Amount" description="Manage charges, payments, invoice, and checkout for this booking." />
       <BillingWorkspaceClient
         bookingId={bookingId}
         booking={(billing.booking ?? {}) as Record<string, unknown>}
