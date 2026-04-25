@@ -1,48 +1,60 @@
 # Resort Management Testing Checklist
 
-## Customer
-- [ ] Add valid customer (name + 10 digit phone).
-- [ ] Reject invalid phone input.
-- [ ] Reject invalid email format.
-- [ ] Duplicate phone shows friendly warning.
+## Billing selection page (`/admin/billing`)
+- [ ] Search by booking code.
+- [ ] Search by guest name.
+- [ ] Search by phone number.
+- [ ] Filter by booking status.
+- [ ] Filter by payment status.
+- [ ] Filter by date range.
+- [ ] Open billing from **Open Billing** action.
+- [ ] No raw booking UUID is shown in staff-facing controls.
 
-## Manual booking
-- [ ] Cottage must be selected before date selection.
-- [ ] Date picker loads cottage availability.
-- [ ] Unavailable dates are disabled.
-- [ ] Overlapping dates cannot be submitted.
-- [ ] Guest count cannot exceed cottage capacity.
-- [ ] Manual booking creation shows success dialog.
+## Dedicated billing page (`/admin/billing/[bookingId]`)
+- [ ] Booking summary shows guest, phone, cottage, stay, statuses, and source.
+- [ ] Room charge, extra charges, discount, final total, paid, pending are correct.
+- [ ] Pending `0` displays fully paid state.
+- [ ] Missing booking shows friendly not-found message.
 
-## Booking lifecycle
-- [ ] Status update works with success message.
-- [ ] Cancel/no-show flow does not crash detail page.
-- [ ] Booking delete returns friendly success/error state.
+## Extra charges
+- [ ] Add Extra Bed charge.
+- [ ] Add Bonfire charge.
+- [ ] Add Food charge.
+- [ ] Delete one charge with confirmation.
+- [ ] Totals update after add/delete.
+- [ ] Invalid quantity is blocked.
+- [ ] Negative unit price is blocked.
 
-## Check-in
-- [ ] Check-in disabled before check-in date.
-- [ ] Check-in enabled only on check-in date.
-- [ ] Non-eligible status keeps check-in disabled.
-- [ ] Success and error messages are staff friendly.
+## Discount
+- [ ] Apply valid discount.
+- [ ] Block discount greater than subtotal.
+- [ ] Block negative discount.
+
+## Payments
+- [ ] Record advance payment.
+- [ ] Record part payment.
+- [ ] Record final payment.
+- [ ] Block payment greater than pending amount.
+- [ ] Block overpayment above final total.
+- [ ] Refund cannot exceed paid amount.
+- [ ] Save button disabled for invalid amount.
+- [ ] Payment history appends new rows (no overwrite).
+- [ ] Payment status updates correctly.
+
+## Invoice
+- [ ] Generate invoice from billing page.
+- [ ] Open latest invoice.
+- [ ] Print using browser print.
+- [ ] Invoice values match billing summary.
 
 ## Checkout
-- [ ] Checkout disabled before checkout date.
-- [ ] Checkout disabled when date has passed.
-- [ ] Pending balance prevents checkout.
-- [ ] Final payment enables checkout.
-- [ ] Checkout success message appears.
+- [ ] Checkout disabled when pending > 0.
+- [ ] Checkout disabled when status is not checked-in.
+- [ ] Checkout disabled when date is not scheduled checkout date.
+- [ ] Checkout succeeds when all rules are satisfied.
 
-## Billing
-- [ ] Booking can be selected without UUID entry.
-- [ ] Billing header shows guest + booking + cottage context.
-- [ ] Add multiple extra charges.
-- [ ] Delete charge recalculates totals.
-- [ ] Apply discount validates upper limit.
-- [ ] Record payment updates paid/pending.
-- [ ] Generate invoice without manual booking ID typing.
-
-## Reports
-- [ ] From date cannot exceed To date.
-- [ ] Filtered report shows expected rows.
-- [ ] Empty states show “No records found for the selected filters.”
-
+## Error-safety
+- [ ] Empty charges does not crash.
+- [ ] Empty payment history does not crash.
+- [ ] Missing booking does not crash page.
+- [ ] Failed actions show friendly errors.

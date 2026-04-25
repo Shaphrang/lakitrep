@@ -222,14 +222,17 @@ export async function addBookingChargeAction(formData: FormData) {
   try {
     await requireAdmin();
     const supabase = await getSupabaseServerClient();
-    const quantity = Math.max(1, getNumber(formData, "quantity", 1));
-    const unitPrice = Math.max(0, getNumber(formData, "unit_price", 0));
-    if (unitPrice <= 0) throw new Error("Unit price must be greater than zero.");
+    const quantity = getNumber(formData, "quantity", 1);
+    const unitPrice = getNumber(formData, "unit_price", 0);
+    if (quantity <= 0) throw new Error("Please enter a valid quantity.");
+    if (unitPrice < 0) throw new Error("Please enter a valid amount.");
+    const chargeType = getString(formData, "charge_type");
+    if (!chargeType.trim()) throw new Error("Charge type is required.");
     const amount = Number((quantity * unitPrice).toFixed(2));
 
     const { error } = await supabase.from("booking_charges").insert({
       booking_id: bookingId,
-      charge_type: getString(formData, "charge_type") || "other",
+      charge_type: chargeType || "other",
       description: getOptionalString(formData, "description") || null,
       quantity,
       unit_price: unitPrice,
@@ -240,6 +243,7 @@ export async function addBookingChargeAction(formData: FormData) {
     await recalculateBookingTotals(bookingId);
     revalidatePath(`/admin/bookings/${bookingId}`);
     revalidatePath("/admin/billing");
+    revalidatePath(`/admin/billing/${bookingId}`);
     redirectWithMessage(returnPath, "success", "Extra charge added successfully.");
   } catch (error) {
     if (isRedirectError(error)) throw error;
@@ -261,6 +265,7 @@ export async function deleteBookingChargeAction(formData: FormData) {
     await recalculateBookingTotals(bookingId);
     revalidatePath(`/admin/bookings/${bookingId}`);
     revalidatePath("/admin/billing");
+    revalidatePath(`/admin/billing/${bookingId}`);
     redirectWithMessage(returnPath, "success", "Extra charge deleted successfully.");
   } catch (error) {
     if (isRedirectError(error)) throw error;
@@ -279,7 +284,7 @@ export async function applyBookingDiscountAction(formData: FormData) {
     const { data: booking } = await supabase.from("bookings").select("id,total_amount,extra_charges_total").eq("id", bookingId).maybeSingle();
     if (!booking) throw new Error("Booking not found.");
     const maxDiscount = Number(booking.total_amount ?? 0) + Number(booking.extra_charges_total ?? 0);
-    if (discount > maxDiscount) throw new Error("Discount cannot exceed current bill total.");
+    if (discount > maxDiscount) throw new Error("Discount cannot be more than the subtotal.");
 
     const { error } = await supabase.from("bookings").update({ discount_amount: discount }).eq("id", bookingId);
     if (error) throw new Error("Unable to apply discount.");
@@ -287,6 +292,7 @@ export async function applyBookingDiscountAction(formData: FormData) {
     await recalculateBookingTotals(bookingId);
     revalidatePath(`/admin/bookings/${bookingId}`);
     revalidatePath("/admin/billing");
+    revalidatePath(`/admin/billing/${bookingId}`);
     redirectWithMessage(returnPath, "success", "Discount applied successfully.");
   } catch (error) {
     if (isRedirectError(error)) throw error;
@@ -301,15 +307,27 @@ export async function addBookingPaymentAction(formData: FormData) {
   try {
     const admin = await requireAdmin();
     const supabase = await getSupabaseServerClient();
-    const amount = Math.max(0, getNumber(formData, "amount", 0));
+    const amount = getNumber(formData, "amount", 0);
     if (amount <= 0) throw new Error("Payment amount must be positive.");
+    const paymentType = getOptionalString(formData, "payment_type") || "part_payment";
+    const { data: booking } = await supabase.from("bookings").select("id,final_total,amount_paid,amount_pending").eq("id", bookingId).maybeSingle();
+    if (!booking) throw new Error("Booking not found.");
+
+    const currentPending = Number((booking as { amount_pending?: number }).amount_pending ?? 0);
+    const currentPaid = Number((booking as { amount_paid?: number }).amount_paid ?? 0);
+    const finalTotal = Number((booking as { final_total?: number }).final_total ?? 0);
+    const isRefund = paymentType === "refund";
+    if (!isRefund && amount > currentPending) throw new Error("Payment amount cannot be more than the pending amount.");
+    const projectedPaid = isRefund ? currentPaid - amount : currentPaid + amount;
+    if (!isRefund && projectedPaid > finalTotal) throw new Error("Payment amount cannot be more than the pending amount.");
+    if (isRefund && projectedPaid < 0) throw new Error("Refund amount cannot be more than the amount paid so far.");
 
     const { error } = await supabase.from("booking_payments").insert({
       booking_id: bookingId,
       payment_date: getOptionalString(formData, "payment_date") || new Date().toISOString().slice(0, 10),
       amount,
       payment_mode: getOptionalString(formData, "payment_mode") || "cash",
-      payment_type: getOptionalString(formData, "payment_type") || "part_payment",
+      payment_type: paymentType,
       reference_number: getOptionalString(formData, "reference_number") || null,
       notes: getOptionalString(formData, "notes") || null,
       received_by: admin.id,
@@ -320,6 +338,7 @@ export async function addBookingPaymentAction(formData: FormData) {
     revalidatePath(`/admin/bookings/${bookingId}`);
     revalidatePath("/admin/payments");
     revalidatePath("/admin/billing");
+    revalidatePath(`/admin/billing/${bookingId}`);
     redirectWithMessage(returnPath, "success", "Payment recorded successfully. The billing summary has been updated.");
   } catch (error) {
     if (isRedirectError(error)) throw error;
@@ -404,6 +423,7 @@ export async function generateInvoiceAction(formData: FormData) {
       .eq("id", bookingId)
       .maybeSingle();
     if (!booking) throw new Error("Booking not found.");
+    if (Number((booking as { final_total?: number }).final_total ?? 0) < 0) throw new Error("Final total is invalid.");
 
     const { count } = await supabase.from("invoices").select("id", { count: "exact", head: true });
     const next = ((count ?? 0) + 1).toString().padStart(4, "0");
@@ -425,6 +445,7 @@ export async function generateInvoiceAction(formData: FormData) {
     if (error) throw new Error("Unable to generate invoice.");
     revalidatePath(`/admin/bookings/${bookingId}`);
     revalidatePath("/admin/invoices");
+    revalidatePath(`/admin/billing/${bookingId}`);
     redirectWithMessage(returnPath, "success", "Invoice generated successfully.");
   } catch (error) {
     if (isRedirectError(error)) throw error;

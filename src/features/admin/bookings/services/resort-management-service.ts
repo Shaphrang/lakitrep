@@ -141,9 +141,15 @@ export async function assertCottageAvailability(cottageId: string, checkInDate: 
 export async function getBillingContext(bookingId: string) {
   const supabase = await getSupabaseServerClient();
   const [{ data: booking }, { data: charges }, { data: payments }, { data: invoices }] = await Promise.all([
-    supabase.from("bookings").select("id,booking_code,status,payment_status,check_in_date,check_out_date,total_amount,discount_amount,extra_charges_total,final_total,amount_paid,amount_pending,guest:booking_guests!bookings_booking_guest_id_fkey(full_name,phone),cottages(name)").eq("id", bookingId).maybeSingle(),
+    supabase
+      .from("bookings")
+      .select(
+        "id,booking_code,status,payment_status,source,check_in_date,check_out_date,adults,children,infants,nights,total_amount,discount_amount,extra_charges_total,final_total,amount_paid,amount_pending,guest:booking_guests!bookings_booking_guest_id_fkey(full_name,phone,whatsapp_number,email),cottages(name,weekday_price,weekend_price)",
+      )
+      .eq("id", bookingId)
+      .maybeSingle(),
     supabase.from("booking_charges").select("*").eq("booking_id", bookingId).order("created_at", { ascending: false }),
-    supabase.from("booking_payments").select("*").eq("booking_id", bookingId).order("payment_date", { ascending: false }),
+    supabase.from("booking_payments").select("*").eq("booking_id", bookingId).order("created_at", { ascending: false }),
     supabase.from("invoices").select("*").eq("booking_id", bookingId).order("created_at", { ascending: false }),
   ]);
 
@@ -177,7 +183,9 @@ export async function recalculateBookingTotals(bookingId: string) {
   const finalTotal = Math.max(0, bookingTotal + extraChargesTotal - discountAmount);
   const amountPending = Math.max(0, finalTotal - totalPaid);
 
-  const paymentStatus = amountPending <= 0 ? "paid" : totalPaid > 0 ? "partially_paid" : "unpaid";
+  const latestNonRefund = [...(payments ?? [])].find((row) => String((row as { payment_type?: string }).payment_type ?? "") !== "refund");
+  const latestType = String((latestNonRefund as { payment_type?: string } | undefined)?.payment_type ?? "");
+  const paymentStatus = amountPending <= 0 ? "paid" : totalPaid > 0 ? (latestType === "advance" ? "advance_paid" : "partially_paid") : "unpaid";
 
   await supabase
     .from("bookings")
