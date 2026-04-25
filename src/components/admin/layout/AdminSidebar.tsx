@@ -5,10 +5,18 @@ import { usePathname } from "next/navigation";
 
 const adminNavItems = [
   { href: "/admin", label: "Dashboard" },
+  { href: "/admin/bookings", label: "Bookings" },
+  { href: "/admin/bookings/new", label: "Add Manual Booking" },
+  { href: "/admin/customers", label: "Customers" },
+  { href: "/admin/availability", label: "Calendar / Availability" },
+  { href: "/admin/checkin-checkout", label: "Check-in / Checkout" },
+  { href: "/admin/billing", label: "Billing" },
+  { href: "/admin/payments", label: "Payments / Collection" },
+  { href: "/admin/invoices", label: "Invoices" },
+  { href: "/admin/reports", label: "Reports" },
   { href: "/admin/properties", label: "Properties" },
   { href: "/admin/cottages", label: "Cottages" },
   { href: "/admin/attractions", label: "Attractions" },
-  { href: "/admin/bookings", label: "Bookings" },
   { href: "/admin/policies", label: "Policies" },
   { href: "/admin/seo", label: "SEO" },
 ];
@@ -42,7 +50,7 @@ function SidebarBody({ pathname, onClose }: { pathname: string; onClose: () => v
         <h2 className="mt-2 font-serif text-2xl leading-tight">Admin Panel</h2>
       </div>
 
-      <nav className="space-y-1.5">
+      <nav className="space-y-1.5 overflow-y-auto pr-1">
         {adminNavItems.map((item) => {
           const active = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href));
           return (
@@ -63,7 +71,7 @@ function SidebarBody({ pathname, onClose }: { pathname: string; onClose: () => v
       </nav>
 
       <div className="mt-auto rounded-xl border border-[#3b5a49] bg-white/5 p-3 text-xs text-[#d4c9b2]">
-        Manage inventory, stays, and guest flow.
+        Manage inventory, guests, billing, and reporting.
       </div>
     </div>
   );
