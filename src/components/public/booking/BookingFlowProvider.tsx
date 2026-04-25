@@ -1,7 +1,15 @@
 //src\components\public\booking\BookingFlowProvider.tsx
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { BookingRequestForm } from "@/components/public/BookingRequestForm";
 import type { PublicCottage } from "@/lib/public-site";
 
@@ -53,14 +61,25 @@ export function BookingFlowProvider({
 
   const value = useMemo(
     () => ({
-      openBooking: (nextSeed: BookingSeed = {}, options?: { lockCottage?: boolean }) => {
+      openBooking: (
+        nextSeed: BookingSeed = {},
+        options?: { lockCottage?: boolean },
+      ) => {
         setSeed(nextSeed);
         setLockCottage(Boolean(options?.lockCottage));
         setVersion((current) => current + 1);
 
-        if (typeof window !== "undefined" && isMobileViewport() && !pushedMobileHistoryRef.current) {
+        if (
+          typeof window !== "undefined" &&
+          isMobileViewport() &&
+          !pushedMobileHistoryRef.current
+        ) {
           const nextUrl = `${window.location.pathname}${window.location.search}#booking`;
-          window.history.pushState({ ...(window.history.state ?? {}), bookingFlow: true }, "", nextUrl);
+          window.history.pushState(
+            { ...(window.history.state ?? {}), bookingFlow: true },
+            "",
+            nextUrl,
+          );
           pushedMobileHistoryRef.current = true;
         }
 
@@ -130,7 +149,7 @@ export function BookingFlowProvider({
               </button>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3 sm:overflow-visible sm:px-0 sm:py-0">
+            <div className="min-h-0 flex-1 px-3 py-3 sm:px-0 sm:py-0">
               <BookingRequestForm
                 key={version}
                 cottages={cottages}

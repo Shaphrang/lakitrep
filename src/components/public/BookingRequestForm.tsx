@@ -2,7 +2,10 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
-import { submitBookingRequest, type BookingFormState } from "@/actions/public/bookings";
+import {
+  submitBookingRequest,
+  type BookingFormState,
+} from "@/actions/public/bookings";
 import {
   calculateBookingEstimate,
   DEFAULT_GUESTS,
@@ -45,11 +48,20 @@ export function BookingRequestForm({
   compact = false,
   onCancel,
 }: BookingRequestFormProps) {
-  const [state, formAction, pending] = useActionState(submitBookingRequest, initialState);
+  const [state, formAction, pending] = useActionState(
+    submitBookingRequest,
+    initialState,
+  );
 
-  const [cottageSlug, setCottageSlug] = useState(initialValues?.cottageSlug ?? "");
-  const [checkInDate, setCheckInDate] = useState(initialValues?.checkInDate ?? "");
-  const [checkOutDate, setCheckOutDate] = useState(initialValues?.checkOutDate ?? "");
+  const [cottageSlug, setCottageSlug] = useState(
+    initialValues?.cottageSlug ?? "",
+  );
+  const [checkInDate, setCheckInDate] = useState(
+    initialValues?.checkInDate ?? "",
+  );
+  const [checkOutDate, setCheckOutDate] = useState(
+    initialValues?.checkOutDate ?? "",
+  );
   const [phone, setPhone] = useState("");
   const [whatsappNumber, setWhatsappNumber] = useState("");
 
@@ -74,7 +86,11 @@ export function BookingRequestForm({
     guests,
   });
 
-  const phoneError = phone.length > 0 && phone.length !== 10 ? "Phone number must be exactly 10 digits." : "";
+  const phoneError =
+    phone.length > 0 && phone.length !== 10
+      ? "Phone number must be exactly 10 digits."
+      : "";
+
   const whatsappError =
     whatsappNumber.length > 0 && whatsappNumber.length !== 10
       ? "WhatsApp number must be exactly 10 digits."
@@ -111,11 +127,11 @@ export function BookingRequestForm({
   return (
     <form
       action={formAction}
-      className={`overflow-hidden rounded-[24px] border border-[#dfd6c9] bg-[#fdfbf7] shadow-sm ${
+      className={`flex h-full min-h-0 flex-col overflow-hidden rounded-[24px] border border-[#dfd6c9] bg-[#fdfbf7] shadow-sm sm:h-auto ${
         compact ? "text-sm" : ""
       }`}
     >
-      <div className="space-y-3 p-3 sm:p-4">
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3 pb-4 sm:overflow-visible sm:p-4">
         <div className="grid gap-3 lg:grid-cols-[1.18fr_0.82fr]">
           <div className="space-y-3">
             <div className="grid gap-3 sm:grid-cols-2">
@@ -142,11 +158,15 @@ export function BookingRequestForm({
                   pattern="[0-9]{10}"
                   autoComplete="tel"
                   placeholder="10 digit mobile number"
-                  onChange={(event) => setPhone(keepOnlyTenDigits(event.target.value))}
+                  onChange={(event) =>
+                    setPhone(keepOnlyTenDigits(event.target.value))
+                  }
                   aria-invalid={Boolean(phoneError)}
                   className={`${inputBase} ${inputSize}`}
                 />
-                {phoneError ? <p className="text-xs text-rose-700">{phoneError}</p> : null}
+                {phoneError ? (
+                  <p className="text-xs text-rose-700">{phoneError}</p>
+                ) : null}
               </label>
 
               <label className={labelClass}>
@@ -171,11 +191,15 @@ export function BookingRequestForm({
                   pattern="[0-9]{10}"
                   autoComplete="tel"
                   placeholder="Optional"
-                  onChange={(event) => setWhatsappNumber(keepOnlyTenDigits(event.target.value))}
+                  onChange={(event) =>
+                    setWhatsappNumber(keepOnlyTenDigits(event.target.value))
+                  }
                   aria-invalid={Boolean(whatsappError)}
                   className={`${inputBase} ${inputSize}`}
                 />
-                {whatsappError ? <p className="text-xs text-rose-700">{whatsappError}</p> : null}
+                {whatsappError ? (
+                  <p className="text-xs text-rose-700">{whatsappError}</p>
+                ) : null}
               </label>
             </div>
 
@@ -197,6 +221,7 @@ export function BookingRequestForm({
                 value={checkInDate}
                 onChange={(event) => setCheckInDate(event.target.value)}
               />
+
               <input
                 required
                 type="date"
@@ -206,13 +231,19 @@ export function BookingRequestForm({
                 onChange={(event) => setCheckOutDate(event.target.value)}
               />
 
-              {/* Hidden fallback only. The country field is removed from the visible booking form. */}
               <input type="hidden" name="country" value="India" />
 
-              <input type="hidden" name="totalGuests" value={totalGuests} readOnly />
+              <input
+                type="hidden"
+                name="totalGuests"
+                value={totalGuests}
+                readOnly
+              />
             </div>
 
-            {dateError ? <p className="text-sm text-rose-700">{dateError}</p> : null}
+            {dateError ? (
+              <p className="text-sm text-rose-700">{dateError}</p>
+            ) : null}
 
             <label className={labelClass}>
               <span className={labelTextClass}>Special requests</span>
@@ -243,7 +274,10 @@ export function BookingRequestForm({
                   </option>
                 ))}
               </select>
-              {cottageLocked ? <input type="hidden" name="cottageSlug" value={cottageSlug} /> : null}
+
+              {cottageLocked ? (
+                <input type="hidden" name="cottageSlug" value={cottageSlug} />
+              ) : null}
             </label>
 
             <div className="rounded-2xl border border-[#d8cebf] bg-white p-3">
@@ -253,9 +287,10 @@ export function BookingRequestForm({
                     Guests
                   </p>
                   <p className="text-xs text-[#78867c]">
-                    {guests.adults} adult{guests.adults > 1 ? "s" : ""} + {guests.children} child
-                    {guests.children !== 1 ? "ren" : ""} + {guests.infants} infant
-                    {guests.infants !== 1 ? "s" : ""}
+                    {guests.adults} adult{guests.adults > 1 ? "s" : ""} +{" "}
+                    {guests.children} child
+                    {guests.children !== 1 ? "ren" : ""} + {guests.infants}{" "}
+                    infant{guests.infants !== 1 ? "s" : ""}
                   </p>
                 </div>
 
@@ -265,21 +300,27 @@ export function BookingRequestForm({
               </div>
 
               <div className="grid gap-2">
-                {([
-                  ["Adults", "adults", 1],
-                  ["Children", "children", 0],
-                  ["Infants", "infants", 0],
-                ] as const).map(([label, key, min]) => (
+                {(
+                  [
+                    ["Adults", "adults", 1],
+                    ["Children", "children", 0],
+                    ["Infants", "infants", 0],
+                  ] as const
+                ).map(([label, key, min]) => (
                   <div
                     key={key}
                     className="flex items-center justify-between rounded-xl border border-[#eee5d8] bg-[#fffdfa] px-3 py-2"
                   >
-                    <span className="text-sm font-medium text-[#314d3b]">{label}</span>
+                    <span className="text-sm font-medium text-[#314d3b]">
+                      {label}
+                    </span>
 
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => updateGuests(key, guests[key] - 1, min)}
+                        onClick={() =>
+                          updateGuests(key, guests[key] - 1, min)
+                        }
                         className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d7cbb9] bg-white text-[#2f513c] transition hover:bg-[#f2ecdf]"
                         aria-label={`Decrease ${label}`}
                       >
@@ -292,7 +333,9 @@ export function BookingRequestForm({
 
                       <button
                         type="button"
-                        onClick={() => updateGuests(key, guests[key] + 1, min)}
+                        onClick={() =>
+                          updateGuests(key, guests[key] + 1, min)
+                        }
                         className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d7cbb9] bg-white text-[#2f513c] transition hover:bg-[#f2ecdf]"
                         aria-label={`Increase ${label}`}
                       >
@@ -300,7 +343,12 @@ export function BookingRequestForm({
                       </button>
                     </div>
 
-                    <input type="hidden" name={key} value={guests[key]} readOnly />
+                    <input
+                      type="hidden"
+                      name={key}
+                      value={guests[key]}
+                      readOnly
+                    />
                   </div>
                 ))}
               </div>
@@ -310,17 +358,25 @@ export function BookingRequestForm({
               <div className="rounded-2xl border border-[#e5dccf] bg-white p-3 text-xs text-[#54635a]">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-semibold text-[#284735]">Pricing estimate</p>
+                    <p className="font-semibold text-[#284735]">
+                      Pricing estimate
+                    </p>
                     <p className="mt-1">
                       Weekday: {formatCurrency(selectedCottage.weekday_price)}
                     </p>
-                    <p>Weekend: {formatCurrency(selectedCottage.weekend_price)}</p>
+                    <p>
+                      Weekend: {formatCurrency(selectedCottage.weekend_price)}
+                    </p>
                   </div>
 
                   {estimate ? (
                     <div className="rounded-xl bg-[#2f5a3d] px-3 py-2 text-right text-white">
-                      <p className="text-[10px] uppercase tracking-wide opacity-80">Estimated</p>
-                      <p className="text-sm font-bold">{formatCurrency(estimate.totalAmount)}</p>
+                      <p className="text-[10px] uppercase tracking-wide opacity-80">
+                        Estimated
+                      </p>
+                      <p className="text-sm font-bold">
+                        {formatCurrency(estimate.totalAmount)}
+                      </p>
                     </div>
                   ) : null}
                 </div>
@@ -328,12 +384,16 @@ export function BookingRequestForm({
                 {estimate ? (
                   <div className="mt-2 space-y-1">
                     <p>
-                      {estimate.nights} night{estimate.nights > 1 ? "s" : ""} (
-                      {estimate.weekdayNights} weekday + {estimate.weekendNights} weekend)
+                      {estimate.nights} night
+                      {estimate.nights > 1 ? "s" : ""} (
+                      {estimate.weekdayNights} weekday +{" "}
+                      {estimate.weekendNights} weekend)
                     </p>
 
                     {estimate.childAmount > 0 ? (
-                      <p>Child charges: {formatCurrency(estimate.childAmount)}</p>
+                      <p>
+                        Child charges: {formatCurrency(estimate.childAmount)}
+                      </p>
                     ) : null}
                   </div>
                 ) : (
@@ -352,38 +412,48 @@ export function BookingRequestForm({
               </div>
             ) : null}
 
-            {capacityError ? <p className="text-sm text-rose-700">{capacityError}</p> : null}
+            {capacityError ? (
+              <p className="text-sm text-rose-700">{capacityError}</p>
+            ) : null}
 
             {state.message ? (
-              <p className={`rounded-xl px-3 py-2 text-sm ${state.success ? "bg-[#e8f3eb] text-[#2f663f]" : "bg-rose-50 text-rose-700"}`}>
+              <p
+                className={`rounded-xl px-3 py-2 text-sm ${
+                  state.success
+                    ? "bg-[#e8f3eb] text-[#2f663f]"
+                    : "bg-rose-50 text-rose-700"
+                }`}
+              >
                 {state.message}
                 {state.bookingCode ? ` Ref: ${state.bookingCode}` : ""}
-                {state.estimatedTotal ? ` Estimated: ${formatCurrency(state.estimatedTotal)}` : ""}
+                {state.estimatedTotal
+                  ? ` Estimated: ${formatCurrency(state.estimatedTotal)}`
+                  : ""}
               </p>
             ) : null}
           </div>
         </div>
       </div>
 
-      <div className="sticky bottom-0 z-20 border-t border-[#e1d7c8] bg-[#fdfbf7]/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur sm:static sm:grid sm:grid-cols-[0.9fr_1.1fr] sm:gap-2 sm:p-4">
-  {onCancel ? (
-    <button
-      type="button"
-      onClick={onCancel}
-      className="hidden h-11 rounded-xl border border-[#cfc4b3] bg-white px-4 text-sm font-semibold text-[#2f513c] shadow-sm transition hover:bg-[#f2ecdf] sm:block"
-    >
-      Cancel
-    </button>
-  ) : null}
+      <div className="shrink-0 border-t border-[#e1d7c8] bg-[#fdfbf7]/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur sm:grid sm:grid-cols-[0.9fr_1.1fr] sm:gap-2 sm:p-4">
+        {onCancel ? (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="hidden h-11 rounded-xl border border-[#cfc4b3] bg-white px-4 text-sm font-semibold text-[#2f513c] shadow-sm transition hover:bg-[#f2ecdf] sm:block"
+          >
+            Cancel
+          </button>
+        ) : null}
 
-  <button
-    type="submit"
-    disabled={pending || !canSubmit}
-    className="h-12 w-full rounded-2xl bg-[#e17b22] px-5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(225,123,34,0.35)] transition hover:bg-[#c96718] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 sm:h-11 sm:rounded-xl"
-  >
-    {pending ? "Submitting..." : "Book Now"}
-  </button>
-</div>
+        <button
+          type="submit"
+          disabled={pending || !canSubmit}
+          className="h-12 w-full rounded-2xl bg-[#e17b22] px-5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(225,123,34,0.35)] transition hover:bg-[#c96718] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 sm:h-11 sm:rounded-xl"
+        >
+          {pending ? "Submitting..." : "Book Now"}
+        </button>
+      </div>
     </form>
   );
 }
