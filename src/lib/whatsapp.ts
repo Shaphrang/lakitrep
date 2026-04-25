@@ -24,6 +24,7 @@ type NotificationResult = {
   ok: boolean;
   skipped?: boolean;
   error?: string;
+  fallbackLink?: string;
 };
 
 function formatBookingWhatsappMessage(payload: BookingWhatsappPayload) {
@@ -56,14 +57,24 @@ function formatBookingWhatsappMessage(payload: BookingWhatsappPayload) {
   ].join("\n");
 }
 
+function buildWhatsAppAdminLink(message: string) {
+  const recipientDigits = WHATSAPP_RECIPIENT_NUMBER?.replace(/\D/g, "");
+  if (!recipientDigits) return undefined;
+  return `https://wa.me/${recipientDigits}?text=${encodeURIComponent(message)}`;
+}
+
 export async function sendBookingWhatsappNotification(payload: BookingWhatsappPayload): Promise<NotificationResult> {
+  const message = formatBookingWhatsappMessage(payload);
   // Required env vars for WhatsApp Cloud API:
   // WHATSAPP_CLOUD_API_TOKEN, WHATSAPP_CLOUD_PHONE_NUMBER_ID, WHATSAPP_BOOKING_RECIPIENT_NUMBER
+  // If Cloud API is not configured yet, booking still succeeds and we return a fallback wa.me admin link.
   if (!WHATSAPP_API_TOKEN || !WHATSAPP_PHONE_NUMBER_ID || !WHATSAPP_RECIPIENT_NUMBER) {
-    return { ok: false, skipped: true, error: "WhatsApp Cloud API env vars are not configured." };
+    return {
+      ok: true,
+      skipped: true,
+      fallbackLink: buildWhatsAppAdminLink(message),
+    };
   }
-
-  const message = formatBookingWhatsappMessage(payload);
 
   const response = await fetch(`https://graph.facebook.com/v23.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`, {
     method: "POST",
@@ -87,6 +98,7 @@ export async function sendBookingWhatsappNotification(payload: BookingWhatsappPa
     return {
       ok: false,
       error: `WhatsApp API request failed (${response.status}): ${failureBody}`,
+      fallbackLink: buildWhatsAppAdminLink(message),
     };
   }
 

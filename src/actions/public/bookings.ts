@@ -265,6 +265,8 @@ export async function submitBookingRequest(
   // Notification delivery should not fail booking persistence.
   if (!whatsappResult.ok) {
     console.error("WhatsApp notification failed after booking creation", whatsappResult.error ?? "Unknown error");
+    } else if (whatsappResult.skipped) {
+    console.info("WhatsApp Cloud API not configured yet. Booking saved without automated notification.", whatsappResult.fallbackLink ?? "");
   }
 
   return {
