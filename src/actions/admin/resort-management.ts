@@ -1,15 +1,16 @@
 "use server";
 
-import { format, isAfter, isBefore, parseISO } from "date-fns";
+import { addDays, eachDayOfInterval, format, isAfter, isBefore, parseISO } from "date-fns";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { z } from "zod";
 import {
-  assertCottageAvailability,
   calculateNights,
   recalculateBookingTotals,
   simpleRoomEstimate,
 } from "@/features/admin/bookings/services/resort-management-service";
+import { getCottageAvailability } from "@/actions/public/bookings";
 import { requireAdmin } from "@/lib/auth/admin";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getNumber, getOptionalString, getString } from "./_shared";
@@ -36,6 +37,20 @@ function redirectWithMessage(path: string, key: "success" | "error", message: st
   const joiner = path.includes("?") ? "&" : "?";
   redirect(`${path}${joiner}${key}=${encodeURIComponent(message)}`);
 }
+
+function rangeContainsUnavailableDates(checkInDate: string, checkOutDate: string, unavailableDateSet: Set<string>) {
+  const checkIn = parseISO(checkInDate);
+  const checkOut = parseISO(checkOutDate);
+  if (!isBefore(checkIn, checkOut)) return true;
+
+  const blockedNights = eachDayOfInterval({
+    start: checkIn,
+    end: addDays(checkOut, -1),
+  });
+
+  return blockedNights.some((day) => unavailableDateSet.has(format(day, "yyyy-MM-dd")));
+}
+
 
 export async function createOrUpdateCustomerAction(formData: FormData) {
   const returnPath = getOptionalString(formData, "return_path") || "/admin/customers";
@@ -85,6 +100,7 @@ export async function createOrUpdateCustomerAction(formData: FormData) {
     revalidatePath("/admin/customers");
     redirectWithMessage(returnPath, "success", "Customer added successfully.");
   } catch (error) {
+    if (isRedirectError(error)) throw error;
     redirectWithMessage(returnPath, "error", friendlyError(error, "Unable to save customer."));
   }
 }
@@ -114,7 +130,7 @@ export async function createManualBookingAction(formData: FormData) {
 
     const { data: cottage, error: cottageError } = await supabase
       .from("cottages")
-      .select("id,max_total_guests,weekday_price,weekend_price")
+      .select("id,slug,max_total_guests,weekday_price,weekend_price")
       .eq("id", cottageId)
       .maybeSingle();
 
@@ -124,8 +140,13 @@ export async function createManualBookingAction(formData: FormData) {
       throw new Error("Guest count exceeds cottage capacity.");
     }
 
-    const availability = await assertCottageAvailability(cottageId, checkInDate, checkOutDate);
-    if (availability.hasConflict) {
+    const availability = await getCottageAvailability(String(cottage.slug ?? ""));
+    if (availability.error) {
+      throw new Error("Unable to verify current availability. Please try again.");
+    }
+
+    const unavailableDateSet = new Set(availability.unavailableDates ?? []);
+    if (rangeContainsUnavailableDates(checkInDate, checkOutDate, unavailableDateSet)) {
       throw new Error("Selected dates are no longer available for this cottage. Please choose another date.");
     }
 
@@ -189,6 +210,7 @@ export async function createManualBookingAction(formData: FormData) {
     revalidatePath("/admin/bookings");
     redirectWithMessage(`/admin/bookings/${created.id}`, "success", "Booking created successfully. The booking has been added to the calendar.");
   } catch (error) {
+    if (isRedirectError(error)) throw error;
     redirectWithMessage(returnPath, "error", friendlyError(error, "Unable to create manual booking."));
   }
 }
@@ -220,6 +242,7 @@ export async function addBookingChargeAction(formData: FormData) {
     revalidatePath("/admin/billing");
     redirectWithMessage(returnPath, "success", "Extra charge added successfully.");
   } catch (error) {
+    if (isRedirectError(error)) throw error;
     redirectWithMessage(returnPath, "error", friendlyError(error, "Unable to add charge."));
   }
 }
@@ -240,6 +263,7 @@ export async function deleteBookingChargeAction(formData: FormData) {
     revalidatePath("/admin/billing");
     redirectWithMessage(returnPath, "success", "Extra charge deleted successfully.");
   } catch (error) {
+    if (isRedirectError(error)) throw error;
     redirectWithMessage(returnPath, "error", friendlyError(error, "Unable to delete charge."));
   }
 }
@@ -265,6 +289,7 @@ export async function applyBookingDiscountAction(formData: FormData) {
     revalidatePath("/admin/billing");
     redirectWithMessage(returnPath, "success", "Discount applied successfully.");
   } catch (error) {
+    if (isRedirectError(error)) throw error;
     redirectWithMessage(returnPath, "error", friendlyError(error, "Unable to apply discount."));
   }
 }
@@ -297,6 +322,7 @@ export async function addBookingPaymentAction(formData: FormData) {
     revalidatePath("/admin/billing");
     redirectWithMessage(returnPath, "success", "Payment recorded successfully. The billing summary has been updated.");
   } catch (error) {
+    if (isRedirectError(error)) throw error;
     redirectWithMessage(returnPath, "error", friendlyError(error, "Unable to record payment."));
   }
 }
@@ -359,6 +385,7 @@ export async function performCheckInOutAction(formData: FormData) {
 
     throw new Error("Invalid action.");
   } catch (error) {
+    if (isRedirectError(error)) throw error;
     redirectWithMessage(returnPath, "error", friendlyError(error, "Unable to process check-in/check-out action."));
   }
 }
@@ -400,6 +427,7 @@ export async function generateInvoiceAction(formData: FormData) {
     revalidatePath("/admin/invoices");
     redirectWithMessage(returnPath, "success", "Invoice generated successfully.");
   } catch (error) {
+    if (isRedirectError(error)) throw error;
     redirectWithMessage(returnPath, "error", friendlyError(error, "Unable to generate invoice."));
   }
 }

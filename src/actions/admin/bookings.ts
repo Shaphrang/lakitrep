@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { bookingStatusSchema } from "@/features/admin/bookings/schema";
 import { deleteBooking, updateBookingStatus } from "@/features/admin/bookings/services/bookings-service";
 import { requireAdmin } from "@/lib/auth/admin";
@@ -22,7 +23,8 @@ export async function updateBookingsAction(formData: FormData) {
     await updateBookingStatus(id, status);
     revalidatePath("/admin/bookings");
     redirectWithMessage(returnPath, "success", "Booking status updated successfully.");
-  } catch {
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
     redirectWithMessage(returnPath, "error", "Unable to update booking status.");
   }
 }
@@ -36,7 +38,8 @@ export async function deleteBookingsAction(formData: FormData) {
     await deleteBooking(id);
     revalidatePath("/admin/bookings");
     redirectWithMessage(returnPath, "success", "Booking deleted successfully.");
-  } catch {
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
     redirectWithMessage(returnPath, "error", "Unable to delete booking.");
   }
 }
