@@ -14,7 +14,7 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type TouchEvent } from "react";
 import { getCottageAvailability } from "@/actions/public/bookings";
 import { formatDateLabel } from "@/lib/booking";
 
@@ -67,6 +67,9 @@ export function DateRangePicker({
 
   const touchStartXRef = useRef<number | null>(null);
   const touchStartYRef = useRef<number | null>(null);
+
+  const pushedDatePickerHistoryRef = useRef(false);
+  const previousDatePickerUrlRef = useRef<string | null>(null);
 
   const [open, setOpen] = useState(false);
   const [viewMonth, setViewMonth] = useState(startOfMonth(new Date()));
@@ -133,12 +136,12 @@ export function DateRangePicker({
         return;
       }
 
-      setOpen(false);
+      closeDatePicker();
     }
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        setOpen(false);
+        closeDatePicker();
       }
     }
 
@@ -150,6 +153,40 @@ export function DateRangePicker({
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [open]);
+
+  useEffect(() => {
+    if (!open || !isMobile || pushedDatePickerHistoryRef.current) return;
+
+    previousDatePickerUrlRef.current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+
+    window.history.pushState(
+      { ...(window.history.state ?? {}), datePickerOpen: true },
+      "",
+      `${window.location.pathname}${window.location.search}#booking-date`,
+    );
+
+    pushedDatePickerHistoryRef.current = true;
+  }, [open, isMobile]);
+
+  useEffect(() => {
+    if (!open || !isMobile) return;
+
+    function handleDatePickerBack(event: PopStateEvent) {
+      if (!pushedDatePickerHistoryRef.current) return;
+
+      pushedDatePickerHistoryRef.current = false;
+      previousDatePickerUrlRef.current = null;
+      setOpen(false);
+
+      event.stopImmediatePropagation();
+    }
+
+    window.addEventListener("popstate", handleDatePickerBack, true);
+
+    return () => {
+      window.removeEventListener("popstate", handleDatePickerBack, true);
+    };
+  }, [open, isMobile]);
 
   useEffect(() => {
     let cancelled = false;
@@ -227,6 +264,29 @@ export function DateRangePicker({
     };
   }, [cottageSlug, checkInDate, checkOutDate]);
 
+  function closeDatePicker() {
+    setOpen(false);
+
+    if (
+      typeof window !== "undefined" &&
+      isMobile &&
+      pushedDatePickerHistoryRef.current
+    ) {
+      const previousUrl =
+        previousDatePickerUrlRef.current ??
+        `${window.location.pathname}${window.location.search}`;
+
+      window.history.replaceState(
+        { ...(window.history.state ?? {}), datePickerOpen: false },
+        "",
+        previousUrl,
+      );
+
+      pushedDatePickerHistoryRef.current = false;
+      previousDatePickerUrlRef.current = null;
+    }
+  }
+
   function isInSelectedRange(day: Date) {
     if (!checkInDate || !checkOutDate) return false;
 
@@ -271,15 +331,15 @@ export function DateRangePicker({
       checkOutDate: selected,
     });
 
-    setOpen(false);
+    closeDatePicker();
   }
 
-  function handleTouchStart(event: React.TouchEvent<HTMLDivElement>) {
+  function handleTouchStart(event: TouchEvent<HTMLDivElement>) {
     touchStartXRef.current = event.touches[0]?.clientX ?? null;
     touchStartYRef.current = event.touches[0]?.clientY ?? null;
   }
 
-  function handleTouchEnd(event: React.TouchEvent<HTMLDivElement>) {
+  function handleTouchEnd(event: TouchEvent<HTMLDivElement>) {
     const startX = touchStartXRef.current;
     const startY = touchStartYRef.current;
 
@@ -314,7 +374,14 @@ export function DateRangePicker({
     <div ref={wrapperRef} className="relative overflow-visible">
       <button
         type="button"
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => {
+          if (open) {
+            closeDatePicker();
+            return;
+          }
+
+          setOpen(true);
+        }}
         disabled={!cottageSlug}
         aria-expanded={open}
         className={`w-full rounded-2xl border border-[#d7ccb9] bg-white px-3.5 ${triggerHeight} text-left text-sm text-[#2e4c3a] shadow-sm transition hover:border-[#cbbb9f] focus:outline-none focus:ring-2 focus:ring-[#2f5a3d]/10 disabled:cursor-not-allowed disabled:bg-[#f3efe8] disabled:text-[#8b948e]`}
@@ -361,7 +428,7 @@ export function DateRangePicker({
           <button
             type="button"
             className="fixed inset-0 z-[60] bg-black/25 sm:bg-black/10"
-            onClick={() => setOpen(false)}
+            onClick={closeDatePicker}
             aria-label="Close date picker"
           />
 
@@ -374,10 +441,10 @@ export function DateRangePicker({
                 : "fixed left-1/2 top-1/2 z-[70] max-h-[min(76vh,640px)] w-[min(92vw,720px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[28px] border border-[#d8cdbd] bg-[#fffdfa] p-4 shadow-[0_22px_70px_rgba(28,34,29,0.28)]"
             }
           >
-            <div className="mb-3 flex items-center justify-between gap-2 rounded-2xl border border-[#eee4d7] bg-[#fffaf1] px-2.5 py-2">
+            <div className="mb-3 flex items-center justify-center gap-2 rounded-2xl border border-[#eee4d7] bg-[#fffaf1] px-2.5 py-2 sm:justify-between">
               <button
                 type="button"
-                className="rounded-xl border border-[#e1d7c8] bg-white px-3 py-1.5 text-xs font-bold text-[#2f5a3d] transition hover:bg-[#f3ede3]"
+                className="hidden rounded-xl border border-[#e1d7c8] bg-white px-3 py-1.5 text-xs font-bold text-[#2f5a3d] transition hover:bg-[#f3ede3] sm:block"
                 onClick={() => setViewMonth((month) => addMonths(month, -1))}
               >
                 Prev
@@ -397,7 +464,7 @@ export function DateRangePicker({
 
               <button
                 type="button"
-                className="rounded-xl border border-[#e1d7c8] bg-white px-3 py-1.5 text-xs font-bold text-[#2f5a3d] transition hover:bg-[#f3ede3]"
+                className="hidden rounded-xl border border-[#e1d7c8] bg-white px-3 py-1.5 text-xs font-bold text-[#2f5a3d] transition hover:bg-[#f3ede3] sm:block"
                 onClick={() => setViewMonth((month) => addMonths(month, 1))}
               >
                 Next
@@ -488,7 +555,7 @@ export function DateRangePicker({
 
             <button
               type="button"
-              onClick={() => setOpen(false)}
+              onClick={closeDatePicker}
               className="mt-3 h-10 w-full rounded-xl border border-[#d8cdbd] bg-white text-sm font-bold text-[#2f5a3d] shadow-sm sm:hidden"
             >
               Done
