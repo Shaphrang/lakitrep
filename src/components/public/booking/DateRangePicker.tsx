@@ -1,3 +1,4 @@
+//src\components\public\booking\DateRangePicker.tsx
 "use client";
 
 import {
@@ -13,7 +14,7 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
-import { useEffect, useMemo, useRef, useState, type TouchEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getCottageAvailability } from "@/actions/public/bookings";
 import { formatDateLabel } from "@/lib/booking";
 
@@ -30,12 +31,6 @@ type DateRangePickerProps = {
   }) => void;
 };
 
-type DesktopPopoverPosition = {
-  top: number;
-  left: number;
-  width: number;
-};
-
 function toIso(day: Date) {
   return format(day, "yyyy-MM-dd");
 }
@@ -47,9 +42,14 @@ function containsUnavailableNight(
 ) {
   const checkIn = parseISO(checkInDate);
   const checkOut = parseISO(checkOutDate);
+
   if (!isBefore(checkIn, checkOut)) return true;
 
-  const nights = eachDayOfInterval({ start: checkIn, end: addDays(checkOut, -1) });
+  const nights = eachDayOfInterval({
+    start: checkIn,
+    end: addDays(checkOut, -1),
+  });
+
   return nights.some((night) => unavailableDateSet.has(toIso(night)));
 }
 
@@ -61,33 +61,44 @@ export function DateRangePicker({
   compact = false,
   onAvailabilityStateChange,
 }: DateRangePickerProps) {
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const onChangeRef = useRef(onChange);
+  const availabilityStateChangeRef = useRef(onAvailabilityStateChange);
+
+  const touchStartXRef = useRef<number | null>(null);
+  const touchStartYRef = useRef<number | null>(null);
+
   const [open, setOpen] = useState(false);
   const [viewMonth, setViewMonth] = useState(startOfMonth(new Date()));
   const [isMobile, setIsMobile] = useState(false);
+
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [availabilityError, setAvailabilityError] = useState("");
   const [rangeError, setRangeError] = useState("");
   const [unavailableDates, setUnavailableDates] = useState<string[]>([]);
-  const [desktopPopoverPosition, setDesktopPopoverPosition] =
-    useState<DesktopPopoverPosition | null>(null);
-
-  const wrapperRef = useRef<HTMLDivElement | null>(null);
-  const triggerRef = useRef<HTMLButtonElement | null>(null);
-  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
-  const touchEndRef = useRef<{ x: number; y: number } | null>(null);
 
   const today = useMemo(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), now.getDate());
   }, []);
 
-  const unavailableDateSet = useMemo(() => new Set(unavailableDates), [unavailableDates]);
+  const unavailableDateSet = useMemo(
+    () => new Set(unavailableDates),
+    [unavailableDates],
+  );
 
-  const onChangeRef = useRef(onChange);
+  const months = useMemo(
+    () => (isMobile ? [viewMonth] : [viewMonth, addMonths(viewMonth, 1)]),
+    [isMobile, viewMonth],
+  );
 
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
+
+  useEffect(() => {
+    availabilityStateChangeRef.current = onAvailabilityStateChange;
+  }, [onAvailabilityStateChange]);
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 639px)");
@@ -103,12 +114,42 @@ export function DateRangePicker({
   }, []);
 
   useEffect(() => {
-    onAvailabilityStateChange?.({
+    availabilityStateChangeRef.current?.({
       loading: availabilityLoading,
       error: availabilityError,
       rangeError,
     });
-  }, [availabilityLoading, availabilityError, rangeError, onAvailabilityStateChange]);
+  }, [availabilityLoading, availabilityError, rangeError]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target as Node | null;
+
+      if (!target) return;
+
+      if (wrapperRef.current?.contains(target)) {
+        return;
+      }
+
+      setOpen(false);
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
 
   useEffect(() => {
     let cancelled = false;
@@ -128,6 +169,7 @@ export function DateRangePicker({
 
       try {
         const availability = await getCottageAvailability(cottageSlug);
+
         if (cancelled) return;
 
         if (availability.error) {
@@ -136,27 +178,41 @@ export function DateRangePicker({
           return;
         }
 
-        setUnavailableDates(availability.unavailableDates);
+        const nextUnavailableDates = availability.unavailableDates ?? [];
+        const nextUnavailableDateSet = new Set(nextUnavailableDates);
+
+        setUnavailableDates(nextUnavailableDates);
 
         if (checkInDate && checkOutDate) {
           const invalidRange = containsUnavailableNight(
             checkInDate,
             checkOutDate,
-            new Set(availability.unavailableDates),
+            nextUnavailableDateSet,
           );
 
           if (invalidRange) {
-            onChangeRef.current({ checkInDate: undefined, checkOutDate: undefined });
-            setRangeError("Please select available dates again for the selected cottage.");
+            onChangeRef.current({
+              checkInDate: undefined,
+              checkOutDate: undefined,
+            });
+            setRangeError(
+              "Please select available dates again for the selected cottage.",
+            );
           }
-        } else if (checkInDate && new Set(availability.unavailableDates).has(checkInDate)) {
-          onChangeRef.current({ checkInDate: undefined, checkOutDate: undefined });
+        } else if (checkInDate && nextUnavailableDateSet.has(checkInDate)) {
+          onChangeRef.current({
+            checkInDate: undefined,
+            checkOutDate: undefined,
+          });
           setRangeError("Selected check-in date is not available for this cottage.");
         }
       } catch {
         if (cancelled) return;
+
         setUnavailableDates([]);
-        setAvailabilityError("We could not check availability right now. Please try again.");
+        setAvailabilityError(
+          "We could not check availability right now. Please try again.",
+        );
       } finally {
         if (!cancelled) {
           setAvailabilityLoading(false);
@@ -170,75 +226,6 @@ export function DateRangePicker({
       cancelled = true;
     };
   }, [cottageSlug, checkInDate, checkOutDate]);
-
-  useEffect(() => {
-    if (!open) return;
-
-    function handlePointerDown(event: PointerEvent) {
-      const target = event.target;
-      if (!(target instanceof Node)) return;
-      if (!wrapperRef.current?.contains(target)) {
-        setOpen(false);
-      }
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setOpen(false);
-      }
-    }
-
-    document.addEventListener("pointerdown", handlePointerDown, true);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown, true);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [open]);
-
-  useEffect(() => {
-    if (!open || isMobile) {
-      return;
-    }
-
-    function updateDesktopPopoverPosition() {
-      const rect = triggerRef.current?.getBoundingClientRect();
-      if (!rect) return;
-
-      const viewportPadding = 12;
-      const preferredWidth = compact ? 560 : 650;
-      const maxWidth = Math.max(380, window.innerWidth - viewportPadding * 2);
-      const width = Math.min(preferredWidth, maxWidth);
-
-      let left = compact ? rect.right - width : rect.left;
-      left = Math.max(viewportPadding, Math.min(left, window.innerWidth - width - viewportPadding));
-
-      const estimatedHeight = 470;
-      let top = rect.bottom + 10;
-      if (top + estimatedHeight > window.innerHeight - viewportPadding) {
-        top = rect.top - estimatedHeight - 10;
-      }
-      top = Math.max(viewportPadding, top);
-
-      setDesktopPopoverPosition({ left, top, width });
-    }
-
-    updateDesktopPopoverPosition();
-
-    window.addEventListener("resize", updateDesktopPopoverPosition);
-    window.addEventListener("scroll", updateDesktopPopoverPosition, true);
-
-    return () => {
-      window.removeEventListener("resize", updateDesktopPopoverPosition);
-      window.removeEventListener("scroll", updateDesktopPopoverPosition, true);
-    };
-  }, [open, isMobile, compact]);
-
-  const months = useMemo(
-    () => (isMobile ? [viewMonth] : [viewMonth, addMonths(viewMonth, 1)]),
-    [isMobile, viewMonth],
-  );
 
   function isInSelectedRange(day: Date) {
     if (!checkInDate || !checkOutDate) return false;
@@ -259,12 +246,18 @@ export function DateRangePicker({
     }
 
     if (!checkInDate || (checkInDate && checkOutDate)) {
-      onChangeRef.current({ checkInDate: selected, checkOutDate: undefined });
+      onChangeRef.current({
+        checkInDate: selected,
+        checkOutDate: undefined,
+      });
       return;
     }
 
     if (selected <= checkInDate) {
-      onChangeRef.current({ checkInDate: selected, checkOutDate: undefined });
+      onChangeRef.current({
+        checkInDate: selected,
+        checkOutDate: undefined,
+      });
       return;
     }
 
@@ -273,136 +266,139 @@ export function DateRangePicker({
       return;
     }
 
-    onChangeRef.current({ checkInDate, checkOutDate: selected });
+    onChangeRef.current({
+      checkInDate,
+      checkOutDate: selected,
+    });
+
     setOpen(false);
   }
 
-  function handleMonthChange(delta: 1 | -1) {
-    setViewMonth((month) => addMonths(month, delta));
+  function handleTouchStart(event: React.TouchEvent<HTMLDivElement>) {
+    touchStartXRef.current = event.touches[0]?.clientX ?? null;
+    touchStartYRef.current = event.touches[0]?.clientY ?? null;
   }
 
-  function handleTouchStart(event: TouchEvent<HTMLDivElement>) {
-    if (!isMobile) return;
-    const touch = event.touches[0];
-    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
-    touchEndRef.current = null;
-  }
+  function handleTouchEnd(event: React.TouchEvent<HTMLDivElement>) {
+    const startX = touchStartXRef.current;
+    const startY = touchStartYRef.current;
 
-  function handleTouchMove(event: TouchEvent<HTMLDivElement>) {
-    if (!isMobile) return;
-    const touch = event.touches[0];
-    touchEndRef.current = { x: touch.clientX, y: touch.clientY };
-  }
+    touchStartXRef.current = null;
+    touchStartYRef.current = null;
 
-  function handleTouchEnd() {
-    if (!isMobile || !touchStartRef.current || !touchEndRef.current) return;
+    if (startX === null || startY === null) return;
 
-    const deltaX = touchEndRef.current.x - touchStartRef.current.x;
-    const deltaY = touchEndRef.current.y - touchStartRef.current.y;
-    const swipeThreshold = 52;
-    const horizontalBiasMultiplier = 1.2;
+    const endTouch = event.changedTouches[0];
+    if (!endTouch) return;
 
-    if (
-      Math.abs(deltaX) < swipeThreshold ||
-      Math.abs(deltaX) <= Math.abs(deltaY) * horizontalBiasMultiplier
-    ) {
+    const deltaX = endTouch.clientX - startX;
+    const deltaY = endTouch.clientY - startY;
+
+    const swipeThreshold = 55;
+    const mostlyHorizontal = Math.abs(deltaX) > Math.abs(deltaY) * 1.35;
+
+    if (!mostlyHorizontal || Math.abs(deltaX) < swipeThreshold) {
       return;
     }
 
     if (deltaX < 0) {
-      handleMonthChange(1);
-      return;
+      setViewMonth((month) => addMonths(month, 1));
+    } else {
+      setViewMonth((month) => addMonths(month, -1));
     }
-
-    handleMonthChange(-1);
   }
 
   const triggerHeight = compact ? "py-2.5" : "py-3";
 
   return (
-    <div ref={wrapperRef} className="relative">
+    <div ref={wrapperRef} className="relative overflow-visible">
       <button
-        ref={triggerRef}
         type="button"
         onClick={() => setOpen((value) => !value)}
         disabled={!cottageSlug}
-        aria-haspopup="dialog"
         aria-expanded={open}
         className={`w-full rounded-2xl border border-[#d7ccb9] bg-white px-3.5 ${triggerHeight} text-left text-sm text-[#2e4c3a] shadow-sm transition hover:border-[#cbbb9f] focus:outline-none focus:ring-2 focus:ring-[#2f5a3d]/10 disabled:cursor-not-allowed disabled:bg-[#f3efe8] disabled:text-[#8b948e]`}
       >
-        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#6d7f70]">
-          Stay Dates
-        </div>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#6d7f70]">
+              Stay Dates
+            </div>
 
-        <div className="mt-1 flex flex-wrap items-center gap-1 text-sm font-semibold text-[#274230]">
-          <span>{formatDateLabel(checkInDate)}</span>
-          <span className="text-[#849187]">→</span>
-          <span>{formatDateLabel(checkOutDate)}</span>
+            <div className="mt-1 flex flex-wrap items-center gap-1 text-sm font-bold text-[#274230]">
+              <span>{formatDateLabel(checkInDate)}</span>
+              <span className="text-[#849187]">→</span>
+              <span>{formatDateLabel(checkOutDate)}</span>
+            </div>
+          </div>
+
+          <span className="rounded-full bg-[#f3eee5] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#6d7f70]">
+            Select
+          </span>
         </div>
       </button>
 
-      {!cottageSlug ? <p className="mt-1 text-xs text-[#7b6e5d]">Select a cottage first.</p> : null}
-      {availabilityLoading ? <p className="mt-1 text-xs text-[#2f5a3d]">Checking availability...</p> : null}
-      {availabilityError ? <p className="mt-1 text-xs text-rose-700">{availabilityError}</p> : null}
-      {rangeError ? <p className="mt-1 text-xs text-rose-700">{rangeError}</p> : null}
+      {!cottageSlug ? (
+        <p className="mt-1 text-xs text-[#7b6e5d]">Select a cottage first.</p>
+      ) : null}
+
+      {availabilityLoading ? (
+        <p className="mt-1 text-xs font-medium text-[#2f5a3d]">
+          Checking availability...
+        </p>
+      ) : null}
+
+      {availabilityError ? (
+        <p className="mt-1 text-xs text-rose-700">{availabilityError}</p>
+      ) : null}
+
+      {rangeError ? (
+        <p className="mt-1 text-xs text-rose-700">{rangeError}</p>
+      ) : null}
 
       {open ? (
         <>
           <button
             type="button"
-            className="fixed inset-0 z-[70] bg-black/25 sm:hidden"
+            className="fixed inset-0 z-[60] bg-black/25 sm:bg-black/10"
             onClick={() => setOpen(false)}
             aria-label="Close date picker"
           />
 
           <div
-            role="dialog"
-            aria-label="Stay date picker"
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            style={
-              isMobile
-                ? undefined
-                : {
-                    position: "fixed",
-                    top: desktopPopoverPosition?.top ?? 80,
-                    left: desktopPopoverPosition?.left ?? 12,
-                    width: desktopPopoverPosition?.width ?? (compact ? 560 : 650),
-                    maxWidth: "calc(100vw - 24px)",
-                    maxHeight: `calc(100vh - ${(desktopPopoverPosition?.top ?? 80) + 12}px)`,
-                  }
-            }
+            onTouchStart={isMobile ? handleTouchStart : undefined}
+            onTouchEnd={isMobile ? handleTouchEnd : undefined}
             className={
               isMobile
-                ? "fixed inset-x-3 top-[72px] bottom-3 z-[80] overflow-y-auto rounded-[24px] border border-[#d8cdbd] bg-[#fffdfa] p-3 shadow-2xl"
-                : "z-[90] mt-2 overflow-y-auto rounded-[24px] border border-[#d8cdbd] bg-[#fffdfa] p-3 shadow-[0_18px_45px_rgba(28,34,29,0.18)]"
+                ? "fixed inset-x-3 bottom-3 top-[72px] z-[70] overflow-y-auto rounded-[26px] border border-[#d8cdbd] bg-[#fffdfa] p-3 shadow-2xl"
+                : "fixed left-1/2 top-1/2 z-[70] max-h-[min(76vh,640px)] w-[min(92vw,720px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[28px] border border-[#d8cdbd] bg-[#fffdfa] p-4 shadow-[0_22px_70px_rgba(28,34,29,0.28)]"
             }
           >
-            <div className="mb-3 flex items-center justify-between gap-2 px-1">
+            <div className="mb-3 flex items-center justify-between gap-2 rounded-2xl border border-[#eee4d7] bg-[#fffaf1] px-2.5 py-2">
               <button
                 type="button"
-                aria-label="Show previous month"
-                className="rounded-xl border border-[#e1d7c8] bg-white px-3 py-1.5 text-xs font-semibold text-[#2f5a3d] transition hover:bg-[#f3ede3]"
-                onClick={() => handleMonthChange(-1)}
+                className="rounded-xl border border-[#e1d7c8] bg-white px-3 py-1.5 text-xs font-bold text-[#2f5a3d] transition hover:bg-[#f3ede3]"
+                onClick={() => setViewMonth((month) => addMonths(month, -1))}
               >
                 Prev
               </button>
 
               <div className="text-center">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#6d7f70]">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#6d7f70]">
                   Select stay dates
                 </p>
                 <p className="text-[11px] text-[#839187]">
-                  {isMobile ? "Swipe to change month • Tap check-in, then check-out" : "Tap check-in, then check-out"}
+                  Tap check-in, then check-out
+                </p>
+                <p className="mt-0.5 text-[10px] text-[#9a8b78] sm:hidden">
+                  Swipe left or right to change month
                 </p>
               </div>
 
               <button
                 type="button"
-                aria-label="Show next month"
-                className="rounded-xl border border-[#e1d7c8] bg-white px-3 py-1.5 text-xs font-semibold text-[#2f5a3d] transition hover:bg-[#f3ede3]"
-                onClick={() => handleMonthChange(1)}
+                className="rounded-xl border border-[#e1d7c8] bg-white px-3 py-1.5 text-xs font-bold text-[#2f5a3d] transition hover:bg-[#f3ede3]"
+                onClick={() => setViewMonth((month) => addMonths(month, 1))}
               >
                 Next
               </button>
@@ -412,15 +408,21 @@ export function DateRangePicker({
               {months.map((month) => {
                 const monthStart = startOfMonth(month);
                 const start = startOfWeek(monthStart, { weekStartsOn: 1 });
-                const days = eachDayOfInterval({ start, end: addDays(start, 41) });
+                const days = eachDayOfInterval({
+                  start,
+                  end: addDays(start, 41),
+                });
 
                 return (
-                  <div key={month.toISOString()} className="rounded-2xl bg-[#fffdfa]">
+                  <div
+                    key={month.toISOString()}
+                    className="rounded-2xl border border-[#f0e6d8] bg-[#fffdfa] p-2"
+                  >
                     <p className="mb-2 text-center text-sm font-bold text-[#214531]">
                       {format(month, "MMMM yyyy")}
                     </p>
 
-                    <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-semibold uppercase text-[#6f7f74]">
+                    <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold uppercase text-[#6f7f74]">
                       {"MTWTFSS".split("").map((dayLabel, index) => (
                         <span key={`${dayLabel}-${index}`}>{dayLabel}</span>
                       ))}
@@ -430,14 +432,20 @@ export function DateRangePicker({
                       {days.map((day) => {
                         const iso = toIso(day);
                         const isUnavailable = unavailableDateSet.has(iso);
+
                         const disabled =
-                          !isSameMonth(day, month) || isBefore(day, today) || isUnavailable;
+                          !isSameMonth(day, month) ||
+                          isBefore(day, today) ||
+                          isUnavailable;
+
                         const isStart = Boolean(
                           checkInDate && isSameDay(day, parseISO(checkInDate)),
                         );
+
                         const isEnd = Boolean(
                           checkOutDate && isSameDay(day, parseISO(checkOutDate)),
                         );
+
                         const inRange = isInSelectedRange(day);
 
                         return (
@@ -447,7 +455,7 @@ export function DateRangePicker({
                             title={isUnavailable ? "Not available" : undefined}
                             disabled={disabled}
                             onClick={() => handleSelect(day)}
-                            className={`h-8 rounded-xl text-xs transition sm:h-9 ${
+                            className={`relative h-8 rounded-xl text-xs transition sm:h-9 ${
                               disabled
                                 ? isUnavailable
                                   ? "cursor-not-allowed border border-[#e4d7ca] bg-[#f5ede2] text-[#aa9786]"
@@ -455,7 +463,7 @@ export function DateRangePicker({
                                 : isStart || isEnd
                                   ? "bg-[#2f5a3d] font-bold text-white shadow-sm"
                                   : inRange
-                                    ? "bg-[#e8f0ea] font-semibold text-[#2f5a3d]"
+                                    ? "bg-[#e8f0ea] font-bold text-[#2f5a3d]"
                                     : "text-[#2f493b] hover:bg-[#f1ebe2]"
                             }`}
                           >
@@ -473,14 +481,15 @@ export function DateRangePicker({
               })}
             </div>
 
-            <p className="mt-3 text-center text-[11px] text-[#7c6a55]">
-              Dates marked in muted tone are not available.
-            </p>
+            <div className="mt-3 rounded-2xl border border-[#eee4d7] bg-[#fffaf1] px-3 py-2 text-center text-[11px] text-[#7c6a55]">
+              Muted dates are not available. Checkout date is allowed when the
+              previous guest checks out that day.
+            </div>
 
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="mt-3 h-10 w-full rounded-xl border border-[#d8cdbd] bg-white text-sm font-semibold text-[#2f5a3d] shadow-sm sm:hidden"
+              className="mt-3 h-10 w-full rounded-xl border border-[#d8cdbd] bg-white text-sm font-bold text-[#2f5a3d] shadow-sm sm:hidden"
             >
               Done
             </button>

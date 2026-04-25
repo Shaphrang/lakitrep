@@ -148,7 +148,7 @@ export function BookingFlowProvider({
                 <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#6f7f75]">
                   La Ki Trep
                 </p>
-                <h3 className="mt-0.5 truncate font-serif text-xl leading-tight text-[#214531] sm:text-[1.8rem]">
+                <h3 className="mt-0.5 truncate font-serif text-sm leading-tight text-[#214531] sm:text-[1.8rem]">
                   Complete your booking request
                 </h3>
               </div>
