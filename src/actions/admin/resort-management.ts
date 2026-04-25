@@ -16,6 +16,32 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getNumber, getOptionalString, getString } from "./_shared";
 
 const DIGIT_PHONE_REGEX = /^\d{10}$/;
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const VALID_BILLING_STATUSES = new Set([
+  "confirmed",
+  "advance_paid",
+  "checked_in",
+  "checked_out",
+]);
+const VALID_CHARGE_TYPES = new Set([
+  "extra_bed",
+  "extra_person",
+  "food_bill",
+  "bonfire",
+  "transport",
+  "laundry",
+  "decoration",
+  "late_checkout",
+  "damage_charge",
+  "other",
+  // Backward compatibility values.
+  "food",
+  "damage",
+  "discount_adjustment",
+  "room",
+]);
+const VALID_PAYMENT_MODES = new Set(["cash", "upi", "card", "bank_transfer", "other"]);
+const VALID_PAYMENT_TYPES = new Set(["advance", "part_payment", "final_payment", "refund"]);
 
 const customerSchema = z.object({
   fullName: z.string().trim().min(2).max(100),
@@ -222,13 +248,23 @@ export async function addBookingChargeAction(formData: FormData) {
   try {
     await requireAdmin();
     const supabase = await getSupabaseServerClient();
+    if (!UUID_REGEX.test(bookingId)) throw new Error("Invalid booking selected.");
+
+    const { data: booking } = await supabase.from("bookings").select("id,status").eq("id", bookingId).maybeSingle();
+    if (!booking) throw new Error("Booking not found.");
+    if (!VALID_BILLING_STATUSES.has(String((booking as { status?: string }).status ?? ""))) {
+      throw new Error("This booking is not available for billing updates.");
+    }
+
     const quantity = getNumber(formData, "quantity", 1);
     const unitPrice = getNumber(formData, "unit_price", 0);
     if (quantity <= 0) throw new Error("Please enter a valid quantity.");
     if (unitPrice < 0) throw new Error("Please enter a valid amount.");
     const chargeType = getString(formData, "charge_type");
     if (!chargeType.trim()) throw new Error("Charge type is required.");
+    if (!VALID_CHARGE_TYPES.has(chargeType)) throw new Error("Please select a valid charge type.");
     const amount = Number((quantity * unitPrice).toFixed(2));
+    if (amount < 0) throw new Error("Amount cannot be negative.");
 
     const { error } = await supabase.from("booking_charges").insert({
       booking_id: bookingId,
@@ -247,7 +283,8 @@ export async function addBookingChargeAction(formData: FormData) {
     redirectWithMessage(returnPath, "success", "Extra charge added successfully.");
   } catch (error) {
     if (isRedirectError(error)) throw error;
-    redirectWithMessage(returnPath, "error", friendlyError(error, "Unable to add charge."));
+    console.error("[billing] addBookingChargeAction failed", { bookingId, error });
+    redirectWithMessage(returnPath, "error", friendlyError(error, "Unable to save extra charge. Please check the details and try again."));
   }
 }
 
@@ -259,6 +296,7 @@ export async function deleteBookingChargeAction(formData: FormData) {
   try {
     await requireAdmin();
     const supabase = await getSupabaseServerClient();
+    if (!UUID_REGEX.test(bookingId) || !UUID_REGEX.test(chargeId)) throw new Error("Invalid request.");
     const { error } = await supabase.from("booking_charges").delete().eq("id", chargeId).eq("booking_id", bookingId);
     if (error) throw new Error("Unable to delete charge.");
 
@@ -269,6 +307,7 @@ export async function deleteBookingChargeAction(formData: FormData) {
     redirectWithMessage(returnPath, "success", "Extra charge deleted successfully.");
   } catch (error) {
     if (isRedirectError(error)) throw error;
+    console.error("[billing] deleteBookingChargeAction failed", { bookingId, chargeId, error });
     redirectWithMessage(returnPath, "error", friendlyError(error, "Unable to delete charge."));
   }
 }
@@ -280,7 +319,8 @@ export async function applyBookingDiscountAction(formData: FormData) {
   try {
     await requireAdmin();
     const supabase = await getSupabaseServerClient();
-    const discount = Math.max(0, getNumber(formData, "discount_amount", 0));
+    const discount = getNumber(formData, "discount_amount", 0);
+    if (discount < 0) throw new Error("Discount cannot be negative.");
     const { data: booking } = await supabase.from("bookings").select("id,total_amount,extra_charges_total").eq("id", bookingId).maybeSingle();
     if (!booking) throw new Error("Booking not found.");
     const maxDiscount = Number(booking.total_amount ?? 0) + Number(booking.extra_charges_total ?? 0);
@@ -310,6 +350,10 @@ export async function addBookingPaymentAction(formData: FormData) {
     const amount = getNumber(formData, "amount", 0);
     if (amount <= 0) throw new Error("Payment amount must be positive.");
     const paymentType = getOptionalString(formData, "payment_type") || "part_payment";
+    const paymentMode = getOptionalString(formData, "payment_mode");
+    if (!paymentMode) throw new Error("Payment mode is required.");
+    if (!VALID_PAYMENT_MODES.has(paymentMode)) throw new Error("Please select a valid payment mode.");
+    if (!VALID_PAYMENT_TYPES.has(paymentType)) throw new Error("Please select a valid payment type.");
     const { data: booking } = await supabase.from("bookings").select("id,final_total,amount_paid,amount_pending").eq("id", bookingId).maybeSingle();
     if (!booking) throw new Error("Booking not found.");
 
@@ -326,7 +370,7 @@ export async function addBookingPaymentAction(formData: FormData) {
       booking_id: bookingId,
       payment_date: getOptionalString(formData, "payment_date") || new Date().toISOString().slice(0, 10),
       amount,
-      payment_mode: getOptionalString(formData, "payment_mode") || "cash",
+      payment_mode: paymentMode,
       payment_type: paymentType,
       reference_number: getOptionalString(formData, "reference_number") || null,
       notes: getOptionalString(formData, "notes") || null,

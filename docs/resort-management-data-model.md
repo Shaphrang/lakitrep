@@ -22,6 +22,21 @@ Stores multiple extra charges per booking:
 - `unit_price`
 - `amount`
 
+Supported `charge_type` values (billing UI aligned):
+- `extra_bed`
+- `extra_person`
+- `food_bill`
+- `bonfire`
+- `transport`
+- `laundry`
+- `decoration`
+- `late_checkout`
+- `damage_charge`
+- `other`
+
+Backward-compatible legacy values still handled:
+- `room`, `food`, `damage`, `discount_adjustment`
+
 ### `booking_payments`
 Stores immutable payment history records:
 - `booking_id`
@@ -56,6 +71,13 @@ After charge/payment/discount write operations, the server recalculates:
 - `payment_status`
 
 This prevents relying only on client-side totals.
+
+## RLS / policy note
+
+PostgreSQL does not support `create policy if not exists`.
+SQL docs use:
+- `drop policy if exists ...`
+- `create policy ...`
 
 ## Payment status rules
 

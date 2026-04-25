@@ -13,3 +13,23 @@ body {
 .font-serif {
   font-family: Georgia, "Times New Roman", serif;
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #print-invoice-only,
+  #print-invoice-only * {
+    visibility: visible;
+  }
+
+  #print-invoice-only {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    display: block !important;
+    padding: 0;
+    margin: 0;
+  }
+}

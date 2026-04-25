@@ -15,6 +15,16 @@
 - If a booking is missing, UI shows: **“Booking not found or no longer available.”**
 - Empty state on list: **“Please select a booking to manage billing.”**
 
+## Billing layout (production)
+
+The billing detail page is now compact and operational:
+
+- **Row 1 (3 columns on desktop):** Booking Summary, Billing Breakdown, Payment History
+- **Row 2 (3 columns on desktop):** Extra Charges, Record Payment, Discount
+- Tablet collapses to 2 columns; mobile stacks cards.
+
+The previous “How this billing works” help panel is removed from the workspace to reduce clutter.
+
 ## Billing summary
 
 Billing breakdown follows:
@@ -26,11 +36,12 @@ Highlights:
 - Final total and pending amount are visually emphasized.
 - Pending `0` means fully paid.
 - Room charge remains understandable for staff (nights and price context).
+- Every extra charge line is shown in both the **Extra Charges** card and **Billing Breakdown** card.
 
 ## Extra charges
 
-- Multiple charges per booking are supported.
-- Fields: charge type, description, quantity, unit price.
+- Charges are added from a **small modal** (`+ Add Charge`) and never require booking UUID typing.
+- Fields: charge type, description, quantity, unit price, amount preview.
 - Server computes amount (`quantity × unit price`).
 - Delete requires confirmation.
 
@@ -38,6 +49,18 @@ Validation:
 - Charge type required.
 - Quantity must be greater than `0`.
 - Unit price cannot be negative.
+- Booking ID must be a valid UUID and booking must be billing-eligible.
+- Friendly save error: **“Unable to save extra charge. Please check the details and try again.”**
+
+### Troubleshooting: extra charges not saving
+
+Root cause fixed in this release:
+- UI charge type values (e.g. `extra_bed`, `food_bill`, `late_checkout`) were not aligned with legacy DB `booking_charges.charge_type` check constraints in some environments.
+
+Actions taken:
+- Added stricter server validation for booking ID and charge types.
+- Added SQL migration/doc update to align allowed `charge_type` values.
+- Added technical logging in server action while keeping staff-facing messages friendly.
 
 ## Discount
 
@@ -81,8 +104,9 @@ Status rules:
 ## Invoice
 
 - **Generate Invoice** creates invoice number format `LKT-INV-YYYY-####`.
-- Printable invoice page: `/admin/invoices/[id]`.
-- Invoice includes booking, guest, stay, totals, charges, and payment history.
+- Billing page includes **Generate / Print / View** controls in Billing Breakdown.
+- Print behavior now targets a dedicated print-only invoice section (no sidebar/forms/buttons).
+- Printable invoice page remains available: `/admin/invoices/[id]`.
 
 ## Checkout
 
