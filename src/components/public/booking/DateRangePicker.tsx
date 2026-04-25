@@ -1,4 +1,3 @@
-//src\components\public\booking\DateRangePicker.tsx
 "use client";
 
 import {
@@ -14,7 +13,7 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type TouchEvent } from "react";
 import { getCottageAvailability } from "@/actions/public/bookings";
 import { formatDateLabel } from "@/lib/booking";
 
@@ -31,11 +30,21 @@ type DateRangePickerProps = {
   }) => void;
 };
 
+type DesktopPopoverPosition = {
+  top: number;
+  left: number;
+  width: number;
+};
+
 function toIso(day: Date) {
   return format(day, "yyyy-MM-dd");
 }
 
-function containsUnavailableNight(checkInDate: string, checkOutDate: string, unavailableDateSet: Set<string>) {
+function containsUnavailableNight(
+  checkInDate: string,
+  checkOutDate: string,
+  unavailableDateSet: Set<string>,
+) {
   const checkIn = parseISO(checkInDate);
   const checkOut = parseISO(checkOutDate);
   if (!isBefore(checkIn, checkOut)) return true;
@@ -59,6 +68,13 @@ export function DateRangePicker({
   const [availabilityError, setAvailabilityError] = useState("");
   const [rangeError, setRangeError] = useState("");
   const [unavailableDates, setUnavailableDates] = useState<string[]>([]);
+  const [desktopPopoverPosition, setDesktopPopoverPosition] =
+    useState<DesktopPopoverPosition | null>(null);
+
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const touchEndRef = useRef<{ x: number; y: number } | null>(null);
 
   const today = useMemo(() => {
     const now = new Date();
@@ -123,7 +139,11 @@ export function DateRangePicker({
         setUnavailableDates(availability.unavailableDates);
 
         if (checkInDate && checkOutDate) {
-          const invalidRange = containsUnavailableNight(checkInDate, checkOutDate, new Set(availability.unavailableDates));
+          const invalidRange = containsUnavailableNight(
+            checkInDate,
+            checkOutDate,
+            new Set(availability.unavailableDates),
+          );
 
           if (invalidRange) {
             onChangeRef.current({ checkInDate: undefined, checkOutDate: undefined });
@@ -150,6 +170,70 @@ export function DateRangePicker({
       cancelled = true;
     };
   }, [cottageSlug, checkInDate, checkOutDate]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (!wrapperRef.current?.contains(target)) {
+        setOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown, true);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown, true);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || isMobile) {
+      return;
+    }
+
+    function updateDesktopPopoverPosition() {
+      const rect = triggerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+
+      const viewportPadding = 12;
+      const preferredWidth = compact ? 560 : 650;
+      const maxWidth = Math.max(380, window.innerWidth - viewportPadding * 2);
+      const width = Math.min(preferredWidth, maxWidth);
+
+      let left = compact ? rect.right - width : rect.left;
+      left = Math.max(viewportPadding, Math.min(left, window.innerWidth - width - viewportPadding));
+
+      const estimatedHeight = 470;
+      let top = rect.bottom + 10;
+      if (top + estimatedHeight > window.innerHeight - viewportPadding) {
+        top = rect.top - estimatedHeight - 10;
+      }
+      top = Math.max(viewportPadding, top);
+
+      setDesktopPopoverPosition({ left, top, width });
+    }
+
+    updateDesktopPopoverPosition();
+
+    window.addEventListener("resize", updateDesktopPopoverPosition);
+    window.addEventListener("scroll", updateDesktopPopoverPosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updateDesktopPopoverPosition);
+      window.removeEventListener("scroll", updateDesktopPopoverPosition, true);
+    };
+  }, [open, isMobile, compact]);
 
   const months = useMemo(
     () => (isMobile ? [viewMonth] : [viewMonth, addMonths(viewMonth, 1)]),
@@ -193,14 +277,57 @@ export function DateRangePicker({
     setOpen(false);
   }
 
+  function handleMonthChange(delta: 1 | -1) {
+    setViewMonth((month) => addMonths(month, delta));
+  }
+
+  function handleTouchStart(event: TouchEvent<HTMLDivElement>) {
+    if (!isMobile) return;
+    const touch = event.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+    touchEndRef.current = null;
+  }
+
+  function handleTouchMove(event: TouchEvent<HTMLDivElement>) {
+    if (!isMobile) return;
+    const touch = event.touches[0];
+    touchEndRef.current = { x: touch.clientX, y: touch.clientY };
+  }
+
+  function handleTouchEnd() {
+    if (!isMobile || !touchStartRef.current || !touchEndRef.current) return;
+
+    const deltaX = touchEndRef.current.x - touchStartRef.current.x;
+    const deltaY = touchEndRef.current.y - touchStartRef.current.y;
+    const swipeThreshold = 52;
+    const horizontalBiasMultiplier = 1.2;
+
+    if (
+      Math.abs(deltaX) < swipeThreshold ||
+      Math.abs(deltaX) <= Math.abs(deltaY) * horizontalBiasMultiplier
+    ) {
+      return;
+    }
+
+    if (deltaX < 0) {
+      handleMonthChange(1);
+      return;
+    }
+
+    handleMonthChange(-1);
+  }
+
   const triggerHeight = compact ? "py-2.5" : "py-3";
 
   return (
-    <div className="relative">
+    <div ref={wrapperRef} className="relative">
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen((value) => !value)}
         disabled={!cottageSlug}
+        aria-haspopup="dialog"
+        aria-expanded={open}
         className={`w-full rounded-2xl border border-[#d7ccb9] bg-white px-3.5 ${triggerHeight} text-left text-sm text-[#2e4c3a] shadow-sm transition hover:border-[#cbbb9f] focus:outline-none focus:ring-2 focus:ring-[#2f5a3d]/10 disabled:cursor-not-allowed disabled:bg-[#f3efe8] disabled:text-[#8b948e]`}
       >
         <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#6d7f70]">
@@ -223,25 +350,41 @@ export function DateRangePicker({
         <>
           <button
             type="button"
-            className="fixed inset-0 z-[60] bg-black/25 sm:hidden"
+            className="fixed inset-0 z-[70] bg-black/25 sm:hidden"
             onClick={() => setOpen(false)}
             aria-label="Close date picker"
           />
 
           <div
+            role="dialog"
+            aria-label="Stay date picker"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            style={
+              isMobile
+                ? undefined
+                : {
+                    position: "fixed",
+                    top: desktopPopoverPosition?.top ?? 80,
+                    left: desktopPopoverPosition?.left ?? 12,
+                    width: desktopPopoverPosition?.width ?? (compact ? 560 : 650),
+                    maxWidth: "calc(100vw - 24px)",
+                    maxHeight: `calc(100vh - ${(desktopPopoverPosition?.top ?? 80) + 12}px)`,
+                  }
+            }
             className={
               isMobile
-                ? "fixed inset-x-3 top-[72px] bottom-3 z-[70] overflow-y-auto rounded-[24px] border border-[#d8cdbd] bg-[#fffdfa] p-3 shadow-2xl"
-                : `absolute z-40 mt-2 rounded-[24px] border border-[#d8cdbd] bg-[#fffdfa] p-3 shadow-[0_18px_45px_rgba(28,34,29,0.18)] ${
-                    compact ? "right-0 w-[min(96vw,560px)]" : "left-0 w-[min(96vw,650px)]"
-                  }`
+                ? "fixed inset-x-3 top-[72px] bottom-3 z-[80] overflow-y-auto rounded-[24px] border border-[#d8cdbd] bg-[#fffdfa] p-3 shadow-2xl"
+                : "z-[90] mt-2 overflow-y-auto rounded-[24px] border border-[#d8cdbd] bg-[#fffdfa] p-3 shadow-[0_18px_45px_rgba(28,34,29,0.18)]"
             }
           >
             <div className="mb-3 flex items-center justify-between gap-2 px-1">
               <button
                 type="button"
+                aria-label="Show previous month"
                 className="rounded-xl border border-[#e1d7c8] bg-white px-3 py-1.5 text-xs font-semibold text-[#2f5a3d] transition hover:bg-[#f3ede3]"
-                onClick={() => setViewMonth((month) => addMonths(month, -1))}
+                onClick={() => handleMonthChange(-1)}
               >
                 Prev
               </button>
@@ -250,13 +393,16 @@ export function DateRangePicker({
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#6d7f70]">
                   Select stay dates
                 </p>
-                <p className="text-[11px] text-[#839187]">Tap check-in, then check-out</p>
+                <p className="text-[11px] text-[#839187]">
+                  {isMobile ? "Swipe to change month • Tap check-in, then check-out" : "Tap check-in, then check-out"}
+                </p>
               </div>
 
               <button
                 type="button"
+                aria-label="Show next month"
                 className="rounded-xl border border-[#e1d7c8] bg-white px-3 py-1.5 text-xs font-semibold text-[#2f5a3d] transition hover:bg-[#f3ede3]"
-                onClick={() => setViewMonth((month) => addMonths(month, 1))}
+                onClick={() => handleMonthChange(1)}
               >
                 Next
               </button>
@@ -284,9 +430,14 @@ export function DateRangePicker({
                       {days.map((day) => {
                         const iso = toIso(day);
                         const isUnavailable = unavailableDateSet.has(iso);
-                        const disabled = !isSameMonth(day, month) || isBefore(day, today) || isUnavailable;
-                        const isStart = Boolean(checkInDate && isSameDay(day, parseISO(checkInDate)));
-                        const isEnd = Boolean(checkOutDate && isSameDay(day, parseISO(checkOutDate)));
+                        const disabled =
+                          !isSameMonth(day, month) || isBefore(day, today) || isUnavailable;
+                        const isStart = Boolean(
+                          checkInDate && isSameDay(day, parseISO(checkInDate)),
+                        );
+                        const isEnd = Boolean(
+                          checkOutDate && isSameDay(day, parseISO(checkOutDate)),
+                        );
                         const inRange = isInSelectedRange(day);
 
                         return (
@@ -322,7 +473,9 @@ export function DateRangePicker({
               })}
             </div>
 
-            <p className="mt-3 text-center text-[11px] text-[#7c6a55]">Dates marked in muted tone are not available.</p>
+            <p className="mt-3 text-center text-[11px] text-[#7c6a55]">
+              Dates marked in muted tone are not available.
+            </p>
 
             <button
               type="button"
