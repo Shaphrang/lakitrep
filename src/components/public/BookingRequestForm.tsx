@@ -365,27 +365,25 @@ export function BookingRequestForm({
         </div>
       </div>
 
-      <div className="sticky bottom-0 z-10 grid grid-cols-[0.9fr_1.1fr] gap-2 border-t border-[#e1d7c8] bg-[#fdfbf7]/95 p-3 backdrop-blur sm:static sm:p-4">
-        {onCancel ? (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="h-11 rounded-xl border border-[#cfc4b3] bg-white px-4 text-sm font-semibold text-[#2f513c] shadow-sm transition hover:bg-[#f2ecdf]"
-          >
-            Cancel
-          </button>
-        ) : null}
+      <div className="sticky bottom-0 z-20 border-t border-[#e1d7c8] bg-[#fdfbf7]/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur sm:static sm:grid sm:grid-cols-[0.9fr_1.1fr] sm:gap-2 sm:p-4">
+  {onCancel ? (
+    <button
+      type="button"
+      onClick={onCancel}
+      className="hidden h-11 rounded-xl border border-[#cfc4b3] bg-white px-4 text-sm font-semibold text-[#2f513c] shadow-sm transition hover:bg-[#f2ecdf] sm:block"
+    >
+      Cancel
+    </button>
+  ) : null}
 
-        <button
-          type="submit"
-          disabled={pending || !canSubmit}
-          className={`h-11 rounded-xl bg-[#2f5a3d] px-4 text-sm font-semibold text-white shadow-md transition hover:bg-[#264f35] disabled:cursor-not-allowed disabled:opacity-60 ${
-            onCancel ? "" : "col-span-2"
-          }`}
-        >
-          {pending ? "Submitting..." : "Book Now"}
-        </button>
-      </div>
+  <button
+    type="submit"
+    disabled={pending || !canSubmit}
+    className="h-12 w-full rounded-2xl bg-[#e17b22] px-5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(225,123,34,0.35)] transition hover:bg-[#c96718] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 sm:h-11 sm:rounded-xl"
+  >
+    {pending ? "Submitting..." : "Book Now"}
+  </button>
+</div>
     </form>
   );
 }
