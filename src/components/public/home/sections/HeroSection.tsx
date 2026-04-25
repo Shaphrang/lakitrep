@@ -51,8 +51,8 @@ export function HeroSection({ property, cottages }: HeroSectionProps) {
 
             <div className="mt-6 flex flex-wrap gap-3">
               <BookNowButton
-                className="rounded-2xl border border-[#d6c497]/35 bg-[#335b39]/90 px-5 py-3 text-sm font-semibold text-white shadow-lg backdrop-blur-sm transition hover:bg-[#284a2d]"
-                label="Book via WhatsApp"
+                className="rounded-2xl bg-[#e17b22] px-5 py-3 text-sm font-bold text-white shadow-[0_10px_24px_rgba(225,123,34,0.34)] transition hover:bg-[#c96718]"
+                label="Book Now"
                 lockCottage={false}
               />
               <Link

@@ -1,4 +1,3 @@
-//src\components\public\booking\HeroBookingWidget.tsx
 "use client";
 
 import { useMemo, useState } from "react";
@@ -16,10 +15,14 @@ export function HeroBookingWidget({ cottages }: { cottages: PublicCottage[] }) {
   const [children, setChildren] = useState(DEFAULT_GUESTS.children);
   const [infants, setInfants] = useState(DEFAULT_GUESTS.infants);
 
-  const selected = useMemo(() => cottages.find((item) => item.slug === cottageSlug), [cottages, cottageSlug]);
+  const selected = useMemo(
+    () => cottages.find((item) => item.slug === cottageSlug),
+    [cottages, cottageSlug],
+  );
 
   const totalGuests = adults + children + infants;
-  const maxReached = Boolean(selected) && totalGuests >= (selected?.max_total_guests ?? 0);
+  const maxReached =
+    Boolean(selected) && totalGuests >= (selected?.max_total_guests ?? 0);
   const guestError = validateGuestCapacity(selected, { adults, children, infants });
 
   function updateGuests(key: "adults" | "children" | "infants", nextValue: number, min: number) {
@@ -40,20 +43,23 @@ export function HeroBookingWidget({ cottages }: { cottages: PublicCottage[] }) {
   }
 
   return (
-    <aside className="w-full rounded-[26px] border border-[#ddd2c2] bg-[#fbf7f1]/95 p-4 text-[#264330] shadow-[0_18px_50px_rgba(22,31,24,0.18)] backdrop-blur-xl sm:p-5 lg:max-w-[400px]">
-      <div className="mb-4">
-        <p className="text-[0.65rem] font-medium uppercase tracking-[0.22em] text-[#6e7d72]">
+    <aside className="w-full rounded-[24px] border border-[#d8cebf] bg-[#fbf7f1]/95 p-4 text-[#264330] shadow-[0_18px_42px_rgba(22,31,24,0.16)] backdrop-blur-xl sm:p-5 lg:max-w-[400px]">
+      <div className="mb-4 border-b border-[#e3dacc] pb-3">
+        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-[#6a7c70]">
           Booking request
         </p>
-        <h2 className="mt-1 font-serif text-[1.65rem] leading-tight text-[#203d2d]">
+        <h2 className="mt-1 font-serif text-[1.5rem] leading-tight text-[#1f3b2b] sm:text-[1.6rem]">
           Check dates & cottages
         </h2>
+        <p className="mt-1.5 text-xs leading-5 text-[#67776d]">
+          Choose your stay dates and cottage to send a booking request.
+        </p>
       </div>
 
       <div className="space-y-3.5">
         <label className="space-y-1.5">
-          <span className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#6f7d73]">
-            Cottage Type
+          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#66766b]">
+            Cottage
           </span>
           <select
             value={cottageSlug}
@@ -62,7 +68,7 @@ export function HeroBookingWidget({ cottages }: { cottages: PublicCottage[] }) {
               setCheckInDate("");
               setCheckOutDate("");
             }}
-            className="h-12 w-full rounded-2xl border border-[#d7ccb9] bg-white px-3 text-sm text-[#274330] outline-none transition focus:border-[#3d6545]"
+            className="h-11 w-full rounded-2xl border border-[#d7ccb9] bg-white px-3 text-sm text-[#274330] outline-none transition focus:border-[#3d6545] focus:ring-2 focus:ring-[#2f5a3d]/10"
           >
             {cottages.map((cottage) => (
               <option key={cottage.id} value={cottage.slug}>
@@ -83,68 +89,59 @@ export function HeroBookingWidget({ cottages }: { cottages: PublicCottage[] }) {
           }}
         />
 
-        <label className="space-y-1.5">
-          <span className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#6f7d73]">
-            Guests
-          </span>
-          <div className="flex h-12 items-center justify-between rounded-2xl border border-[#d7ccb9] bg-white px-3">
-            <button
-              type="button"
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ddd1c0] text-[#254432]"
-              onClick={() => updateGuests("adults", adults - 1, 1)}
-            >
-              -
-            </button>
-            <span className="text-sm font-semibold text-[#254432]">
-              {totalGuests} guest{totalGuests > 1 ? "s" : ""}
+        <div className="rounded-2xl border border-[#ddd2c2] bg-white/90 p-3">
+          <div className="mb-2.5 flex items-center justify-between gap-2">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#6a7a70]">
+              Guests
             </span>
-            <button
-              type="button"
-              disabled={maxReached}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ddd1c0] text-[#254432] disabled:cursor-not-allowed disabled:border-[#e7ddd0] disabled:bg-[#f4eee4] disabled:text-[#b09f8f]"
-              onClick={() => updateGuests("adults", adults + 1, 1)}
-            >
-              +
-            </button>
+            <span className="rounded-full bg-[#edf3ee] px-2.5 py-1 text-[11px] font-semibold text-[#2f5a3d]">
+              Total {totalGuests}
+            </span>
           </div>
-        </label>
 
-        <div className="grid grid-cols-3 gap-2.5">
-          {([
-            ["Adults", adults, "adults", 1],
-            ["Children", children, "children", 0],
-            ["Infants", infants, "infants", 0],
-          ] as const).map(([label, value, key, min]) => (
-            <div
-              key={label}
-              className="rounded-2xl border border-[#ddd2c2] bg-white px-2 py-3 text-center shadow-sm"
-            >
-              <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-[#76847a]">
-                {label}
-              </p>
-              <div className="mt-2 flex items-center justify-center gap-2">
-                <button
-                  type="button"
-                  className="flex h-7 w-7 items-center justify-center rounded-full border border-[#ddd1c0] text-[#264330]"
-                  onClick={() => updateGuests(key, value - 1, min)}
-                >
-                  -
-                </button>
-                <span className="min-w-[18px] text-sm font-semibold text-[#234736]">{value}</span>
-                <button
-                  type="button"
-                  disabled={maxReached}
-                  className="flex h-7 w-7 items-center justify-center rounded-full border border-[#ddd1c0] text-[#264330] disabled:cursor-not-allowed disabled:border-[#e7ddd0] disabled:bg-[#f4eee4] disabled:text-[#b09f8f]"
-                  onClick={() => updateGuests(key, value + 1, min)}
-                >
-                  +
-                </button>
+          <div className="grid grid-cols-3 gap-2">
+            {([
+              ["Adults", adults, "adults", 1],
+              ["Children", children, "children", 0],
+              ["Infants", infants, "infants", 0],
+            ] as const).map(([label, value, key, min]) => (
+              <div
+                key={label}
+                className="rounded-xl border border-[#e8dece] bg-[#fffdfa] px-2 py-2.5 text-center"
+              >
+                <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#748279]">
+                  {label}
+                </p>
+                <div className="mt-1.5 flex items-center justify-center gap-1.5">
+                  <button
+                    type="button"
+                    className="flex h-7 w-7 items-center justify-center rounded-full border border-[#ddd1c0] text-[#264330]"
+                    onClick={() => updateGuests(key, value - 1, min)}
+                    aria-label={`Decrease ${label}`}
+                  >
+                    -
+                  </button>
+                  <span className="min-w-[16px] text-sm font-semibold text-[#234736]">{value}</span>
+                  <button
+                    type="button"
+                    disabled={maxReached}
+                    className="flex h-7 w-7 items-center justify-center rounded-full border border-[#ddd1c0] text-[#264330] disabled:cursor-not-allowed disabled:border-[#e7ddd0] disabled:bg-[#f4eee4] disabled:text-[#b09f8f]"
+                    onClick={() => updateGuests(key, value + 1, min)}
+                    aria-label={`Increase ${label}`}
+                  >
+                    +
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
-        {guestError ? <p className="text-xs text-rose-700">This cottage allows a maximum of {selected?.max_total_guests ?? 0} occupants.</p> : null}
+        {guestError ? (
+          <p className="text-xs text-rose-700">
+            This cottage allows a maximum of {selected?.max_total_guests ?? 0} occupants.
+          </p>
+        ) : null}
 
         <button
           type="button"
@@ -155,18 +152,19 @@ export function HeroBookingWidget({ cottages }: { cottages: PublicCottage[] }) {
               { lockCottage: true },
             )
           }
-          className="h-12 w-full rounded-2xl bg-[#2f5a3d] px-4 text-sm font-semibold text-white shadow-md transition hover:bg-[#264f35] disabled:cursor-not-allowed disabled:opacity-60"
+          className="h-11 w-full rounded-2xl bg-[#e17b22] px-4 text-sm font-bold text-white shadow-[0_10px_24px_rgba(225,123,34,0.34)] transition hover:bg-[#c96718] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Send Booking Request
+          Book Now
         </button>
 
-        <p className="text-center text-[11px] text-[#7a857d]">Pre-booking required</p>
-
-        {selected ? (
-          <p className="text-center text-xs text-[#607267]">
-            Starting from ₹{selected.weekday_price.toLocaleString("en-IN")} per weekday night.
-          </p>
-        ) : null}
+        <div className="space-y-1 text-center">
+          <p className="text-[11px] text-[#7a857d]">Pre-booking required</p>
+          {selected ? (
+            <p className="text-xs text-[#607267]">
+              Starting from ₹{selected.weekday_price.toLocaleString("en-IN")} per weekday night.
+            </p>
+          ) : null}
+        </div>
       </div>
     </aside>
   );
