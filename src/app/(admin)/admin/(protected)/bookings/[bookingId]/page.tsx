@@ -15,21 +15,90 @@ import { DataTable } from "@/components/admin/shared/DataTable";
 import { StatusBadge } from "@/components/admin/shared/StatusBadge";
 import { getBookingById } from "@/features/admin/bookings/services/bookings-service";
 import { getBillingContext } from "@/features/admin/bookings/services/resort-management-service";
-import { notFound } from "next/navigation";
+
 
 const detailCard = "rounded-2xl border border-[#ddd4c6] bg-white p-4 shadow-sm sm:p-5";
 const inputClass = "mt-1 w-full rounded-xl border border-[#d8cfbf] bg-[#fdfbf7] px-3 py-2.5 text-sm text-[#21392c]";
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-export default async function BookingDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const { id } = await params;
+function isValidBookingId(value: string) {
+  return UUID_PATTERN.test(value);
+}
+
+export default async function BookingDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ bookingId: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const { bookingId } = await params;
   const query = await searchParams;
   const success = typeof query.success === "string" ? decodeURIComponent(query.success) : "";
   const error = typeof query.error === "string" ? decodeURIComponent(query.error) : "";
 
-  const booking = await getBookingById(id);
-  if (!booking) notFound();
+  if (!isValidBookingId(bookingId)) {
+    return (
+      <div className="space-y-4">
+        <AdminPageHeader title="Booking Details" description="Booking lifecycle, billing, and invoice controls." />
+        <div className={detailCard}>
+          <p className="text-sm text-[#5e6f63]">Invalid booking reference.</p>
+          <div className="mt-3">
+            <Link href="/admin/bookings" className="rounded-xl border border-[#2e5a3d] px-3 py-2 text-sm font-semibold text-[#2e5a3d]">
+              Back to Bookings
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const billing = await getBillingContext(id);
+  let booking: Awaited<ReturnType<typeof getBookingById>> = null;
+  let billing: Awaited<ReturnType<typeof getBillingContext>> = { booking: null, charges: [], payments: [], invoices: [] };
+  let loadFailed = false;
+
+  try {
+    booking = await getBookingById(bookingId);
+    if (booking) {
+      billing = await getBillingContext(bookingId);
+    }
+  } catch {
+    loadFailed = true;
+  }
+
+  if (loadFailed) {
+    return (
+      <div className="space-y-4">
+        <AdminPageHeader title="Booking Details" description="Booking lifecycle, billing, and invoice controls." />
+        <div className={detailCard}>
+          <p className="text-sm text-[#5e6f63]">Unable to load booking details. Please refresh and try again.</p>
+          <div className="mt-3">
+            <Link href="/admin/bookings" className="rounded-xl border border-[#2e5a3d] px-3 py-2 text-sm font-semibold text-[#2e5a3d]">
+              Back to Bookings
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!booking) {
+    return (
+      <div className="space-y-4">
+        <AdminPageHeader title="Booking Details" description="Booking lifecycle, billing, and invoice controls." />
+        <div className={detailCard}>
+          <p className="text-sm text-[#5e6f63]">Booking not found or no longer available.</p>
+          <div className="mt-3">
+            <Link href="/admin/bookings" className="rounded-xl border border-[#2e5a3d] px-3 py-2 text-sm font-semibold text-[#2e5a3d]">
+              Back to Bookings
+            </Link>
+          </div>
+        </div>
+        <ActionDialog success={success} error={error} />
+      </div>
+    );
+  }
+
   const guest = booking.guest as Record<string, unknown> | null;
   const cottage = booking.cottages as Record<string, unknown> | null;
   const today = format(new Date(), "yyyy-MM-dd");
