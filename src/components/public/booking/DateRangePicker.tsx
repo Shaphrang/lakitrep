@@ -553,7 +553,7 @@ export function DateRangePicker({
                     </div>
 
                     <p className="mt-2 text-center text-[10px] text-[#849186]">
-                      Weekend pricing applies Sat/Sun nights.
+                      Weekend pricing applies on Sat/Sun nights.
                     </p>
                   </div>
                 );

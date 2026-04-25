@@ -22,7 +22,7 @@ export async function getAllBookings(filters: BookingFilters = {}) {
   let query = supabase
     .from("bookings")
     .select(
-      "id,booking_code,status,payment_status,source,check_in_date,check_out_date,adults,children,infants,nights,total_amount,final_total,amount_paid,amount_pending,properties(name),cottages(name),booking_guests(full_name,phone)",
+      "id,booking_code,status,payment_status,source,check_in_date,check_out_date,adults,children,infants,nights,total_amount,final_total,amount_paid,amount_pending,properties(name),cottages(name),guest:booking_guests!bookings_booking_guest_id_fkey(full_name,phone)",
       { count: "exact" },
     )
     .order("created_at", { ascending: false })
@@ -77,8 +77,8 @@ function mapBookings(data: Record<string, unknown>[]): Booking[] {
     amount_pending: Number(row.amount_pending ?? row.total_amount ?? 0),
     property_name: ((row.properties as { name?: string } | null)?.name ?? "-") as string,
     cottage_name: ((row.cottages as { name?: string } | null)?.name ?? "-") as string,
-    guest_name: ((row.booking_guests as { full_name?: string } | null)?.full_name ?? "-") as string,
-    guest_phone: ((row.booking_guests as { phone?: string } | null)?.phone ?? "-") as string,
+    guest_name: ((row.guest as { full_name?: string } | null)?.full_name ?? "-") as string,
+    guest_phone: ((row.guest as { phone?: string } | null)?.phone ?? "-") as string,
   }));
 }
 
@@ -86,7 +86,7 @@ export async function getBookingById(id: string) {
   const supabase = await getSupabaseServerClient();
   const { data, error } = await supabase
     .from("bookings")
-    .select("*,properties(name),cottages(name,code,max_total_guests),booking_guests(*)")
+    .select("*,properties(name),cottages(name,code,max_total_guests),guest:booking_guests!bookings_booking_guest_id_fkey(*)")
     .eq("id", id)
     .maybeSingle();
   if (error) throw new Error(`Failed to fetch booking: ${error.message}`);

@@ -9,7 +9,7 @@ export default async function ReportsPage() {
     supabase.from("booking_payments").select("id,payment_date,amount,payment_mode,payment_type").order("payment_date", { ascending: false }).limit(2000),
     supabase
       .from("bookings")
-      .select("id,booking_code,amount_pending,final_total,amount_paid,status,check_out_date,booking_guests(full_name,phone),cottages(name)")
+      .select("id,booking_code,amount_pending,final_total,amount_paid,status,check_out_date,guest:booking_guests!bookings_booking_guest_id_fkey(full_name,phone),cottages(name)")
       .gt("amount_pending", 0)
       .order("check_out_date", { ascending: true })
       .limit(500),
@@ -44,8 +44,8 @@ export default async function ReportsPage() {
   const pendingRows = (pending ?? []).map((row) => ({
     id: String(row.id),
     booking_code: String(row.booking_code ?? "-"),
-    guest: ((row.booking_guests as { full_name?: string } | null)?.full_name ?? "-") as string,
-    phone: ((row.booking_guests as { phone?: string } | null)?.phone ?? "-") as string,
+    guest: ((row.guest as { full_name?: string } | null)?.full_name ?? "-") as string,
+    phone: ((row.guest as { phone?: string } | null)?.phone ?? "-") as string,
     cottage: ((row.cottages as { name?: string } | null)?.name ?? "-") as string,
     check_out_date: String(row.check_out_date ?? "-"),
     final_total: Number(row.final_total ?? 0),

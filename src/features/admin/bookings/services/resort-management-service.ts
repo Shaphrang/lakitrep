@@ -141,7 +141,7 @@ export async function assertCottageAvailability(cottageId: string, checkInDate: 
 export async function getBillingContext(bookingId: string) {
   const supabase = await getSupabaseServerClient();
   const [{ data: booking }, { data: charges }, { data: payments }, { data: invoices }] = await Promise.all([
-    supabase.from("bookings").select("id,booking_code,status,payment_status,check_in_date,check_out_date,total_amount,discount_amount,extra_charges_total,final_total,amount_paid,amount_pending,booking_guests(full_name,phone),cottages(name)").eq("id", bookingId).maybeSingle(),
+    supabase.from("bookings").select("id,booking_code,status,payment_status,check_in_date,check_out_date,total_amount,discount_amount,extra_charges_total,final_total,amount_paid,amount_pending,guest:booking_guests!bookings_booking_guest_id_fkey(full_name,phone),cottages(name)").eq("id", bookingId).maybeSingle(),
     supabase.from("booking_charges").select("*").eq("booking_id", bookingId).order("created_at", { ascending: false }),
     supabase.from("booking_payments").select("*").eq("booking_id", bookingId).order("payment_date", { ascending: false }),
     supabase.from("invoices").select("*").eq("booking_id", bookingId).order("created_at", { ascending: false }),
