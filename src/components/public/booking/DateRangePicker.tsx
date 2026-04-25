@@ -69,7 +69,6 @@ export function DateRangePicker({
   const touchStartYRef = useRef<number | null>(null);
 
   const pushedDatePickerHistoryRef = useRef(false);
-  const previousDatePickerUrlRef = useRef<string | null>(null);
 
   const [open, setOpen] = useState(false);
   const [viewMonth, setViewMonth] = useState(startOfMonth(new Date()));
@@ -113,7 +112,9 @@ export function DateRangePicker({
     syncViewport();
     media.addEventListener("change", syncViewport);
 
-    return () => media.removeEventListener("change", syncViewport);
+    return () => {
+      media.removeEventListener("change", syncViewport);
+    };
   }, []);
 
   useEffect(() => {
@@ -152,13 +153,18 @@ export function DateRangePicker({
       document.removeEventListener("pointerdown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [open]);
+  }, [open, isMobile]);
 
   useEffect(() => {
     if (!open || !isMobile || pushedDatePickerHistoryRef.current) return;
 
-    previousDatePickerUrlRef.current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    /*
+      Add a separate mobile history layer for the date picker.
+      Booking form uses #booking.
+      Date picker uses #booking-date.
 
+      Back from #booking-date should return to #booking and close only the picker.
+    */
     window.history.pushState(
       { ...(window.history.state ?? {}), datePickerOpen: true },
       "",
@@ -174,8 +180,14 @@ export function DateRangePicker({
     function handleDatePickerBack(event: PopStateEvent) {
       if (!pushedDatePickerHistoryRef.current) return;
 
+      /*
+        When mobile Back is pressed:
+        #booking-date -> #booking
+
+        Close only the date picker.
+        Do not close the booking form.
+      */
       pushedDatePickerHistoryRef.current = false;
-      previousDatePickerUrlRef.current = null;
       setOpen(false);
 
       event.stopImmediatePropagation();
@@ -232,6 +244,7 @@ export function DateRangePicker({
               checkInDate: undefined,
               checkOutDate: undefined,
             });
+
             setRangeError(
               "Please select available dates again for the selected cottage.",
             );
@@ -241,6 +254,7 @@ export function DateRangePicker({
             checkInDate: undefined,
             checkOutDate: undefined,
           });
+
           setRangeError("Selected check-in date is not available for this cottage.");
         }
       } catch {
@@ -267,23 +281,20 @@ export function DateRangePicker({
   function closeDatePicker() {
     setOpen(false);
 
+    /*
+      If the picker created #booking-date, remove only that history layer.
+      This returns the URL to #booking without closing the booking form.
+    */
     if (
       typeof window !== "undefined" &&
       isMobile &&
-      pushedDatePickerHistoryRef.current
+      pushedDatePickerHistoryRef.current &&
+      window.location.hash === "#booking-date"
     ) {
-      const previousUrl =
-        previousDatePickerUrlRef.current ??
-        `${window.location.pathname}${window.location.search}`;
-
-      window.history.replaceState(
-        { ...(window.history.state ?? {}), datePickerOpen: false },
-        "",
-        previousUrl,
-      );
-
       pushedDatePickerHistoryRef.current = false;
-      previousDatePickerUrlRef.current = null;
+      window.history.back();
+    } else {
+      pushedDatePickerHistoryRef.current = false;
     }
   }
 
@@ -310,6 +321,7 @@ export function DateRangePicker({
         checkInDate: selected,
         checkOutDate: undefined,
       });
+
       return;
     }
 
@@ -318,6 +330,7 @@ export function DateRangePicker({
         checkInDate: selected,
         checkOutDate: undefined,
       });
+
       return;
     }
 
@@ -454,9 +467,7 @@ export function DateRangePicker({
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#6d7f70]">
                   Select stay dates
                 </p>
-                <p className="text-[11px] text-[#839187]">
-                  Tap check-in, then check-out
-                </p>
+
                 <p className="mt-0.5 text-[10px] text-[#9a8b78] sm:hidden">
                   Swipe left or right to change month
                 </p>
@@ -475,6 +486,7 @@ export function DateRangePicker({
               {months.map((month) => {
                 const monthStart = startOfMonth(month);
                 const start = startOfWeek(monthStart, { weekStartsOn: 1 });
+
                 const days = eachDayOfInterval({
                   start,
                   end: addDays(start, 41),
@@ -549,8 +561,7 @@ export function DateRangePicker({
             </div>
 
             <div className="mt-3 rounded-2xl border border-[#eee4d7] bg-[#fffaf1] px-3 py-2 text-center text-[11px] text-[#7c6a55]">
-              Muted dates are not available. Checkout date is allowed when the
-              previous guest checks out that day.
+              Muted dates are not available.
             </div>
 
             <button

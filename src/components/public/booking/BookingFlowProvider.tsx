@@ -55,13 +55,14 @@ export function BookingFlowProvider({
       if (
         typeof window !== "undefined" &&
         pushedMobileHistoryRef.current &&
-        window.location.hash === "#booking"
+        (window.location.hash === "#booking" || window.location.hash === "#booking-date")
       ) {
         window.history.replaceState(
           { ...(window.history.state ?? {}), bookingFlow: false },
           "",
           `${window.location.pathname}${window.location.search}`,
         );
+
         pushedMobileHistoryRef.current = false;
       }
 
@@ -88,11 +89,13 @@ export function BookingFlowProvider({
           !pushedMobileHistoryRef.current
         ) {
           const nextUrl = `${window.location.pathname}${window.location.search}#booking`;
+
           window.history.pushState(
             { ...(window.history.state ?? {}), bookingFlow: true },
             "",
             nextUrl,
           );
+
           pushedMobileHistoryRef.current = true;
         }
 
@@ -115,14 +118,32 @@ export function BookingFlowProvider({
 
   useEffect(() => {
     function handlePopState() {
-      if (pushedMobileHistoryRef.current) {
-        pushedMobileHistoryRef.current = false;
-        setIsOpen(false);
+      if (!pushedMobileHistoryRef.current) return;
+
+      /*
+        Important mobile behavior:
+
+        Booking form URL: #booking
+        Date picker URL: #booking-date
+
+        When the user presses Back while the date picker is open,
+        the browser moves from #booking-date back to #booking.
+        In that case, only the date picker should close.
+        The booking form must remain open so the user does not lose typed data.
+      */
+      if (window.location.hash === "#booking") {
+        return;
       }
+
+      pushedMobileHistoryRef.current = false;
+      setIsOpen(false);
     }
 
     window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
   }, []);
 
   return (
@@ -148,6 +169,7 @@ export function BookingFlowProvider({
                 <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#6f7f75]">
                   La Ki Trep
                 </p>
+
                 <h3 className="mt-0.5 truncate font-serif text-sm leading-tight text-[#214531] sm:text-[1.8rem]">
                   Complete your booking request
                 </h3>
