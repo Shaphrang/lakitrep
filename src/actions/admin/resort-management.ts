@@ -1,5 +1,6 @@
 "use server";
 
+import { format, isAfter, isBefore, parseISO } from "date-fns";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -16,281 +17,389 @@ import { getNumber, getOptionalString, getString } from "./_shared";
 const DIGIT_PHONE_REGEX = /^\d{10}$/;
 
 const customerSchema = z.object({
-  fullName: z.string().min(2),
+  fullName: z.string().trim().min(2).max(100),
   phone: z.string().regex(DIGIT_PHONE_REGEX, "Phone number must be exactly 10 digits."),
-  whatsappNumber: z.string().optional().refine((value) => !value || DIGIT_PHONE_REGEX.test(value), "WhatsApp must be 10 digits."),
+  whatsappNumber: z
+    .string()
+    .optional()
+    .refine((value) => !value || DIGIT_PHONE_REGEX.test(value), "WhatsApp must be 10 digits."),
   email: z.string().email().or(z.literal("")).optional(),
 });
 
+function friendlyError(error: unknown, fallback: string) {
+  if (error instanceof z.ZodError) return error.issues[0]?.message ?? fallback;
+  if (error instanceof Error) return error.message;
+  return fallback;
+}
+
+function redirectWithMessage(path: string, key: "success" | "error", message: string) {
+  const joiner = path.includes("?") ? "&" : "?";
+  redirect(`${path}${joiner}${key}=${encodeURIComponent(message)}`);
+}
+
 export async function createOrUpdateCustomerAction(formData: FormData) {
-  await requireAdmin();
-  const supabase = await getSupabaseServerClient();
+  const returnPath = getOptionalString(formData, "return_path") || "/admin/customers";
+  try {
+    await requireAdmin();
+    const supabase = await getSupabaseServerClient();
 
-  const id = getOptionalString(formData, "id");
-  const fullName = getString(formData, "full_name");
-  const phone = getString(formData, "phone");
-  const whatsappNumber = getOptionalString(formData, "whatsapp_number");
-  const email = getOptionalString(formData, "email");
+    const id = getOptionalString(formData, "id");
+    const fullName = getString(formData, "full_name");
+    const phone = getString(formData, "phone").replace(/\D/g, "").slice(0, 10);
+    const whatsappNumber = getOptionalString(formData, "whatsapp_number").replace(/\D/g, "").slice(0, 10);
+    const email = getOptionalString(formData, "email");
 
-  customerSchema.parse({ fullName, phone, whatsappNumber, email });
+    customerSchema.parse({ fullName, phone, whatsappNumber, email });
 
-  const payload = {
-    full_name: fullName,
-    phone,
-    whatsapp_number: whatsappNumber || null,
-    email: email || null,
-    address: getOptionalString(formData, "address") || null,
-    city: getOptionalString(formData, "city") || null,
-    state: getOptionalString(formData, "state") || null,
-    country: getOptionalString(formData, "country") || "India",
-    customer_type: getOptionalString(formData, "customer_type") || "other",
-    source: getOptionalString(formData, "source") || "other",
-    notes: getOptionalString(formData, "notes") || null,
-  };
+    const payload = {
+      full_name: fullName,
+      phone,
+      whatsapp_number: whatsappNumber || null,
+      email: email || null,
+      address: getOptionalString(formData, "address") || null,
+      city: getOptionalString(formData, "city") || null,
+      state: getOptionalString(formData, "state") || null,
+      country: getOptionalString(formData, "country") || "India",
+      customer_type: getOptionalString(formData, "customer_type") || "other",
+      source: getOptionalString(formData, "source") || "other",
+      notes: getOptionalString(formData, "notes") || null,
+    };
 
-  const duplicateQuery = supabase.from("booking_guests").select("id").eq("phone", phone).limit(1);
-  const duplicate = await (id ? duplicateQuery.neq("id", id) : duplicateQuery);
+    const duplicateQuery = supabase.from("booking_guests").select("id").eq("phone", phone).limit(1);
+    const duplicate = await (id ? duplicateQuery.neq("id", id) : duplicateQuery);
 
-  if ((duplicate.data ?? []).length > 0) {
-    throw new Error("A customer with the same phone number already exists.");
-  }
+    if ((duplicate.data ?? []).length > 0) {
+      redirectWithMessage(returnPath, "error", "A customer with this phone number already exists.");
+    }
 
-  if (id) {
-    const { error } = await supabase.from("booking_guests").update(payload).eq("id", id);
-    if (error) throw new Error(error.message);
-  } else {
+    if (id) {
+      const { error } = await supabase.from("booking_guests").update(payload).eq("id", id);
+      if (error) throw new Error("Unable to update customer. Please try again.");
+      revalidatePath("/admin/customers");
+      redirectWithMessage(returnPath, "success", "Customer updated successfully.");
+    }
+
     const { error } = await supabase.from("booking_guests").insert(payload);
-    if (error) throw new Error(error.message);
-  }
+    if (error) throw new Error("Unable to add customer. Please try again.");
 
-  revalidatePath("/admin/customers");
-  redirect("/admin/customers");
+    revalidatePath("/admin/customers");
+    redirectWithMessage(returnPath, "success", "Customer added successfully.");
+  } catch (error) {
+    redirectWithMessage(returnPath, "error", friendlyError(error, "Unable to save customer."));
+  }
 }
 
 export async function createManualBookingAction(formData: FormData) {
-  const admin = await requireAdmin();
-  const supabase = await getSupabaseServerClient();
+  const returnPath = getOptionalString(formData, "return_path") || "/admin/bookings/new";
 
-  const customerId = getString(formData, "customer_id");
-  const cottageId = getString(formData, "cottage_id");
-  const checkInDate = getString(formData, "check_in_date");
-  const checkOutDate = getString(formData, "check_out_date");
-  const adults = Math.max(1, getNumber(formData, "adults", 1));
-  const children = Math.max(0, getNumber(formData, "children", 0));
-  const infants = Math.max(0, getNumber(formData, "infants", 0));
+  try {
+    const admin = await requireAdmin();
+    const supabase = await getSupabaseServerClient();
 
-  if (!customerId || !cottageId || !checkInDate || !checkOutDate) {
-    throw new Error("Customer, cottage, check-in, and check-out are required.");
+    const customerId = getString(formData, "customer_id");
+    const cottageId = getString(formData, "cottage_id");
+    const checkInDate = getString(formData, "check_in_date");
+    const checkOutDate = getString(formData, "check_out_date");
+    const adults = Math.max(1, getNumber(formData, "adults", 1));
+    const children = Math.max(0, getNumber(formData, "children", 0));
+    const infants = Math.max(0, getNumber(formData, "infants", 0));
+
+    if (!customerId || !cottageId || !checkInDate || !checkOutDate) {
+      throw new Error("Customer, cottage, check-in and check-out are required.");
+    }
+
+    const today = format(new Date(), "yyyy-MM-dd");
+    if (checkInDate < today) throw new Error("Past check-in dates are not allowed for manual booking.");
+    if (checkOutDate <= checkInDate) throw new Error("Check-out date must be after check-in date.");
+
+    const { data: cottage, error: cottageError } = await supabase
+      .from("cottages")
+      .select("id,max_total_guests,weekday_price,weekend_price")
+      .eq("id", cottageId)
+      .maybeSingle();
+
+    if (cottageError || !cottage) throw new Error("Invalid cottage selected.");
+
+    if (adults + children + infants > Number(cottage.max_total_guests ?? 0)) {
+      throw new Error("Guest count exceeds cottage capacity.");
+    }
+
+    const availability = await assertCottageAvailability(cottageId, checkInDate, checkOutDate);
+    if (availability.hasConflict) {
+      throw new Error("Selected dates are no longer available for this cottage. Please choose another date.");
+    }
+
+    const nights = calculateNights(checkInDate, checkOutDate);
+    const bookingTotal = simpleRoomEstimate(Number(cottage.weekday_price ?? 0), Number(cottage.weekend_price ?? 0), checkInDate, nights);
+    const discountAmount = Math.max(0, getNumber(formData, "discount_amount", 0));
+    if (discountAmount > bookingTotal) throw new Error("Discount cannot exceed room charges.");
+
+    const finalTotal = Math.max(0, bookingTotal - discountAmount);
+    const advanceAmount = Math.max(0, getNumber(formData, "advance_amount", 0));
+    const paymentStatus = advanceAmount <= 0 ? "unpaid" : advanceAmount >= finalTotal ? "paid" : "advance_paid";
+
+    const { data: created, error: bookingError } = await supabase
+      .from("bookings")
+      .insert({
+        property_id: getString(formData, "property_id"),
+        booking_guest_id: customerId,
+        customer_id: customerId,
+        cottage_id: cottageId,
+        check_in_date: checkInDate,
+        check_out_date: checkOutDate,
+        adults,
+        children,
+        infants,
+        source: getOptionalString(formData, "source") || "phone",
+        status: getOptionalString(formData, "status") || (advanceAmount > 0 ? "advance_paid" : "confirmed"),
+        payment_method: "pay_on_arrival",
+        payment_status: paymentStatus,
+        special_requests: getOptionalString(formData, "special_requests") || null,
+        admin_notes: getOptionalString(formData, "internal_notes") || null,
+        nights,
+        total_amount: bookingTotal,
+        booking_total: bookingTotal,
+        discount_amount: discountAmount,
+        extra_charges_total: 0,
+        final_total: finalTotal,
+        amount_paid: advanceAmount,
+        amount_pending: Math.max(0, finalTotal - advanceAmount),
+        created_by: admin.id,
+      })
+      .select("id")
+      .single();
+
+    if (bookingError || !created) throw new Error("Failed to create booking.");
+
+    if (advanceAmount > 0) {
+      const paymentMode = getOptionalString(formData, "payment_mode") || "cash";
+      const { error: paymentError } = await supabase.from("booking_payments").insert({
+        booking_id: created.id,
+        payment_date: new Date().toISOString().slice(0, 10),
+        amount: advanceAmount,
+        payment_mode: paymentMode,
+        payment_type: "advance",
+        reference_number: getOptionalString(formData, "reference_number") || null,
+        notes: "Advance received while creating manual booking",
+        received_by: admin.id,
+      });
+      if (paymentError) throw new Error("Booking created but advance payment could not be recorded.");
+    }
+
+    revalidatePath("/admin/bookings");
+    redirectWithMessage(`/admin/bookings/${created.id}`, "success", "Booking created successfully. The booking has been added to the calendar.");
+  } catch (error) {
+    redirectWithMessage(returnPath, "error", friendlyError(error, "Unable to create manual booking."));
   }
-
-  if (checkOutDate <= checkInDate) {
-    throw new Error("Check-out date must be after check-in date.");
-  }
-
-  const { data: cottage, error: cottageError } = await supabase
-    .from("cottages")
-    .select("id,max_total_guests,weekday_price,weekend_price")
-    .eq("id", cottageId)
-    .maybeSingle();
-
-  if (cottageError || !cottage) throw new Error("Invalid cottage selected.");
-
-  if (adults + children + infants > Number(cottage.max_total_guests ?? 0)) {
-    throw new Error("Guest count exceeds cottage capacity.");
-  }
-
-  const availability = await assertCottageAvailability(cottageId, checkInDate, checkOutDate);
-  if (availability.hasConflict) {
-    throw new Error("Selected cottage is not available for this date range.");
-  }
-
-  const nights = calculateNights(checkInDate, checkOutDate);
-  const bookingTotal = simpleRoomEstimate(Number(cottage.weekday_price ?? 0), Number(cottage.weekend_price ?? 0), checkInDate, nights);
-  const discountAmount = Math.max(0, getNumber(formData, "discount_amount", 0));
-  if (discountAmount > bookingTotal) throw new Error("Discount cannot exceed booking total.");
-
-  const finalTotal = Math.max(0, bookingTotal - discountAmount);
-  const advanceAmount = Math.max(0, getNumber(formData, "advance_amount", 0));
-  const paymentStatus = advanceAmount <= 0 ? "unpaid" : advanceAmount >= finalTotal ? "paid" : "advance_paid";
-
-  const { data: created, error: bookingError } = await supabase
-    .from("bookings")
-    .insert({
-      property_id: getString(formData, "property_id"),
-      booking_guest_id: customerId,
-      customer_id: customerId,
-      cottage_id: cottageId,
-      check_in_date: checkInDate,
-      check_out_date: checkOutDate,
-      adults,
-      children,
-      infants,
-      source: getOptionalString(formData, "source") || "phone",
-      status: getOptionalString(formData, "status") || (advanceAmount > 0 ? "advance_paid" : "confirmed"),
-      payment_method: "pay_on_arrival",
-      payment_status: paymentStatus,
-      special_requests: getOptionalString(formData, "special_requests") || null,
-      admin_notes: getOptionalString(formData, "internal_notes") || null,
-      nights,
-      total_amount: bookingTotal,
-      booking_total: bookingTotal,
-      discount_amount: discountAmount,
-      extra_charges_total: 0,
-      final_total: finalTotal,
-      amount_paid: advanceAmount,
-      amount_pending: Math.max(0, finalTotal - advanceAmount),
-      created_by: admin.id,
-    })
-    .select("id")
-    .single();
-
-  if (bookingError || !created) throw new Error(bookingError?.message ?? "Failed to create booking.");
-
-  if (advanceAmount > 0) {
-    const paymentMode = getOptionalString(formData, "payment_mode") || "cash";
-    const { error: paymentError } = await supabase.from("booking_payments").insert({
-      booking_id: created.id,
-      payment_date: new Date().toISOString().slice(0, 10),
-      amount: advanceAmount,
-      payment_mode: paymentMode,
-      payment_type: "advance",
-      reference_number: getOptionalString(formData, "reference_number") || null,
-      notes: "Advance received while creating manual booking",
-      received_by: admin.id,
-    });
-
-    if (paymentError) throw new Error(paymentError.message);
-  }
-
-  revalidatePath("/admin/bookings");
-  redirect(`/admin/bookings/${created.id}`);
 }
 
 export async function addBookingChargeAction(formData: FormData) {
-  await requireAdmin();
-  const supabase = await getSupabaseServerClient();
   const bookingId = getString(formData, "booking_id");
-  const quantity = Math.max(1, getNumber(formData, "quantity", 1));
-  const unitPrice = Math.max(0, getNumber(formData, "unit_price", 0));
-  const amount = Number((quantity * unitPrice).toFixed(2));
+  const returnPath = getOptionalString(formData, "return_path") || `/admin/bookings/${bookingId}`;
 
-  const { error } = await supabase.from("booking_charges").insert({
-    booking_id: bookingId,
-    charge_type: getString(formData, "charge_type") || "other",
-    description: getOptionalString(formData, "description") || null,
-    quantity,
-    unit_price: unitPrice,
-    amount,
-  });
+  try {
+    await requireAdmin();
+    const supabase = await getSupabaseServerClient();
+    const quantity = Math.max(1, getNumber(formData, "quantity", 1));
+    const unitPrice = Math.max(0, getNumber(formData, "unit_price", 0));
+    if (unitPrice <= 0) throw new Error("Unit price must be greater than zero.");
+    const amount = Number((quantity * unitPrice).toFixed(2));
 
-  if (error) throw new Error(error.message);
-  await recalculateBookingTotals(bookingId);
-  revalidatePath(`/admin/bookings/${bookingId}`);
-  revalidatePath("/admin/billing");
+    const { error } = await supabase.from("booking_charges").insert({
+      booking_id: bookingId,
+      charge_type: getString(formData, "charge_type") || "other",
+      description: getOptionalString(formData, "description") || null,
+      quantity,
+      unit_price: unitPrice,
+      amount,
+    });
+    if (error) throw new Error("Unable to add extra charge.");
+
+    await recalculateBookingTotals(bookingId);
+    revalidatePath(`/admin/bookings/${bookingId}`);
+    revalidatePath("/admin/billing");
+    redirectWithMessage(returnPath, "success", "Extra charge added successfully.");
+  } catch (error) {
+    redirectWithMessage(returnPath, "error", friendlyError(error, "Unable to add charge."));
+  }
+}
+
+export async function deleteBookingChargeAction(formData: FormData) {
+  const bookingId = getString(formData, "booking_id");
+  const chargeId = getString(formData, "charge_id");
+  const returnPath = getOptionalString(formData, "return_path") || `/admin/bookings/${bookingId}`;
+
+  try {
+    await requireAdmin();
+    const supabase = await getSupabaseServerClient();
+    const { error } = await supabase.from("booking_charges").delete().eq("id", chargeId).eq("booking_id", bookingId);
+    if (error) throw new Error("Unable to delete charge.");
+
+    await recalculateBookingTotals(bookingId);
+    revalidatePath(`/admin/bookings/${bookingId}`);
+    revalidatePath("/admin/billing");
+    redirectWithMessage(returnPath, "success", "Extra charge deleted successfully.");
+  } catch (error) {
+    redirectWithMessage(returnPath, "error", friendlyError(error, "Unable to delete charge."));
+  }
+}
+
+export async function applyBookingDiscountAction(formData: FormData) {
+  const bookingId = getString(formData, "booking_id");
+  const returnPath = getOptionalString(formData, "return_path") || `/admin/bookings/${bookingId}`;
+
+  try {
+    await requireAdmin();
+    const supabase = await getSupabaseServerClient();
+    const discount = Math.max(0, getNumber(formData, "discount_amount", 0));
+    const { data: booking } = await supabase.from("bookings").select("id,total_amount,extra_charges_total").eq("id", bookingId).maybeSingle();
+    if (!booking) throw new Error("Booking not found.");
+    const maxDiscount = Number(booking.total_amount ?? 0) + Number(booking.extra_charges_total ?? 0);
+    if (discount > maxDiscount) throw new Error("Discount cannot exceed current bill total.");
+
+    const { error } = await supabase.from("bookings").update({ discount_amount: discount }).eq("id", bookingId);
+    if (error) throw new Error("Unable to apply discount.");
+
+    await recalculateBookingTotals(bookingId);
+    revalidatePath(`/admin/bookings/${bookingId}`);
+    revalidatePath("/admin/billing");
+    redirectWithMessage(returnPath, "success", "Discount applied successfully.");
+  } catch (error) {
+    redirectWithMessage(returnPath, "error", friendlyError(error, "Unable to apply discount."));
+  }
 }
 
 export async function addBookingPaymentAction(formData: FormData) {
-  const admin = await requireAdmin();
-  const supabase = await getSupabaseServerClient();
   const bookingId = getString(formData, "booking_id");
-  const amount = Math.max(0, getNumber(formData, "amount", 0));
-  if (amount <= 0) throw new Error("Payment amount must be positive.");
+  const returnPath = getOptionalString(formData, "return_path") || `/admin/bookings/${bookingId}`;
 
-  const { error } = await supabase.from("booking_payments").insert({
-    booking_id: bookingId,
-    payment_date: getOptionalString(formData, "payment_date") || new Date().toISOString().slice(0, 10),
-    amount,
-    payment_mode: getOptionalString(formData, "payment_mode") || "cash",
-    payment_type: getOptionalString(formData, "payment_type") || "part_payment",
-    reference_number: getOptionalString(formData, "reference_number") || null,
-    notes: getOptionalString(formData, "notes") || null,
-    received_by: admin.id,
-  });
-  if (error) throw new Error(error.message);
+  try {
+    const admin = await requireAdmin();
+    const supabase = await getSupabaseServerClient();
+    const amount = Math.max(0, getNumber(formData, "amount", 0));
+    if (amount <= 0) throw new Error("Payment amount must be positive.");
 
-  await recalculateBookingTotals(bookingId);
-  revalidatePath(`/admin/bookings/${bookingId}`);
-  revalidatePath("/admin/payments");
-  revalidatePath("/admin/billing");
+    const { error } = await supabase.from("booking_payments").insert({
+      booking_id: bookingId,
+      payment_date: getOptionalString(formData, "payment_date") || new Date().toISOString().slice(0, 10),
+      amount,
+      payment_mode: getOptionalString(formData, "payment_mode") || "cash",
+      payment_type: getOptionalString(formData, "payment_type") || "part_payment",
+      reference_number: getOptionalString(formData, "reference_number") || null,
+      notes: getOptionalString(formData, "notes") || null,
+      received_by: admin.id,
+    });
+    if (error) throw new Error("Unable to record payment.");
+
+    await recalculateBookingTotals(bookingId);
+    revalidatePath(`/admin/bookings/${bookingId}`);
+    revalidatePath("/admin/payments");
+    revalidatePath("/admin/billing");
+    redirectWithMessage(returnPath, "success", "Payment recorded successfully. The billing summary has been updated.");
+  } catch (error) {
+    redirectWithMessage(returnPath, "error", friendlyError(error, "Unable to record payment."));
+  }
 }
 
 export async function performCheckInOutAction(formData: FormData) {
-  await requireAdmin();
-  const supabase = await getSupabaseServerClient();
   const bookingId = getString(formData, "booking_id");
   const actionType = getString(formData, "action_type");
-  const allowPending = getString(formData, "allow_pending") === "1";
+  const returnPath = getOptionalString(formData, "return_path") || "/admin/checkin-checkout";
 
-  const { data: booking } = await supabase
-    .from("bookings")
-    .select("id,status,amount_pending,payment_status")
-    .eq("id", bookingId)
-    .maybeSingle();
+  try {
+    await requireAdmin();
+    const supabase = await getSupabaseServerClient();
 
-  if (!booking) throw new Error("Booking not found.");
+    const { data: booking } = await supabase
+      .from("bookings")
+      .select("id,status,amount_pending,payment_status,check_in_date,check_out_date,booking_guest_id,cottage_id")
+      .eq("id", bookingId)
+      .maybeSingle();
 
-  if (actionType === "check_in") {
-    const valid = ["confirmed", "advance_paid", "checked_in"].includes(String(booking.status));
-    if (!valid && !allowPending) {
-      throw new Error("Booking should be confirmed or advance paid before check-in.");
+    if (!booking) throw new Error("Booking not found.");
+
+    const today = format(new Date(), "yyyy-MM-dd");
+
+    if (actionType === "check_in") {
+      const validStatus = ["confirmed", "advance_paid"].includes(String(booking.status));
+      if (!validStatus) throw new Error("Only confirmed or advance-paid bookings can be checked in.");
+      if (!booking.booking_guest_id || !booking.cottage_id) throw new Error("Customer or cottage information is missing.");
+      if (today !== String(booking.check_in_date)) {
+        const bookingDate = String(booking.check_in_date);
+        if (isBefore(parseISO(today), parseISO(bookingDate))) throw new Error("Check-in will be available on the booking check-in date.");
+        if (isAfter(parseISO(today), parseISO(bookingDate))) throw new Error("The scheduled check-in date has passed. Please review this booking before checking in.");
+      }
+
+      const { error } = await supabase.from("bookings").update({ status: "checked_in", actual_check_in_at: new Date().toISOString() }).eq("id", bookingId);
+      if (error) throw new Error("Unable to complete check-in.");
+
+      revalidatePath(`/admin/bookings/${bookingId}`);
+      revalidatePath("/admin/checkin-checkout");
+      redirectWithMessage(returnPath, "success", "Guest checked in successfully.");
     }
 
-    const { error } = await supabase
-      .from("bookings")
-      .update({ status: "checked_in", actual_check_in_at: new Date().toISOString() })
-      .eq("id", bookingId);
-    if (error) throw new Error(error.message);
-  }
+    if (actionType === "check_out") {
+      if (String(booking.status) !== "checked_in") throw new Error("Only checked-in bookings can be checked out.");
+      if (today !== String(booking.check_out_date)) {
+        const bookingDate = String(booking.check_out_date);
+        if (isBefore(parseISO(today), parseISO(bookingDate))) throw new Error("Checkout will be available on the booking check-out date.");
+        if (isAfter(parseISO(today), parseISO(bookingDate))) throw new Error("The scheduled checkout date has passed. Please review the booking. To change dates, cancel/delete and create a new booking.");
+      }
 
-  if (actionType === "check_out") {
-    const pending = Number((booking as { amount_pending?: number }).amount_pending ?? 0);
-    if (pending > 0 && !allowPending) {
-      throw new Error("Pending dues exist. Use checkout with pending dues to continue.");
+      const pending = Number((booking as { amount_pending?: number }).amount_pending ?? 0);
+      if (pending > 0) throw new Error("Pending balance exists. Record final payment before checkout.");
+
+      const { error } = await supabase.from("bookings").update({ status: "checked_out", actual_check_out_at: new Date().toISOString() }).eq("id", bookingId);
+      if (error) throw new Error("Unable to complete checkout.");
+
+      revalidatePath(`/admin/bookings/${bookingId}`);
+      revalidatePath("/admin/checkin-checkout");
+      redirectWithMessage(returnPath, "success", "Checkout completed successfully.");
     }
 
-    const { error } = await supabase
-      .from("bookings")
-      .update({ status: "checked_out", actual_check_out_at: new Date().toISOString() })
-      .eq("id", bookingId);
-
-    if (error) throw new Error(error.message);
+    throw new Error("Invalid action.");
+  } catch (error) {
+    redirectWithMessage(returnPath, "error", friendlyError(error, "Unable to process check-in/check-out action."));
   }
-
-  revalidatePath(`/admin/bookings/${bookingId}`);
-  revalidatePath("/admin/checkin-checkout");
 }
 
 export async function generateInvoiceAction(formData: FormData) {
-  await requireAdmin();
-  const supabase = await getSupabaseServerClient();
   const bookingId = getString(formData, "booking_id");
+  const returnPath = getOptionalString(formData, "return_path") || `/admin/bookings/${bookingId}`;
 
-  const { data: booking } = await supabase
-    .from("bookings")
-    .select("id,final_total,discount_amount,amount_paid,amount_pending")
-    .eq("id", bookingId)
-    .maybeSingle();
+  try {
+    await requireAdmin();
+    const supabase = await getSupabaseServerClient();
 
-  if (!booking) throw new Error("Booking not found.");
+    const { data: booking } = await supabase
+      .from("bookings")
+      .select("id,final_total,discount_amount,amount_paid,amount_pending")
+      .eq("id", bookingId)
+      .maybeSingle();
+    if (!booking) throw new Error("Booking not found.");
 
-  const { data: existing } = await supabase.from("invoices").select("id").order("created_at", { ascending: false }).limit(1);
-  const next = ((existing?.length ?? 0) + 1).toString().padStart(4, "0");
-  const year = new Date().getFullYear();
+    const { count } = await supabase.from("invoices").select("id", { count: "exact", head: true });
+    const next = ((count ?? 0) + 1).toString().padStart(4, "0");
+    const year = new Date().getFullYear();
 
-  const { error } = await supabase.from("invoices").insert({
-    invoice_number: `LKT-INV-${year}-${next}`,
-    booking_id: bookingId,
-    invoice_date: new Date().toISOString().slice(0, 10),
-    subtotal: Number((booking as { final_total?: number }).final_total ?? 0),
-    discount_amount: Number((booking as { discount_amount?: number }).discount_amount ?? 0),
-    tax_amount: 0,
-    total_amount: Number((booking as { final_total?: number }).final_total ?? 0),
-    amount_paid: Number((booking as { amount_paid?: number }).amount_paid ?? 0),
-    amount_pending: Number((booking as { amount_pending?: number }).amount_pending ?? 0),
-    status: Number((booking as { amount_pending?: number }).amount_pending ?? 0) <= 0 ? "paid" : "issued",
-  });
+    const { error } = await supabase.from("invoices").insert({
+      invoice_number: `LKT-INV-${year}-${next}`,
+      booking_id: bookingId,
+      invoice_date: new Date().toISOString().slice(0, 10),
+      subtotal: Number((booking as { final_total?: number }).final_total ?? 0),
+      discount_amount: Number((booking as { discount_amount?: number }).discount_amount ?? 0),
+      tax_amount: 0,
+      total_amount: Number((booking as { final_total?: number }).final_total ?? 0),
+      amount_paid: Number((booking as { amount_paid?: number }).amount_paid ?? 0),
+      amount_pending: Number((booking as { amount_pending?: number }).amount_pending ?? 0),
+      status: Number((booking as { amount_pending?: number }).amount_pending ?? 0) <= 0 ? "paid" : "issued",
+    });
 
-  if (error) throw new Error(error.message);
-  revalidatePath(`/admin/bookings/${bookingId}`);
-  revalidatePath("/admin/invoices");
+    if (error) throw new Error("Unable to generate invoice.");
+    revalidatePath(`/admin/bookings/${bookingId}`);
+    revalidatePath("/admin/invoices");
+    redirectWithMessage(returnPath, "success", "Invoice generated successfully.");
+  } catch (error) {
+    redirectWithMessage(returnPath, "error", friendlyError(error, "Unable to generate invoice."));
+  }
 }

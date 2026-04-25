@@ -99,7 +99,7 @@ export async function getCustomerById(customerId: string) {
 export async function getManualBookingMeta() {
   const supabase = await getSupabaseServerClient();
   const [{ data: cottages }, { data: customers }] = await Promise.all([
-    supabase.from("cottages").select("id,name,code,max_total_guests,weekday_price,weekend_price,status,is_bookable").eq("is_bookable", true).order("name"),
+    supabase.from("cottages").select("id,name,code,slug,max_total_guests,weekday_price,weekend_price,status,is_bookable").eq("is_bookable", true).order("name"),
     supabase.from("booking_guests").select("id,full_name,phone").order("created_at", { ascending: false }).limit(50),
   ]);
 
