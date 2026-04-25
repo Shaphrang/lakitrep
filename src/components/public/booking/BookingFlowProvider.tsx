@@ -10,6 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useRouter } from "next/navigation";
 import { BookingRequestForm } from "@/components/public/BookingRequestForm";
 import type { PublicCottage } from "@/lib/public-site";
 
@@ -40,24 +41,36 @@ export function BookingFlowProvider({
   children: React.ReactNode;
   cottages: PublicCottage[];
 }) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [seed, setSeed] = useState<BookingSeed>({});
   const [lockCottage, setLockCottage] = useState(false);
   const [version, setVersion] = useState(0);
   const pushedMobileHistoryRef = useRef(false);
 
-  const closeBooking = useCallback(() => {
-    setIsOpen(false);
+  const closeBooking = useCallback(
+    (options?: { navigateHome?: boolean }) => {
+      setIsOpen(false);
 
-    if (
-      typeof window !== "undefined" &&
-      pushedMobileHistoryRef.current &&
-      window.location.hash === "#booking"
-    ) {
-      pushedMobileHistoryRef.current = false;
-      window.history.back();
-    }
-  }, []);
+      if (
+        typeof window !== "undefined" &&
+        pushedMobileHistoryRef.current &&
+        window.location.hash === "#booking"
+      ) {
+        window.history.replaceState(
+          { ...(window.history.state ?? {}), bookingFlow: false },
+          "",
+          `${window.location.pathname}${window.location.search}`,
+        );
+        pushedMobileHistoryRef.current = false;
+      }
+
+      if (options?.navigateHome) {
+        router.push("/");
+      }
+    },
+    [router],
+  );
 
   const value = useMemo(
     () => ({
@@ -121,7 +134,7 @@ export function BookingFlowProvider({
           <button
             type="button"
             className="hidden sm:absolute sm:inset-0 sm:block"
-            onClick={closeBooking}
+            onClick={() => closeBooking()}
             aria-label="Close booking"
           />
 
@@ -142,7 +155,7 @@ export function BookingFlowProvider({
 
               <button
                 type="button"
-                onClick={closeBooking}
+                onClick={() => closeBooking()}
                 className="rounded-full border border-[#d8cdbd] bg-white px-3 py-1.5 text-xs font-semibold text-[#2d573b] shadow-sm transition hover:bg-[#f1eadf] sm:px-4 sm:py-2 sm:text-sm"
               >
                 Close
@@ -156,7 +169,8 @@ export function BookingFlowProvider({
                 initialValues={seed}
                 cottageLocked={lockCottage}
                 compact
-                onCancel={closeBooking}
+                onCancel={() => closeBooking()}
+                onSuccessAcknowledged={() => closeBooking({ navigateHome: true })}
               />
             </div>
           </section>

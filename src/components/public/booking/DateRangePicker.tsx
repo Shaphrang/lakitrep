@@ -14,34 +14,64 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { getCottageAvailability } from "@/actions/public/bookings";
 import { formatDateLabel } from "@/lib/booking";
 
 type DateRangePickerProps = {
+  cottageSlug?: string;
   checkInDate?: string;
   checkOutDate?: string;
   onChange: (value: { checkInDate?: string; checkOutDate?: string }) => void;
   compact?: boolean;
+  onAvailabilityStateChange?: (state: {
+    loading: boolean;
+    error: string;
+    rangeError: string;
+  }) => void;
 };
 
 function toIso(day: Date) {
   return format(day, "yyyy-MM-dd");
 }
 
+function containsUnavailableNight(checkInDate: string, checkOutDate: string, unavailableDateSet: Set<string>) {
+  const checkIn = parseISO(checkInDate);
+  const checkOut = parseISO(checkOutDate);
+  if (!isBefore(checkIn, checkOut)) return true;
+
+  const nights = eachDayOfInterval({ start: checkIn, end: addDays(checkOut, -1) });
+  return nights.some((night) => unavailableDateSet.has(toIso(night)));
+}
+
 export function DateRangePicker({
+  cottageSlug,
   checkInDate,
   checkOutDate,
   onChange,
   compact = false,
+  onAvailabilityStateChange,
 }: DateRangePickerProps) {
   const [open, setOpen] = useState(false);
   const [viewMonth, setViewMonth] = useState(startOfMonth(new Date()));
   const [isMobile, setIsMobile] = useState(false);
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
+  const [availabilityError, setAvailabilityError] = useState("");
+  const [rangeError, setRangeError] = useState("");
+  const [unavailableDates, setUnavailableDates] = useState<string[]>([]);
 
   const today = useMemo(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), now.getDate());
   }, []);
+
+  const unavailableDateSet = useMemo(() => new Set(unavailableDates), [unavailableDates]);
+
+  const onChangeRef = useRef(onChange);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 639px)");
@@ -55,6 +85,71 @@ export function DateRangePicker({
 
     return () => media.removeEventListener("change", syncViewport);
   }, []);
+
+  useEffect(() => {
+    onAvailabilityStateChange?.({
+      loading: availabilityLoading,
+      error: availabilityError,
+      rangeError,
+    });
+  }, [availabilityLoading, availabilityError, rangeError, onAvailabilityStateChange]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function syncAvailability() {
+      if (!cottageSlug) {
+        setUnavailableDates([]);
+        setAvailabilityLoading(false);
+        setAvailabilityError("Please select a cottage first to check dates.");
+        setRangeError("");
+        return;
+      }
+
+      setAvailabilityLoading(true);
+      setAvailabilityError("");
+      setRangeError("");
+
+      try {
+        const availability = await getCottageAvailability(cottageSlug);
+        if (cancelled) return;
+
+        if (availability.error) {
+          setUnavailableDates([]);
+          setAvailabilityError(availability.error);
+          return;
+        }
+
+        setUnavailableDates(availability.unavailableDates);
+
+        if (checkInDate && checkOutDate) {
+          const invalidRange = containsUnavailableNight(checkInDate, checkOutDate, new Set(availability.unavailableDates));
+
+          if (invalidRange) {
+            onChangeRef.current({ checkInDate: undefined, checkOutDate: undefined });
+            setRangeError("Please select available dates again for the selected cottage.");
+          }
+        } else if (checkInDate && new Set(availability.unavailableDates).has(checkInDate)) {
+          onChangeRef.current({ checkInDate: undefined, checkOutDate: undefined });
+          setRangeError("Selected check-in date is not available for this cottage.");
+        }
+      } catch {
+        if (cancelled) return;
+        setUnavailableDates([]);
+        setAvailabilityError("We could not check availability right now. Please try again.");
+      } finally {
+        if (!cancelled) {
+          setAvailabilityLoading(false);
+        }
+      }
+    }
+
+    void syncAvailability();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [cottageSlug, checkInDate, checkOutDate]);
 
   const months = useMemo(
     () => (isMobile ? [viewMonth] : [viewMonth, addMonths(viewMonth, 1)]),
@@ -72,18 +167,29 @@ export function DateRangePicker({
 
   function handleSelect(day: Date) {
     const selected = toIso(day);
+    setRangeError("");
+
+    if (unavailableDateSet.has(selected)) {
+      setRangeError("Not available. Please choose a different date.");
+      return;
+    }
 
     if (!checkInDate || (checkInDate && checkOutDate)) {
-      onChange({ checkInDate: selected, checkOutDate: undefined });
+      onChangeRef.current({ checkInDate: selected, checkOutDate: undefined });
       return;
     }
 
     if (selected <= checkInDate) {
-      onChange({ checkInDate: selected, checkOutDate: undefined });
+      onChangeRef.current({ checkInDate: selected, checkOutDate: undefined });
       return;
     }
 
-    onChange({ checkInDate, checkOutDate: selected });
+    if (containsUnavailableNight(checkInDate, selected, unavailableDateSet)) {
+      setRangeError("This range includes unavailable dates. Please choose another range.");
+      return;
+    }
+
+    onChangeRef.current({ checkInDate, checkOutDate: selected });
     setOpen(false);
   }
 
@@ -94,7 +200,8 @@ export function DateRangePicker({
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className={`w-full rounded-2xl border border-[#d7ccb9] bg-white px-3.5 ${triggerHeight} text-left text-sm text-[#2e4c3a] shadow-sm transition hover:border-[#cbbb9f] focus:outline-none focus:ring-2 focus:ring-[#2f5a3d]/10`}
+        disabled={!cottageSlug}
+        className={`w-full rounded-2xl border border-[#d7ccb9] bg-white px-3.5 ${triggerHeight} text-left text-sm text-[#2e4c3a] shadow-sm transition hover:border-[#cbbb9f] focus:outline-none focus:ring-2 focus:ring-[#2f5a3d]/10 disabled:cursor-not-allowed disabled:bg-[#f3efe8] disabled:text-[#8b948e]`}
       >
         <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#6d7f70]">
           Stay Dates
@@ -106,6 +213,11 @@ export function DateRangePicker({
           <span>{formatDateLabel(checkOutDate)}</span>
         </div>
       </button>
+
+      {!cottageSlug ? <p className="mt-1 text-xs text-[#7b6e5d]">Select a cottage first.</p> : null}
+      {availabilityLoading ? <p className="mt-1 text-xs text-[#2f5a3d]">Checking availability...</p> : null}
+      {availabilityError ? <p className="mt-1 text-xs text-rose-700">{availabilityError}</p> : null}
+      {rangeError ? <p className="mt-1 text-xs text-rose-700">{rangeError}</p> : null}
 
       {open ? (
         <>
@@ -171,7 +283,8 @@ export function DateRangePicker({
                     <div className="mt-1 grid grid-cols-7 gap-1">
                       {days.map((day) => {
                         const iso = toIso(day);
-                        const disabled = !isSameMonth(day, month) || isBefore(day, today);
+                        const isUnavailable = unavailableDateSet.has(iso);
+                        const disabled = !isSameMonth(day, month) || isBefore(day, today) || isUnavailable;
                         const isStart = Boolean(checkInDate && isSameDay(day, parseISO(checkInDate)));
                         const isEnd = Boolean(checkOutDate && isSameDay(day, parseISO(checkOutDate)));
                         const inRange = isInSelectedRange(day);
@@ -180,11 +293,14 @@ export function DateRangePicker({
                           <button
                             key={iso}
                             type="button"
+                            title={isUnavailable ? "Not available" : undefined}
                             disabled={disabled}
                             onClick={() => handleSelect(day)}
                             className={`h-8 rounded-xl text-xs transition sm:h-9 ${
                               disabled
-                                ? "cursor-not-allowed text-[#c8bfb2]"
+                                ? isUnavailable
+                                  ? "cursor-not-allowed border border-[#e4d7ca] bg-[#f5ede2] text-[#aa9786]"
+                                  : "cursor-not-allowed text-[#c8bfb2]"
                                 : isStart || isEnd
                                   ? "bg-[#2f5a3d] font-bold text-white shadow-sm"
                                   : inRange
@@ -205,6 +321,8 @@ export function DateRangePicker({
                 );
               })}
             </div>
+
+            <p className="mt-3 text-center text-[11px] text-[#7c6a55]">Dates marked in muted tone are not available.</p>
 
             <button
               type="button"
