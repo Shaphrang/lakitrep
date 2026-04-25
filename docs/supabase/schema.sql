@@ -508,6 +508,96 @@ grant execute on function public.create_booking_request(
   text, text, text, text, text, text, text, text, text, date, date, integer, integer, integer, text
 ) to anon, authenticated;
 
+
+-- ============================================================
+-- PUBLIC AVAILABILITY FUNCTION (READ-ONLY)
+-- ============================================================
+create or replace function public.get_cottage_unavailability(
+  p_property_slug text,
+  p_cottage_slug text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_property_id uuid;
+  v_cottage_id uuid;
+  v_blocked_ranges jsonb := '[]'::jsonb;
+  v_unavailable_dates jsonb := '[]'::jsonb;
+begin
+  select id
+  into v_property_id
+  from public.properties
+  where slug = p_property_slug
+    and is_active = true
+  limit 1;
+
+  if v_property_id is null then
+    raise exception 'Property not found';
+  end if;
+
+  select id
+  into v_cottage_id
+  from public.cottages
+  where property_id = v_property_id
+    and slug = p_cottage_slug
+    and status = 'active'
+    and is_bookable = true
+  limit 1;
+
+  if v_cottage_id is null then
+    raise exception 'Cottage not found';
+  end if;
+
+  -- Pending requests are intentionally excluded to avoid soft-locking inventory.
+  with blocked as (
+    select b.check_in_date, b.check_out_date
+    from public.bookings b
+    where b.cottage_id = v_cottage_id
+      and b.status in ('confirmed', 'completed')
+      and b.check_in_date < b.check_out_date
+  )
+  select coalesce(
+    jsonb_agg(
+      jsonb_build_object(
+        'checkInDate', check_in_date::text,
+        'checkOutDate', check_out_date::text
+      )
+      order by check_in_date
+    ),
+    '[]'::jsonb
+  )
+  into v_blocked_ranges
+  from blocked;
+
+  -- Checkout date is not blocked; only occupied nights are returned.
+  with blocked as (
+    select b.check_in_date, b.check_out_date
+    from public.bookings b
+    where b.cottage_id = v_cottage_id
+      and b.status in ('confirmed', 'completed')
+      and b.check_in_date < b.check_out_date
+  ),
+  nights as (
+    select generate_series(check_in_date, check_out_date - interval '1 day', interval '1 day')::date as blocked_date
+    from blocked
+  )
+  select coalesce(jsonb_agg(distinct blocked_date::text), '[]'::jsonb)
+  into v_unavailable_dates
+  from nights;
+
+  return jsonb_build_object(
+    'unavailableDates', v_unavailable_dates,
+    'blockedRanges', v_blocked_ranges
+  );
+end;
+$$;
+
+revoke all on function public.get_cottage_unavailability(text, text) from public;
+grant execute on function public.get_cottage_unavailability(text, text) to anon, authenticated;
+
 -- ============================================================
 -- INDEXES
 -- ============================================================
