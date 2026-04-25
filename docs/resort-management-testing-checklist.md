@@ -1,39 +1,48 @@
 # Resort Management Testing Checklist
 
-## Public flow
-- [ ] Website booking form still creates booking request.
-- [ ] Website request appears in admin bookings with source `website`.
+## Customer
+- [ ] Add valid customer (name + 10 digit phone).
+- [ ] Reject invalid phone input.
+- [ ] Reject invalid email format.
+- [ ] Duplicate phone shows friendly warning.
 
-## Customer flow
-- [ ] Create customer with valid 10-digit phone.
-- [ ] Duplicate phone shows warning/error.
-- [ ] Edit customer fields and confirm persistence.
+## Manual booking
+- [ ] Cottage must be selected before date selection.
+- [ ] Date picker loads cottage availability.
+- [ ] Unavailable dates are disabled.
+- [ ] Overlapping dates cannot be submitted.
+- [ ] Guest count cannot exceed cottage capacity.
+- [ ] Manual booking creation shows success dialog.
 
-## Manual booking flow
-- [ ] Create manual booking from phone source.
-- [ ] Validate unavailable/blocked dates are rejected.
-- [ ] Validate check-out must be after check-in.
+## Booking lifecycle
+- [ ] Status update works with success message.
+- [ ] Cancel/no-show flow does not crash detail page.
+- [ ] Booking delete returns friendly success/error state.
 
-## Billing flow
-- [ ] Add advance payment and verify payment history.
-- [ ] Add extra charge and verify bill totals recalculate.
-- [ ] Add final payment and verify pending becomes 0.
+## Check-in
+- [ ] Check-in disabled before check-in date.
+- [ ] Check-in enabled only on check-in date.
+- [ ] Non-eligible status keeps check-in disabled.
+- [ ] Success and error messages are staff friendly.
 
-## Check-in / Checkout flow
-- [ ] Check-in from confirmed booking.
-- [ ] Checkout with full payment.
-- [ ] Checkout with pending dues only via explicit override.
+## Checkout
+- [ ] Checkout disabled before checkout date.
+- [ ] Checkout disabled when date has passed.
+- [ ] Pending balance prevents checkout.
+- [ ] Final payment enables checkout.
+- [ ] Checkout success message appears.
 
-## Invoices
-- [ ] Generate invoice from booking.
-- [ ] Invoice number is unique and readable.
-- [ ] Invoice appears in invoices list.
+## Billing
+- [ ] Booking can be selected without UUID entry.
+- [ ] Billing header shows guest + booking + cottage context.
+- [ ] Add multiple extra charges.
+- [ ] Delete charge recalculates totals.
+- [ ] Apply discount validates upper limit.
+- [ ] Record payment updates paid/pending.
+- [ ] Generate invoice without manual booking ID typing.
 
 ## Reports
-- [ ] Daily/monthly collection shows totals.
-- [ ] Pending bill report lists unpaid balances.
-- [ ] Booking source report shows counts and revenue.
+- [ ] From date cannot exceed To date.
+- [ ] Filtered report shows expected rows.
+- [ ] Empty states show “No records found for the selected filters.”
 
-## Availability
-- [ ] Maintenance block prevents new booking on blocked days.
-- [ ] Cancelled/no-show bookings do not block availability.

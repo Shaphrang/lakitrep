@@ -1,47 +1,44 @@
-# Resort Management Data Model
+# Resort Management Data Model Notes
 
-## Tables
+## Booking availability and overlap logic
 
-### `booking_guests` (customer registry)
-- Existing table reused for customers.
-- Added fields: `address`, `customer_type`, `source`.
+Availability checks block nights using:
+- Active booking statuses (`confirmed`, `advance_paid`, `checked_in`).
+- Cottage maintenance/blocked dates (`cottage_blocks`).
 
-### `bookings`
-- Core reservation table.
-- Added fields:
-  - `customer_id`
-  - `booking_total`, `discount_amount`, `extra_charges_total`
-  - `final_total`, `amount_paid`, `amount_pending`
-  - `internal_notes`, `created_by`
-  - `actual_check_in_at`, `actual_check_out_at`
+Overlap logic treats checkout as non-blocking for next check-in:
+- Booking A: `check_in <= day < check_out`.
+- Conflict query uses `(existing.check_in < new.check_out) AND (existing.check_out > new.check_in)`.
 
-### `booking_payments`
-- Multiple payments per booking.
-- Tracks date, mode, type, amount, reference, receiver.
+## Validation rules used in admin actions
 
-### `booking_charges`
-- Extra billable items (food/transport/laundry/etc.).
+### Customer
+- `full_name`: trimmed, min 2, max 100.
+- `phone`: numeric, exactly 10 digits.
+- `whatsapp_number`: optional, exactly 10 digits if provided.
+- `email`: optional, valid email if provided.
 
-### `invoices`
-- Invoice snapshots generated from booking billing summary.
+### Manual booking
+- Required: customer, cottage, check-in, check-out.
+- Check-in date cannot be in the past.
+- Check-out must be after check-in.
+- Adults min 1; children/infants min 0.
+- Guest total must be <= cottage max guest capacity.
+- Discount cannot exceed room charges.
+- Server-side availability validation runs before insert.
 
-### `cottage_blocks`
-- Maintenance/private blocks for inventory control.
+### Billing
+- Extra charge quantity min 1.
+- Extra charge unit price must be > 0.
+- Payment amount must be > 0.
+- Discount cannot exceed current bill total.
 
-## Status Values
+### Check-in / checkout
+- Check-in only on exact check-in date and valid status.
+- Checkout only on exact checkout date, status `checked_in`, and zero pending amount.
 
-### Booking statuses
-- `new_request`, `contacted`, `confirmed`, `advance_paid`, `checked_in`, `checked_out`, `cancelled`, `no_show`, `rejected`
-- Legacy statuses still supported: `pending`, `completed`
+## Schema impact
 
-### Payment statuses
-- `unpaid`, `advance_paid`, `partially_paid`, `paid`, `pending`, `refunded`
-- Legacy statuses still supported: `paid_on_arrival`, `waived`
+No new tables or columns were added in this UX/validation pass.
+Behavior changes are implemented in server actions and admin pages.
 
-## Relationships
-- `bookings.booking_guest_id` and `bookings.customer_id` → `booking_guests.id`
-- `bookings.cottage_id` → `cottages.id`
-- `booking_payments.booking_id` → `bookings.id`
-- `booking_charges.booking_id` → `bookings.id`
-- `invoices.booking_id` → `bookings.id`
-- `cottage_blocks.cottage_id` → `cottages.id`

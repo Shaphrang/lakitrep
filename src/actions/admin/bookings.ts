@@ -5,21 +5,38 @@ import { redirect } from "next/navigation";
 import { bookingStatusSchema } from "@/features/admin/bookings/schema";
 import { deleteBooking, updateBookingStatus } from "@/features/admin/bookings/services/bookings-service";
 import { requireAdmin } from "@/lib/auth/admin";
-import { getString } from "./_shared";
+import { getOptionalString, getString } from "./_shared";
+
+function redirectWithMessage(path: string, key: "success" | "error", message: string) {
+  const joiner = path.includes("?") ? "&" : "?";
+  redirect(`${path}${joiner}${key}=${encodeURIComponent(message)}`);
+}
 
 export async function updateBookingsAction(formData: FormData) {
-  await requireAdmin();
   const id = getString(formData, "id");
-  const status = bookingStatusSchema.parse(getString(formData, "status"));
-  await updateBookingStatus(id, status);
-  revalidatePath("/admin/bookings");
-  redirect(`/admin/bookings/${id}?saved=1`);
+  const returnPath = getOptionalString(formData, "return_path") || `/admin/bookings/${id}`;
+
+  try {
+    await requireAdmin();
+    const status = bookingStatusSchema.parse(getString(formData, "status"));
+    await updateBookingStatus(id, status);
+    revalidatePath("/admin/bookings");
+    redirectWithMessage(returnPath, "success", "Booking status updated successfully.");
+  } catch {
+    redirectWithMessage(returnPath, "error", "Unable to update booking status.");
+  }
 }
 
 export async function deleteBookingsAction(formData: FormData) {
-  await requireAdmin();
   const id = getString(formData, "id");
-  await deleteBooking(id);
-  revalidatePath("/admin/bookings");
-  redirect("/admin/bookings");
+  const returnPath = getOptionalString(formData, "return_path") || "/admin/bookings";
+
+  try {
+    await requireAdmin();
+    await deleteBooking(id);
+    revalidatePath("/admin/bookings");
+    redirectWithMessage(returnPath, "success", "Booking deleted successfully.");
+  } catch {
+    redirectWithMessage(returnPath, "error", "Unable to delete booking.");
+  }
 }
