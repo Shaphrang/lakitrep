@@ -98,7 +98,6 @@ export function ManualBookingForm({ cottages, customers, propertyId }: { cottage
       <label className="text-sm text-[#32483a]">Booking Status *
         <select name="status" className={inputClass} defaultValue="confirmed" required><option value="confirmed">Confirmed</option><option value="advance_paid">Advance Paid</option></select>
       </label>
-      <label className="text-sm text-[#32483a]">Discount Amount<input name="discount_amount" type="number" min={0} step="0.01" defaultValue={0} className={inputClass} placeholder="Enter discount amount" /></label>
       <label className="text-sm text-[#32483a] sm:col-span-2">Guest Special Requests<input name="special_requests" className={inputClass} maxLength={500} placeholder="Example: Need extra mattress, arrive after 8 PM" /></label>
       <label className="text-sm text-[#32483a]">Internal Staff Notes<input name="internal_notes" className={inputClass} maxLength={500} placeholder="Only visible to admin staff" /></label>
       <button type="submit" className="sm:col-span-3 rounded-xl bg-[#2e5a3d] px-3 py-2 text-sm font-semibold text-white">Create Manual Booking</button>

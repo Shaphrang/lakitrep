@@ -16,7 +16,6 @@ type NavIcon =
   | "attractions"
   | "policies";
 
-
 const adminNavItems: {
   href: string;
   label: string;
@@ -47,20 +46,21 @@ export function AdminSidebar({
 
   return (
     <>
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-[#d7cfbf]/30 bg-[#173024] p-3 text-[#f8f4ec] shadow-2xl lg:block">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-[#284a36] bg-[#163023] text-[#f8f4ec] shadow-xl lg:block">
         <SidebarBody pathname={pathname} onClose={onClose} />
       </aside>
 
       {isOpen ? (
         <button
+          type="button"
           aria-label="Close menu"
           onClick={onClose}
-          className="fixed inset-0 z-40 bg-[#0f1f17]/55 backdrop-blur-[2px] lg:hidden"
+          className="fixed inset-0 z-40 bg-[#0f1f17]/50 backdrop-blur-[2px] lg:hidden"
         />
       ) : null}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-[82vw] max-w-xs border-r border-[#355744] bg-[#173024] p-3 text-[#f8f4ec] shadow-2xl transition-transform duration-300 lg:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 w-[84vw] max-w-xs border-r border-[#284a36] bg-[#163023] text-[#f8f4ec] shadow-2xl transition-transform duration-300 lg:hidden ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -78,82 +78,84 @@ function SidebarBody({
   onClose: () => void;
 }) {
   return (
-    <div className="relative flex h-full flex-col overflow-hidden rounded-[1.35rem] border border-white/10 bg-[linear-gradient(180deg,#214531_0%,#162f24_58%,#10251b_100%)] p-3 shadow-inner">
-      <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-[#dcbf7b]/20 blur-2xl" />
-      <div className="pointer-events-none absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-[#5b8b66]/20 blur-2xl" />
-      <div className="pointer-events-none absolute inset-0 opacity-[0.08]">
-        <div className="absolute left-6 top-24 h-24 w-24 rounded-full border border-white" />
-        <div className="absolute bottom-28 right-5 h-32 w-32 rounded-full border border-[#dcbf7b]" />
-        <div className="absolute bottom-8 left-8 h-px w-44 rotate-[-18deg] bg-white" />
-        <div className="absolute bottom-14 left-10 h-px w-36 rotate-[-18deg] bg-[#dcbf7b]" />
-      </div>
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="pointer-events-none absolute -left-16 top-24 h-44 w-44 rounded-full bg-[#dcbf7b]/10 blur-3xl" />
+      <div className="pointer-events-none absolute -right-20 bottom-20 h-52 w-52 rounded-full bg-[#6fa177]/10 blur-3xl" />
+      <div className="pointer-events-none absolute right-3 top-28 h-24 w-24 rounded-full border border-white/[0.05]" />
+      <div className="pointer-events-none absolute -right-8 top-44 h-28 w-28 rounded-full border border-[#dcbf7b]/[0.06]" />
 
-      <div className="relative mb-3 rounded-2xl border border-white/10 bg-white/[0.08] p-3 backdrop-blur-md">
+      <div className="relative z-10 border-b border-white/10 bg-[linear-gradient(135deg,#244b36_0%,#163023_70%,#10251b_100%)] px-4 py-3">
         <div className="flex items-center gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-2xl bg-[#dcbf7b] text-[#193025] shadow-lg shadow-black/10">
-            <Icon name="cottage" className="h-5 w-5" />
+          <div className="grid h-9 w-9 place-items-center rounded-xl bg-[#dcbf7b] text-[#163023] shadow-sm">
+            <Icon name="cottage" className="h-4 w-4" />
           </div>
 
           <div className="min-w-0">
-            <p className="truncate text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-[#e9d8ac]">
+            <p className="truncate text-[0.6rem] font-semibold uppercase tracking-[0.2em] text-[#e9d8ac]">
               La Ki Trep
             </p>
             <h2 className="truncate font-serif text-xl leading-tight text-white">
-              Admin
+              Admin Panel
             </h2>
           </div>
         </div>
       </div>
 
-      <nav className="relative flex-1 space-y-1">
-        {adminNavItems.map((item) => {
-          const active = isNavActive(pathname, item.href, item.exact);
+      <div className="relative z-10 min-h-0 flex-1 px-2.5 py-2.5">
+        <p className="mb-1.5 px-2 text-[0.66rem] font-semibold uppercase tracking-[0.18em] text-[#aebfaf]">
+          Menu
+        </p>
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={onClose}
-              className={[
-                "group flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[0.82rem] font-medium transition",
-                active
-                  ? "bg-[#dcbf7b] text-[#182d22] shadow-[0_10px_24px_-16px_rgba(0,0,0,0.9)]"
-                  : "text-[#efe8d8] hover:bg-white/10 hover:text-white",
-              ].join(" ")}
-            >
-              <span
+        <nav className="space-y-0.5">
+          {adminNavItems.map((item) => {
+            const active = isNavActive(pathname, item.href, item.exact);
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onClose}
                 className={[
-                  "grid h-7 w-7 shrink-0 place-items-center rounded-lg transition",
+                  "group flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[0.9rem] font-medium transition",
                   active
-                    ? "bg-[#f8edce]/70 text-[#182d22]"
-                    : "bg-white/[0.08] text-[#e8dcc2] group-hover:bg-white/[0.14] group-hover:text-white",
+                    ? "bg-[#f0d28a] text-[#172d22] shadow-sm"
+                    : "text-[#e9efe8] hover:bg-white/10 hover:text-white",
                 ].join(" ")}
               >
-                <Icon name={item.icon} className="h-4 w-4" />
-              </span>
+                <span
+                  className={[
+                    "grid h-8 w-8 shrink-0 place-items-center rounded-lg transition",
+                    active
+                      ? "bg-white/45 text-[#172d22]"
+                      : "bg-white/[0.07] text-[#d7e2d9] group-hover:bg-white/[0.14] group-hover:text-white",
+                  ].join(" ")}
+                >
+                  <Icon name={item.icon} className="h-3.5 w-3.5" />
+                </span>
 
-              <span className="truncate">{item.label}</span>
+                <span className="truncate">{item.label}</span>
 
-              {active ? (
-                <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#182d22]" />
-              ) : null}
-            </Link>
-          );
-        })}
-      </nav>
+                {active ? (
+                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#172d22]" />
+                ) : null}
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
 
-      <div className="relative mt-3 rounded-2xl border border-white/10 bg-white/[0.06] p-3">
-        <div className="flex items-start gap-2">
-          <div className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-[#dcbf7b]/20 text-[#e8d29b]">
-            <Icon name="reports" className="h-4 w-4" />
+      <div className="relative z-10 border-t border-white/10 px-3 py-2">
+        <div className="flex items-center gap-2 rounded-xl bg-white/[0.06] px-2.5 py-2">
+          <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-[#dcbf7b]/20 text-[#e9d8ac]">
+            <Icon name="reports" className="h-3.5 w-3.5" />
           </div>
 
-          <div>
-            <p className="text-xs font-semibold text-[#f8f4ec]">
-              Resort Control
+          <div className="min-w-0">
+            <p className="truncate text-[0.72rem] font-semibold text-[#f8f4ec]">
+              Resort Workspace
             </p>
-            <p className="mt-0.5 text-[0.68rem] leading-4 text-[#d4c9b2]">
-              Manage guests, bookings, billing and reports.
+            <p className="truncate text-[0.64rem] text-[#c9d5ca]">
+              Bookings · Billing · Reports
             </p>
           </div>
         </div>
@@ -253,6 +255,17 @@ function Icon({
         </svg>
       );
 
+    case "reports":
+      return (
+        <svg {...common}>
+          <path d="M4 19V5" />
+          <path d="M4 19h16" />
+          <path d="M8 16v-5" />
+          <path d="M12 16V8" />
+          <path d="M16 16v-3" />
+        </svg>
+      );
+
     case "property":
       return (
         <svg {...common}>
@@ -291,17 +304,6 @@ function Icon({
           <path d="M9 12h6" />
           <path d="M9 16h6" />
           <path d="M9 8h2" />
-        </svg>
-      );
-
-    case "reports":
-      return (
-        <svg {...common}>
-          <path d="M4 19V5" />
-          <path d="M4 19h16" />
-          <path d="M8 16v-5" />
-          <path d="M12 16V8" />
-          <path d="M16 16v-3" />
         </svg>
       );
 

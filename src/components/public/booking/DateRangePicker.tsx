@@ -207,7 +207,7 @@ export function DateRangePicker({
       if (!cottageSlug) {
         setUnavailableDates([]);
         setAvailabilityLoading(false);
-        setAvailabilityError("Please select a cottage first to check dates.");
+        setAvailabilityError("");
         setRangeError("");
         return;
       }
