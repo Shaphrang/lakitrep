@@ -2,9 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { DateRangePicker } from "@/components/public/booking/DateRangePicker";
+import { BOOKING_SOURCE_OPTIONS } from "@/features/admin/bookings/constants";
 
 type CottageOption = { id: string; name: string; code: string; slug: string; max_total_guests: number };
-type CustomerOption = { id: string; full_name: string; phone: string };
+type CustomerOption = { id: string; full_name: string; phone: string; source: string };
 
 const inputClass = "mt-1 w-full rounded-xl border border-[#d8cfbf] bg-[#fdfbf7] px-3 py-2 text-sm text-[#21392c]";
 
@@ -16,11 +17,14 @@ export function ManualBookingForm({ cottages, customers, propertyId }: { cottage
   const [children, setChildren] = useState(0);
   const [infants, setInfants] = useState(0);
   const [availabilityError, setAvailabilityError] = useState("");
+  const [customerId, setCustomerId] = useState("");
 
   const selectedCottage = useMemo(() => cottages.find((item) => item.id === cottageId), [cottages, cottageId]);
+  const selectedCustomer = useMemo(() => customers.find((item) => item.id === customerId), [customerId, customers]);
   const maxGuests = selectedCottage?.max_total_guests ?? 0;
   const totalGuests = adults + children + infants;
   const maxReached = maxGuests > 0 && totalGuests >= maxGuests;
+  const bookingSource = selectedCustomer?.source || "phone";
 
   function updateGuests(key: "adults" | "children" | "infants", value: number) {
     const next = { adults, children, infants, [key]: Math.max(key === "adults" ? 1 : 0, value) };
@@ -34,7 +38,7 @@ export function ManualBookingForm({ cottages, customers, propertyId }: { cottage
     <>
       <input type="hidden" name="property_id" value={propertyId} />
       <label className="text-sm text-[#32483a]">Customer *
-        <select name="customer_id" className={inputClass} required>
+        <select name="customer_id" className={inputClass} required value={customerId} onChange={(event) => setCustomerId(event.target.value)}>
           <option value="">Select customer</option>
           {customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.full_name} ({customer.phone})</option>)}
         </select>
@@ -50,9 +54,14 @@ export function ManualBookingForm({ cottages, customers, propertyId }: { cottage
       </label>
 
       <label className="text-sm text-[#32483a]">Booking Source
-        <select name="source" className={inputClass} defaultValue="phone">
-          <option value="website">Website</option><option value="phone">Phone Call</option><option value="whatsapp">WhatsApp</option><option value="walk_in">Walk-in</option><option value="instagram">Instagram</option><option value="agent">Agent</option><option value="repeat_guest">Repeat Guest</option><option value="other">Other</option>
+        <select className={inputClass} value={bookingSource} disabled>
+          {BOOKING_SOURCE_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
         </select>
+        <input type="hidden" name="source" value={bookingSource} />
       </label>
 
       <div className="sm:col-span-3">
@@ -71,9 +80,6 @@ export function ManualBookingForm({ cottages, customers, propertyId }: { cottage
         <select name="status" className={inputClass} defaultValue="confirmed" required><option value="confirmed">Confirmed</option><option value="advance_paid">Advance Paid</option><option value="contacted">Contacted</option><option value="new_request">New Request</option></select>
       </label>
       <label className="text-sm text-[#32483a]">Discount Amount<input name="discount_amount" type="number" min={0} step="0.01" defaultValue={0} className={inputClass} placeholder="Enter discount amount" /></label>
-      <label className="text-sm text-[#32483a]">Advance Payment<input name="advance_amount" type="number" min={0} step="0.01" defaultValue={0} className={inputClass} placeholder="Enter advance collected" /></label>
-      <label className="text-sm text-[#32483a]">Payment Mode<select name="payment_mode" className={inputClass} defaultValue="cash"><option value="cash">Cash</option><option value="upi">UPI</option><option value="card">Card</option><option value="bank_transfer">Bank Transfer</option><option value="other">Other</option></select></label>
-      <label className="text-sm text-[#32483a]">Payment Reference Number<input name="reference_number" className={inputClass} placeholder="Optional transaction/reference number" /></label>
       <label className="text-sm text-[#32483a] sm:col-span-2">Guest Special Requests<input name="special_requests" className={inputClass} maxLength={500} placeholder="Example: Need extra mattress, arrive after 8 PM" /></label>
       <label className="text-sm text-[#32483a]">Internal Staff Notes<input name="internal_notes" className={inputClass} maxLength={500} placeholder="Only visible to admin staff" /></label>
       <button type="submit" className="sm:col-span-3 rounded-xl bg-[#2e5a3d] px-3 py-2 text-sm font-semibold text-white">Create Manual Booking</button>

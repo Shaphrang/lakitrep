@@ -3,7 +3,7 @@ import { createOrUpdateCustomerAction } from "@/actions/admin/resort-management"
 import { ActionDialog } from "@/components/admin/shared/ActionDialog";
 import { AdminPageHeader } from "@/components/admin/shared/AdminPageHeader";
 import { DataTable } from "@/components/admin/shared/DataTable";
-import { StatusBadge } from "@/components/admin/shared/StatusBadge";
+import { BOOKING_SOURCE_OPTIONS } from "@/features/admin/bookings/constants";
 import { getCustomerById } from "@/features/admin/bookings/services/resort-management-service";
 
 const inputClass = "rounded-xl border border-[#d8cfbf] bg-[#fdfbf7] px-3 py-2 text-sm text-[#21392c]";
@@ -30,7 +30,15 @@ export default async function CustomerDetailPage({ params, searchParams }: { par
         <label className="text-sm">City<input name="city" defaultValue={String(context.customer.city ?? "")} className={`${inputClass} mt-1 w-full`} /></label>
         <label className="text-sm">State<input name="state" defaultValue={String(context.customer.state ?? "")} className={`${inputClass} mt-1 w-full`} /></label>
         <label className="text-sm">Customer Type<input name="customer_type" defaultValue={String(context.customer.customer_type ?? "")} className={`${inputClass} mt-1 w-full`} /></label>
-        <label className="text-sm">Booking Source<input name="source" defaultValue={String(context.customer.source ?? "")} className={`${inputClass} mt-1 w-full`} /></label>
+        <label className="text-sm">Booking Source
+          <select name="source" defaultValue={String(context.customer.source ?? "other")} className={`${inputClass} mt-1 w-full`}>
+            {BOOKING_SOURCE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
         <label className="text-sm">Country<input name="country" defaultValue={String(context.customer.country ?? "India")} className={`${inputClass} mt-1 w-full`} /></label>
         <button type="submit" className="rounded-xl bg-[#2e5a3d] px-3 py-2 text-sm font-semibold text-white">Update Customer</button>
       </form>
@@ -38,11 +46,11 @@ export default async function CustomerDetailPage({ params, searchParams }: { par
       <DataTable
         rows={context.bookings.map((booking) => ({ ...booking, id: String(booking.id) }))}
         columns={[
-          { key: "booking_code", header: "Booking" },
+          { key: "booking_id", header: "Booking ID", render: (row) => String(row.booking_code ?? row.id ?? "-") },
           { key: "check_in_date", header: "Check-in" },
           { key: "check_out_date", header: "Check-out" },
-          { key: "status", header: "Status", render: (row) => <StatusBadge status={String(row.status)} /> },
-          { key: "amount_pending", header: "Pending", render: (row) => `₹${Number(row.amount_pending ?? 0).toLocaleString("en-IN")}` },
+          { key: "total_bill", header: "Total Bill", render: (row) => row.final_total == null ? "Not generated" : `₹${Number(row.final_total ?? 0).toLocaleString("en-IN")}` },
+          { key: "payment_status", header: "Payment Status", render: (row) => row.final_total == null ? "Not generated" : String(row.payment_status ?? "unpaid").replaceAll("_", " ") },
         ]}
       />
       <ActionDialog success={success} error={error} />
