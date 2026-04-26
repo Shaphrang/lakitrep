@@ -9,101 +9,177 @@ type CottagesSectionProps = {
   groupedGallery: PublicGroupedGallery;
 };
 
+function formatMoney(value: number) {
+  return `₹${Number(value || 0).toLocaleString("en-IN")}`;
+}
+
+function getCapacityLabel(cottage: HomeCottage) {
+  const parts: string[] = [];
+
+  if (cottage.max_adults > 0) {
+    parts.push(`${cottage.max_adults} adult${cottage.max_adults > 1 ? "s" : ""}`);
+  }
+
+  if (cottage.max_children > 0) {
+    parts.push(`${cottage.max_children} child${cottage.max_children > 1 ? "ren" : ""}`);
+  }
+
+  if (cottage.max_infants > 0) {
+    parts.push(`${cottage.max_infants} infant${cottage.max_infants > 1 ? "s" : ""}`);
+  }
+
+  return parts.length ? `Up to ${parts.join(" + ")}` : `Up to ${cottage.max_total_guests} guests`;
+}
+
+function pickFeatureChips(cottage: HomeCottage) {
+  const chips: string[] = [];
+  const amenityText = cottage.amenities.map((amenity) => amenity.toLowerCase());
+
+  chips.push(cottage.has_ac ? "AC" : "Non-AC");
+
+  if (cottage.breakfast_included) {
+    chips.push("Breakfast included");
+  }
+
+  if (amenityText.some((item) => item.includes("pool"))) {
+    chips.push("Pool access");
+  }
+
+  if (amenityText.some((item) => item.includes("sit-out") || item.includes("terrace") || item.includes("compound"))) {
+    chips.push("Private sit-out");
+  }
+
+  if (amenityText.some((item) => item.includes("parking"))) {
+    chips.push("Parking");
+  }
+
+  if (cottage.is_combined_unit || cottage.code === "FC45") {
+    chips.push("C4 + C5 combined");
+  }
+
+  if (cottage.extra_bed_allowed && chips.length < 4) {
+    chips.push("Extra bed on request");
+  }
+
+  for (const amenity of cottage.amenities) {
+    if (chips.length >= 4) break;
+    if (!chips.some((item) => item.toLowerCase() === amenity.toLowerCase())) {
+      chips.push(amenity);
+    }
+  }
+
+  return chips.slice(0, 4);
+}
+
+function normalizeCategory(category: string) {
+  const lower = category.toLowerCase();
+  if (lower.includes("family")) return "Family Cottage";
+  if (lower.includes("premium")) return "Premium Cottage";
+  if (lower.includes("standard")) return "Standard Cottage";
+  return category;
+}
+
 export function CottagesSection({ cottages, groupedGallery }: CottagesSectionProps) {
-  return (
-    <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 sm:pb-12 lg:pb-16">
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#6c7d70]">Stay with us</p>
-          <h2 className="mt-1 font-serif text-3xl text-[#214531] sm:text-4xl">Stay in Our Cottages</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#59665d] sm:text-base">
-            Thoughtfully designed private stays with breakfast, curated amenities, and a calm resort setting.
-          </p>
-        </div>
-
-        <Link href="/cottages" className="text-sm font-semibold text-[#2d593b]">
-          View all stays
-        </Link>
-      </div>
-
-      <div className="grid grid-cols-6 gap-2 sm:gap-4">
-  {cottages.slice(0, 5).map((cottage, index) => {
-    const heroImage = getCottageHeroImage(cottage, groupedGallery);
-
+  if (!cottages.length) {
     return (
-      <article
-        key={cottage.id}
-        className={`col-span-2 overflow-hidden rounded-2xl border border-[#dfd6c9] bg-[#fdfbf7] shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${
-          index >= 3 ? "col-span-3" : ""
-        }`}
-      >
-        <div className="relative aspect-[4/3] bg-[#efe6d8]">
-          {heroImage ? (
-            <img
-              src={heroImage}
-              alt={`${cottage.name} cover`}
-              className="h-full w-full object-cover"
-              loading={index === 0 ? "eager" : "lazy"}
-              fetchPriority={index === 0 ? "high" : "auto"}
-              decoding="async"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-[0.6rem] text-[#647369] sm:text-sm">
-              Image unavailable
-            </div>
-          )}
-
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(16,28,20,0.02)_0%,rgba(16,28,20,0.12)_45%,rgba(16,28,20,0.35)_100%)]" />
+      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16">
+        <div className="rounded-3xl border border-[#ddd3c3] bg-[#fffaf1] p-6 text-center text-[#4f5f56] sm:p-8">
+          Cottage details are being updated. Please contact us for availability.
         </div>
-
-        <div className="space-y-1.5 p-2 sm:space-y-2.5 sm:p-4">
-          <h3 className="line-clamp-2 font-serif text-[0.8rem] leading-tight text-[#224331] sm:text-[1.7rem]">
-            {cottage.name}
-          </h3>
-
-          <p className="hidden text-sm text-[#5c6a61] sm:line-clamp-2 sm:block">
-            {cottage.short_description ||
-              cottage.full_description ||
-              "Comfortable stay with curated amenities."}
-          </p>
-
-          <div className="flex flex-wrap items-center gap-1 text-[0.55rem] text-[#47624f] sm:gap-2 sm:text-xs">
-            <span className="rounded-full bg-[#f2ecdf] px-1.5 py-0.5 sm:px-2.5 sm:py-1">
-              {cottage.max_total_guests} guests
-            </span>
-
-            <span className="hidden rounded-full bg-[#f2ecdf] px-2.5 py-1 sm:inline-flex">
-              {cottage.category}
-            </span>
-          </div>
-
-          <div className="space-y-1 border-t border-[#e6ddcf] pt-1.5 sm:space-y-2 sm:pt-3">
-            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-              <p className="text-[0.6rem] font-semibold leading-tight text-[#234a34] sm:text-sm">
-                ₹{Number(cottage.weekday_price).toLocaleString("en-IN")}/night
-              </p>
-
-              <Link
-                href={`/cottages/${cottage.slug}`}
-                className="text-[0.6rem] font-semibold text-[#2e5f3e] sm:text-sm"
-              >
-                Details →
-              </Link>
-            </div>
-
-            <div className="rounded-lg bg-[#f4efe6] p-1 sm:rounded-xl sm:p-2">
-              <BookNowButton
-  cottageSlug={cottage.slug}
-  className="w-full rounded-md bg-[#2f5a3d] px-2 py-1.5 text-[0.6rem] font-semibold text-white sm:rounded-lg sm:px-3 sm:py-2.5 sm:text-sm"
-  label="Book now"
-/>
-            </div>
-          </div>
-        </div>
-      </article>
+      </section>
     );
-  })}
-</div>
+  }
+
+  return (
+    <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16">
+      <div className="rounded-[2rem] border border-[#e0d6c7] bg-gradient-to-b from-[#fffdf8] to-[#f8f2e8] p-5 shadow-sm sm:p-8">
+        <div className="max-w-3xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#6c7d70]">Cottage Stays</p>
+          <h2 className="mt-2 font-serif text-3xl text-[#214531] sm:text-4xl">Stay in Our Cottages</h2>
+          <p className="mt-3 text-sm leading-6 text-[#59665d] sm:text-base">
+            Choose from premium, standard and family cottage stays designed for a peaceful resort experience near Umran, Ri Bhoi.
+          </p>
+          <p className="mt-2 text-sm font-medium text-[#2f5a3d]">All stays include complimentary breakfast.</p>
+        </div>
+
+        <div className="mt-8 grid gap-5 md:grid-cols-2">
+          {cottages.map((cottage) => {
+            const heroImage = getCottageHeroImage(cottage, groupedGallery);
+            const chips = pickFeatureChips(cottage);
+
+            return (
+              <article
+                key={cottage.id}
+                className="overflow-hidden rounded-3xl border border-[#d9cfbf] bg-[#fffdf8] shadow-sm transition md:hover:-translate-y-1 md:hover:shadow-xl"
+              >
+                <div className="relative aspect-[16/9] overflow-hidden bg-[#eee6da]">
+                  {heroImage ? (
+                    <img
+                      src={heroImage}
+                      alt={`${cottage.name} at La Ki Trep`}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center bg-[radial-gradient(circle_at_top,_#f6eddc_0%,_#e8dccb_65%)] px-4 text-center text-sm text-[#5f6e64]">
+                      Resort cottage image coming soon
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-3 p-4 sm:p-5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-[#1f3b2a] px-3 py-1 text-xs font-semibold text-[#f5efdf]">
+                      {normalizeCategory(cottage.category)}
+                    </span>
+                    {cottage.is_combined_unit || cottage.code === "FC45" ? (
+                      <span className="rounded-full bg-[#efe7d7] px-3 py-1 text-xs font-semibold text-[#4f5f56]">Shared private compound</span>
+                    ) : null}
+                  </div>
+
+                  <h3 className="font-serif text-2xl leading-tight text-[#224331]">{cottage.name}</h3>
+
+                  <p className="line-clamp-2 text-sm text-[#5c6a61]">
+                    {cottage.short_description || cottage.full_description || "Comfortable stay with curated amenities."}
+                  </p>
+
+                  <p className="text-sm font-medium text-[#2b5139]">{getCapacityLabel(cottage)}</p>
+
+                  <div className="flex flex-wrap gap-2">
+                    {chips.map((chip) => (
+                      <span key={`${cottage.id}-${chip}`} className="rounded-full border border-[#e3d9ca] bg-[#f7f1e5] px-2.5 py-1 text-xs text-[#4f5f56]">
+                        {chip}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="rounded-2xl border border-[#e7dece] bg-[#fcf7ee] p-3">
+                    <div className="flex flex-wrap items-end justify-between gap-1 text-sm">
+                      <p className="font-semibold text-[#244734]">Weekday from {formatMoney(cottage.weekday_price)}/night</p>
+                      <p className="text-[#506057]">Weekend {formatMoney(cottage.weekend_price)}/night</p>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <Link
+                      href={`/cottages/${cottage.slug}`}
+                      className="inline-flex items-center justify-center rounded-xl border border-[#d8cfbf] bg-[#f9f2e4] px-4 py-2.5 text-sm font-semibold text-[#2f553c] transition hover:bg-[#f2e9d8]"
+                    >
+                      View Details
+                    </Link>
+                    <BookNowButton
+                      cottageSlug={cottage.slug}
+                      className="inline-flex items-center justify-center rounded-xl bg-[#2e5a3d] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#254b33]"
+                      label="Book Now"
+                    />
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </div>
     </section>
   );
 }
