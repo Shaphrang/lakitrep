@@ -7,3 +7,5 @@ export { AttractionsSection } from "./AttractionsSection";
 export { EventsSection } from "./EventsSection";
 export { PoliciesFaqSection } from "./PoliciesFaqSection";
 export { FinalCtaSection } from "./FinalCtaSection";
+
+export { LocationReachSection } from "./LocationReachSection";
