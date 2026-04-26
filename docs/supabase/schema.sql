@@ -340,6 +340,7 @@ as $$
 declare
   v_property public.properties;
   v_cottage public.cottages;
+  v_conflict_cottage_ids uuid[];
   v_guest_id uuid;
   v_booking_id uuid;
   v_total_guests integer;
@@ -410,15 +411,67 @@ begin
     raise exception 'Total guest count exceeds cottage limit';
   end if;
 
+  with selected_and_related_codes as (
+    select distinct code
+    from public.cottages c
+    where c.id = v_cottage.id
+      and c.status = 'active'
+      and c.is_bookable = true
+    union
+    select distinct unnest(component_codes)
+    from public.cottages c
+    where c.id = v_cottage.id
+      and c.status = 'active'
+      and c.is_bookable = true
+    union
+    select distinct c.code
+    from public.cottages c
+    where c.status = 'active'
+      and c.is_bookable = true
+      and exists (
+        select 1
+        from public.cottages selected
+        where selected.id = v_cottage.id
+          and selected.code = any(c.component_codes)
+      )
+  )
+  select array_agg(distinct c.id)
+  into v_conflict_cottage_ids
+  from public.cottages c
+  where c.status = 'active'
+    and c.is_bookable = true
+    and (
+      c.code in (select code from selected_and_related_codes)
+      or exists (
+        select 1
+        from unnest(c.component_codes) as component_code
+        where component_code in (select code from selected_and_related_codes)
+      )
+    );
+
+  if coalesce(array_length(v_conflict_cottage_ids, 1), 0) = 0 then
+    v_conflict_cottage_ids := array[v_cottage.id];
+  end if;
+
   if exists (
     select 1
     from public.bookings b
-    where b.cottage_id = v_cottage.id
-      and b.status = 'confirmed'
+    where b.cottage_id = any(v_conflict_cottage_ids)
+      and b.status in ('confirmed', 'advance_paid', 'checked_in')
       and b.check_in_date < p_check_out_date
       and b.check_out_date > p_check_in_date
   ) then
     raise exception 'Selected dates are unavailable for confirmed bookings';
+  end if;
+
+  if exists (
+    select 1
+    from public.cottage_blocks cb
+    where cb.cottage_id = any(v_conflict_cottage_ids)
+      and cb.start_date < p_check_out_date
+      and cb.end_date > p_check_in_date
+  ) then
+    raise exception 'Selected dates are unavailable due to maintenance block';
   end if;
 
   v_nights := (p_check_out_date - p_check_in_date);
@@ -524,6 +577,7 @@ as $$
 declare
   v_property_id uuid;
   v_cottage_id uuid;
+  v_conflict_cottage_ids uuid[];
   v_blocked_ranges jsonb := '[]'::jsonb;
   v_unavailable_dates jsonb := '[]'::jsonb;
 begin
@@ -551,13 +605,60 @@ begin
     raise exception 'Cottage not found';
   end if;
 
+  with selected_and_related_codes as (
+    select distinct code
+    from public.cottages c
+    where c.id = v_cottage_id
+      and c.status = 'active'
+      and c.is_bookable = true
+    union
+    select distinct unnest(component_codes)
+    from public.cottages c
+    where c.id = v_cottage_id
+      and c.status = 'active'
+      and c.is_bookable = true
+    union
+    select distinct c.code
+    from public.cottages c
+    where c.status = 'active'
+      and c.is_bookable = true
+      and exists (
+        select 1
+        from public.cottages selected
+        where selected.id = v_cottage_id
+          and selected.code = any(c.component_codes)
+      )
+  )
+  select array_agg(distinct c.id)
+  into v_conflict_cottage_ids
+  from public.cottages c
+  where c.status = 'active'
+    and c.is_bookable = true
+    and (
+      c.code in (select code from selected_and_related_codes)
+      or exists (
+        select 1
+        from unnest(c.component_codes) as component_code
+        where component_code in (select code from selected_and_related_codes)
+      )
+    );
+
+  if coalesce(array_length(v_conflict_cottage_ids, 1), 0) = 0 then
+    v_conflict_cottage_ids := array[v_cottage_id];
+  end if;
+
   -- Pending requests are intentionally excluded to avoid soft-locking inventory.
   with blocked as (
     select b.check_in_date, b.check_out_date
     from public.bookings b
-    where b.cottage_id = v_cottage_id
-      and b.status in ('confirmed', 'completed')
+    where b.cottage_id = any(v_conflict_cottage_ids)
+      and b.status in ('confirmed', 'advance_paid', 'checked_in')
       and b.check_in_date < b.check_out_date
+    union all
+    select cb.start_date as check_in_date, (cb.end_date + interval '1 day')::date as check_out_date
+    from public.cottage_blocks cb
+    where cb.cottage_id = any(v_conflict_cottage_ids)
+      and cb.start_date <= cb.end_date
   )
   select coalesce(
     jsonb_agg(
@@ -576,9 +677,14 @@ begin
   with blocked as (
     select b.check_in_date, b.check_out_date
     from public.bookings b
-    where b.cottage_id = v_cottage_id
-      and b.status in ('confirmed', 'completed')
+    where b.cottage_id = any(v_conflict_cottage_ids)
+      and b.status in ('confirmed', 'advance_paid', 'checked_in')
       and b.check_in_date < b.check_out_date
+    union all
+    select cb.start_date as check_in_date, (cb.end_date + interval '1 day')::date as check_out_date
+    from public.cottage_blocks cb
+    where cb.cottage_id = any(v_conflict_cottage_ids)
+      and cb.start_date <= cb.end_date
   ),
   nights as (
     select generate_series(check_in_date, check_out_date - interval '1 day', interval '1 day')::date as blocked_date

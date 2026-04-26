@@ -1,17 +1,17 @@
 "use server";
 
-import { addDays, eachDayOfInterval, format, isAfter, isBefore, parseISO } from "date-fns";
+import { format, isAfter, isBefore, parseISO } from "date-fns";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { z } from "zod";
 import {
+  assertCottageAvailability,
   calculateNights,
   recalculateBookingTotals,
   simpleRoomEstimate,
 } from "@/features/admin/bookings/services/resort-management-service";
 import { bookingSourceSchema } from "@/features/admin/bookings/schema";
-import { getCottageAvailability } from "@/actions/public/bookings";
 import { requireAdmin } from "@/lib/auth/admin";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getNumber, getOptionalString, getString } from "./_shared";
@@ -64,20 +64,6 @@ function redirectWithMessage(path: string, key: "success" | "error", message: st
   const joiner = path.includes("?") ? "&" : "?";
   redirect(`${path}${joiner}${key}=${encodeURIComponent(message)}`);
 }
-
-function rangeContainsUnavailableDates(checkInDate: string, checkOutDate: string, unavailableDateSet: Set<string>) {
-  const checkIn = parseISO(checkInDate);
-  const checkOut = parseISO(checkOutDate);
-  if (!isBefore(checkIn, checkOut)) return true;
-
-  const blockedNights = eachDayOfInterval({
-    start: checkIn,
-    end: addDays(checkOut, -1),
-  });
-
-  return blockedNights.some((day) => unavailableDateSet.has(format(day, "yyyy-MM-dd")));
-}
-
 
 export async function createOrUpdateCustomerAction(formData: FormData) {
   const returnPath = getOptionalString(formData, "return_path") || "/admin/customers";
@@ -158,28 +144,36 @@ export async function createManualBookingAction(formData: FormData) {
 
     const { data: cottage, error: cottageError } = await supabase
       .from("cottages")
-      .select("id,slug,max_total_guests,weekday_price,weekend_price")
+      .select("id,max_adults,max_children,max_infants,max_total_guests,weekday_price,weekend_price,child_price,status,is_bookable")
       .eq("id", cottageId)
+      .eq("status", "active")
+      .eq("is_bookable", true)
       .maybeSingle();
 
     if (cottageError || !cottage) throw new Error("Invalid cottage selected.");
 
+    if (adults > Number(cottage.max_adults ?? 0)) {
+      throw new Error("Adult count exceeds cottage capacity.");
+    }
+    if (children > Number(cottage.max_children ?? 0)) {
+      throw new Error("Children are not allowed for this cottage.");
+    }
+    if (infants > Number(cottage.max_infants ?? 0)) {
+      throw new Error("Infant count exceeds cottage capacity.");
+    }
     if (adults + children + infants > Number(cottage.max_total_guests ?? 0)) {
       throw new Error("Guest count exceeds cottage capacity.");
     }
 
-    const availability = await getCottageAvailability(String(cottage.slug ?? ""));
-    if (availability.error) {
-      throw new Error("Unable to verify current availability. Please try again.");
-    }
-
-    const unavailableDateSet = new Set(availability.unavailableDates ?? []);
-    if (rangeContainsUnavailableDates(checkInDate, checkOutDate, unavailableDateSet)) {
+    const availability = await assertCottageAvailability(cottageId, checkInDate, checkOutDate);
+    if (availability.hasConflict) {
       throw new Error("Selected dates are no longer available for this cottage. Please choose another date.");
     }
 
     const nights = calculateNights(checkInDate, checkOutDate);
-    const bookingTotal = simpleRoomEstimate(Number(cottage.weekday_price ?? 0), Number(cottage.weekend_price ?? 0), checkInDate, nights);
+    const roomAmount = simpleRoomEstimate(Number(cottage.weekday_price ?? 0), Number(cottage.weekend_price ?? 0), checkInDate, nights);
+    const childAmount = Math.max(0, children) * Number(cottage.child_price ?? 0) * nights;
+    const bookingTotal = roomAmount + childAmount;
     const discountAmount = Math.max(0, getNumber(formData, "discount_amount", 0));
     if (discountAmount > bookingTotal) throw new Error("Discount cannot exceed room charges.");
 

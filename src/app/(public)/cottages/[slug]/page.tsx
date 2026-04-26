@@ -69,7 +69,8 @@ export default async function CottageDetailPage({ params }: Props) {
           <dl className="mt-5 space-y-2 rounded-xl border border-[#e4dacd] bg-white p-4 text-sm text-[#3e4d44]">
             <div className="flex justify-between gap-4"><dt>Capacity</dt><dd className="font-medium">{cottage.max_total_guests} guests</dd></div>
             <div className="flex justify-between gap-4"><dt>Adults</dt><dd className="font-medium">{cottage.max_adults}</dd></div>
-            <div className="flex justify-between gap-4"><dt>Children</dt><dd className="font-medium">{cottage.max_children}</dd></div>
+            {cottage.max_children > 0 ? <div className="flex justify-between gap-4"><dt>Children</dt><dd className="font-medium">{cottage.max_children}</dd></div> : null}
+            {cottage.max_infants > 0 ? <div className="flex justify-between gap-4"><dt>Infants</dt><dd className="font-medium">Up to {cottage.max_infants} (below 2 years)</dd></div> : null}
             <div className="flex justify-between gap-4"><dt>Weekday</dt><dd className="font-medium">₹{Number(cottage.weekday_price).toLocaleString("en-IN")}</dd></div>
             <div className="flex justify-between gap-4"><dt>Weekend</dt><dd className="font-medium">₹{Number(cottage.weekend_price).toLocaleString("en-IN")}</dd></div>
           </dl>

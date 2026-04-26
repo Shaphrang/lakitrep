@@ -49,8 +49,29 @@ export default async function CottagesReportPage({
   });
 
   const totalDays = daysBetweenInclusive(from, to);
+  const activeBookableCottageIds = new Set(
+    dataset.cottages
+      .filter((cottage) => cottage.status === "active" && cottage.isBookable)
+      .map((cottage) => cottage.id),
+  );
 
-  const rows = dataset.cottages
+  const historicalCottageMap = new Map<string, string>();
+  for (const booking of dataset.revenueRows) {
+    if (!booking.cottageId || activeBookableCottageIds.has(booking.cottageId)) continue;
+    if (!historicalCottageMap.has(booking.cottageId)) {
+      historicalCottageMap.set(booking.cottageId, booking.cottageName || "Archived cottage");
+    }
+  }
+
+  const rows = [
+    ...dataset.cottages.filter((cottage) => cottage.status === "active" && cottage.isBookable),
+    ...Array.from(historicalCottageMap.entries()).map(([id, name]) => ({
+      id,
+      name: `${name} (Archive/Historical)`,
+      status: "archived",
+      isBookable: false,
+    })),
+  ]
     .map((cottage) => {
       const bookings = dataset.revenueRows.filter(
         (booking) => booking.cottageId === cottage.id,
@@ -83,11 +104,11 @@ export default async function CottagesReportPage({
       return {
         id: cottage.id,
         cottageName: cottage.name,
-        cottageStatus: "active",
+        cottageStatus: cottage.status === "active" && cottage.isBookable ? "active" : "archived",
         totalBookings: bookings.length,
         bookedNights,
-        availableNights: totalDays,
-        occupancyRate: pct(bookedNights, totalDays),
+        availableNights: cottage.status === "active" && cottage.isBookable ? totalDays : 0,
+        occupancyRate: cottage.status === "active" && cottage.isBookable ? pct(bookedNights, totalDays) : 0,
         revenue,
         collection,
         outstanding,
@@ -143,6 +164,7 @@ export default async function CottagesReportPage({
             options: [
               { value: "all", label: "All cottages" },
               { value: "active", label: "Active" },
+              { value: "archived", label: "Archived / Historical" },
             ],
           },
         ]}

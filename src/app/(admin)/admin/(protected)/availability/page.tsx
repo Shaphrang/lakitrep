@@ -10,7 +10,7 @@ export default async function AvailabilityPage() {
   const endDate = format(end, "yyyy-MM-dd");
 
   const [{ data: cottages }, { data: bookings }, { data: blocks }] = await Promise.all([
-    supabase.from("cottages").select("id,name").order("name"),
+    supabase.from("cottages").select("id,name,code,is_combined_unit,component_codes").eq("status", "active").eq("is_bookable", true).order("name"),
     supabase
       .from("bookings")
       .select("id,cottage_id,check_in_date,check_out_date,status")
@@ -21,6 +21,32 @@ export default async function AvailabilityPage() {
   ]);
 
   const dates = Array.from({ length: 14 }).map((_, index) => format(addDays(start, index), "yyyy-MM-dd"));
+  const cottageRows = (cottages ?? []).map((row) => ({
+    id: String(row.id),
+    name: String(row.name ?? "-"),
+    code: String((row as { code?: string }).code ?? ""),
+    componentCodes: Array.isArray((row as { component_codes?: string[] }).component_codes)
+      ? ((row as { component_codes?: string[] }).component_codes ?? []).map((code) => String(code))
+      : [],
+  }));
+
+  function getConflictIds(cottageId: string) {
+    const selected = cottageRows.find((row) => row.id === cottageId);
+    if (!selected) return [cottageId];
+
+    const relatedCodes = new Set<string>([selected.code, ...selected.componentCodes].filter(Boolean));
+    for (const row of cottageRows) {
+      if (row.componentCodes.some((code) => relatedCodes.has(code))) {
+        relatedCodes.add(row.code);
+      }
+    }
+
+    const ids = cottageRows
+      .filter((row) => relatedCodes.has(row.code) || row.componentCodes.some((code) => relatedCodes.has(code)))
+      .map((row) => row.id);
+
+    return ids.length ? ids : [cottageId];
+  }
 
   return (
     <div className="space-y-4">
@@ -36,18 +62,19 @@ export default async function AvailabilityPage() {
             </tr>
           </thead>
           <tbody>
-            {(cottages ?? []).map((cottage) => (
-              <tr key={String(cottage.id)} className="border-t border-[#eee6da]">
-                <td className="p-2 font-medium">{String(cottage.name)}</td>
+            {cottageRows.map((cottage) => (
+              <tr key={cottage.id} className="border-t border-[#eee6da]">
+                <td className="p-2 font-medium">{cottage.name}</td>
                 {dates.map((date) => {
+                  const conflictIds = getConflictIds(cottage.id);
                   const isBooked = (bookings ?? []).some(
                     (booking) =>
-                      String(booking.cottage_id) === String(cottage.id) &&
+                      conflictIds.includes(String(booking.cottage_id)) &&
                       String(booking.check_in_date) <= date &&
                       String(booking.check_out_date) > date,
                   );
                   const isBlocked = (blocks ?? []).some(
-                    (block) => String(block.cottage_id) === String(cottage.id) && String(block.start_date) <= date && String(block.end_date) >= date,
+                    (block) => conflictIds.includes(String(block.cottage_id)) && String(block.start_date) <= date && String(block.end_date) >= date,
                   );
 
                   return (
