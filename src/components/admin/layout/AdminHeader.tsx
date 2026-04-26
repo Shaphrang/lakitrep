@@ -1,3 +1,4 @@
+//src\components\admin\layout\AdminHeader.tsx
 import { logoutAdminAction } from "@/actions/admin/auth";
 
 export function AdminHeader({ adminLabel, onMenuClick }: { adminLabel: string; onMenuClick: () => void }) {

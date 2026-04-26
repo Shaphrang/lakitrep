@@ -3,8 +3,19 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function getResortDashboardMetrics() {
   const supabase = await getSupabaseServerClient();
-  const today = format(new Date(), "yyyy-MM-dd");
-  const monthStart = format(new Date(new Date().getFullYear(), new Date().getMonth(), 1), "yyyy-MM-dd");
+
+  const now = new Date();
+  const today = format(now, "yyyy-MM-dd");
+  const todayStart = `${today}T00:00:00`;
+  const todayEnd = `${today}T23:59:59`;
+
+  const monthStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthStart = format(monthStartDate, "yyyy-MM-dd");
+  const monthStartIso = `${monthStart}T00:00:00`;
+
+  const trendStartDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+  const trendStart = format(trendStartDate, "yyyy-MM-dd");
+  const trendStartIso = `${trendStart}T00:00:00`;
 
   const [
     todayCheckins,
@@ -13,42 +24,249 @@ export async function getResortDashboardMetrics() {
     upcomingConfirmed,
     inHouse,
     pendingBills,
+    arrivalsWithDue,
     todayCollection,
     monthCollection,
+    monthBookings,
+    trendBookings,
+    trendPayments,
     activeCottages,
     blockedCottages,
   ] = await Promise.all([
-    supabase.from("bookings").select("id", { count: "exact", head: true }).eq("check_in_date", today).in("status", ["confirmed", "advance_paid"]),
-    supabase.from("bookings").select("id", { count: "exact", head: true }).eq("check_out_date", today).in("status", ["checked_in", "confirmed", "advance_paid"]),
-    supabase.from("bookings").select("id", { count: "exact", head: true }).in("status", ["new_request", "pending"]),
-    supabase.from("bookings").select("id", { count: "exact", head: true }).gte("check_in_date", today).in("status", ["confirmed", "advance_paid"]),
-    supabase.from("bookings").select("id", { count: "exact", head: true }).eq("status", "checked_in"),
-    supabase.from("bookings").select("id", { count: "exact", head: true }).gt("amount_pending", 0).in("status", ["checked_in", "checked_out", "confirmed", "advance_paid"]),
-    supabase.from("booking_payments").select("amount"),
-    supabase.from("booking_payments").select("amount,payment_date").gte("payment_date", monthStart),
-    supabase.from("cottages").select("id", { count: "exact", head: true }).eq("status", "active"),
-    supabase.from("cottage_blocks").select("id", { count: "exact", head: true }).lte("start_date", today).gte("end_date", today),
+    supabase
+      .from("bookings")
+      .select("id", { count: "exact", head: true })
+      .eq("check_in_date", today)
+      .in("status", ["confirmed", "advance_paid"]),
+
+    supabase
+      .from("bookings")
+      .select("id", { count: "exact", head: true })
+      .eq("check_out_date", today)
+      .in("status", ["checked_in", "confirmed", "advance_paid"]),
+
+    supabase
+      .from("bookings")
+      .select("id", { count: "exact", head: true })
+      .in("status", ["new_request", "pending"]),
+
+    supabase
+      .from("bookings")
+      .select("id", { count: "exact", head: true })
+      .gte("check_in_date", today)
+      .in("status", ["confirmed", "advance_paid"]),
+
+    supabase
+      .from("bookings")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "checked_in"),
+
+    supabase
+      .from("bookings")
+      .select("id,amount_pending", { count: "exact" })
+      .gt("amount_pending", 0)
+      .in("status", ["checked_in", "checked_out", "confirmed", "advance_paid"]),
+
+    supabase
+      .from("bookings")
+      .select("id,amount_pending", { count: "exact" })
+      .eq("check_in_date", today)
+      .gt("amount_pending", 0)
+      .in("status", ["confirmed", "advance_paid"]),
+
+    supabase
+      .from("booking_payments")
+      .select("amount,payment_type,created_at")
+      .gte("created_at", todayStart)
+      .lte("created_at", todayEnd)
+      .limit(1000),
+
+    supabase
+      .from("booking_payments")
+      .select("amount,payment_type,created_at")
+      .gte("created_at", monthStartIso)
+      .limit(5000),
+
+    supabase
+      .from("bookings")
+      .select("id,status,source,final_total,amount_pending,created_at")
+      .gte("created_at", monthStartIso)
+      .limit(5000),
+
+    supabase
+      .from("bookings")
+      .select("id,status,source,final_total,amount_pending,created_at")
+      .gte("created_at", trendStartIso)
+      .limit(10000),
+
+    supabase
+      .from("booking_payments")
+      .select("amount,payment_type,created_at")
+      .gte("created_at", trendStartIso)
+      .limit(10000),
+
+    supabase
+      .from("cottages")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "active"),
+
+    supabase
+      .from("cottage_blocks")
+      .select("id", { count: "exact", head: true })
+      .lte("start_date", today)
+      .gte("end_date", today),
   ]);
 
-  const todayCollectionTotal = (todayCollection.data ?? []).reduce((sum, row) => {
-    const paymentDate = String((row as { payment_date?: string }).payment_date ?? "").slice(0, 10);
-    return paymentDate === today ? sum + Number((row as { amount?: number }).amount ?? 0) : sum;
+  const safePaymentAmount = (row: Record<string, unknown>) => {
+    const amount = Number(row.amount ?? 0);
+    const paymentType = String(row.payment_type ?? "");
+
+    if (!Number.isFinite(amount)) return 0;
+
+    return paymentType === "refund" ? -amount : amount;
+  };
+
+  const todayCollectionTotal = (todayCollection.data ?? []).reduce(
+    (sum, row) => sum + safePaymentAmount(row as Record<string, unknown>),
+    0,
+  );
+
+  const monthCollectionTotal = (monthCollection.data ?? []).reduce(
+    (sum, row) => sum + safePaymentAmount(row as Record<string, unknown>),
+    0,
+  );
+
+  const monthBookingRows = (monthBookings.data ?? []) as Record<
+    string,
+    unknown
+  >[];
+
+  const monthRevenue = monthBookingRows.reduce((sum, row) => {
+    const amount = Number(row.final_total ?? 0);
+    return sum + (Number.isFinite(amount) ? amount : 0);
   }, 0);
 
-  const monthRevenue = (monthCollection.data ?? []).reduce((sum, row) => sum + Number((row as { amount?: number }).amount ?? 0), 0);
-  const occupancy = (activeCottages.count ?? 0) > 0 ? Math.round(((inHouse.count ?? 0) / (activeCottages.count ?? 1)) * 100) : 0;
+  const monthOutstanding = monthBookingRows.reduce((sum, row) => {
+    const amount = Number(row.amount_pending ?? 0);
+    return sum + (Number.isFinite(amount) ? amount : 0);
+  }, 0);
+
+  const pendingAmount = ((pendingBills.data ?? []) as Record<string, unknown>[]).reduce(
+    (sum, row) => {
+      const amount = Number(row.amount_pending ?? 0);
+      return sum + (Number.isFinite(amount) ? amount : 0);
+    },
+    0,
+  );
+
+  const monthBookingsCount = monthBookingRows.length;
+
+  const avgBookingValue =
+    monthBookingsCount > 0 ? monthRevenue / monthBookingsCount : 0;
+
+  const collectionRate =
+    monthRevenue > 0 ? Math.round((monthCollectionTotal / monthRevenue) * 100) : 0;
+
+  const activeCottageCount = activeCottages.count ?? 0;
+  const inHouseCount = inHouse.count ?? 0;
+
+  const occupancy =
+    activeCottageCount > 0
+      ? Math.round((inHouseCount / activeCottageCount) * 100)
+      : 0;
+
+  const sourceMap = new Map<
+    string,
+    { source: string; bookings: number; revenue: number; outstanding: number }
+  >();
+
+  for (const row of monthBookingRows) {
+    const source = String(row.source ?? "other");
+    const existing =
+      sourceMap.get(source) ?? {
+        source,
+        bookings: 0,
+        revenue: 0,
+        outstanding: 0,
+      };
+
+    existing.bookings += 1;
+    existing.revenue += Number(row.final_total ?? 0) || 0;
+    existing.outstanding += Number(row.amount_pending ?? 0) || 0;
+
+    sourceMap.set(source, existing);
+  }
+
+  const sourceBreakdown = Array.from(sourceMap.values())
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 5);
+
+  const statusMap = new Map<string, number>();
+
+  for (const row of monthBookingRows) {
+    const status = String(row.status ?? "unknown");
+    statusMap.set(status, (statusMap.get(status) ?? 0) + 1);
+  }
+
+  const statusBreakdown = Array.from(statusMap.entries())
+    .map(([status, count]) => ({ status, count }))
+    .sort((a, b) => b.count - a.count);
+
+  const trendMonths = Array.from({ length: 6 }, (_, index) => {
+    const date = new Date(now.getFullYear(), now.getMonth() - (5 - index), 1);
+    return {
+      key: format(date, "yyyy-MM"),
+      label: format(date, "MMM"),
+      revenue: 0,
+      collection: 0,
+      bookings: 0,
+    };
+  });
+
+  const trendMap = new Map(trendMonths.map((row) => [row.key, row]));
+
+  for (const row of (trendBookings.data ?? []) as Record<string, unknown>[]) {
+    const createdAt = String(row.created_at ?? "");
+    const key = createdAt.slice(0, 7);
+    const target = trendMap.get(key);
+
+    if (!target) continue;
+
+    target.bookings += 1;
+    target.revenue += Number(row.final_total ?? 0) || 0;
+  }
+
+  for (const row of (trendPayments.data ?? []) as Record<string, unknown>[]) {
+    const createdAt = String(row.created_at ?? "");
+    const key = createdAt.slice(0, 7);
+    const target = trendMap.get(key);
+
+    if (!target) continue;
+
+    target.collection += safePaymentAmount(row);
+  }
 
   return {
     todayCheckins: todayCheckins.count ?? 0,
     todayCheckouts: todayCheckouts.count ?? 0,
     newRequests: newRequests.count ?? 0,
     upcomingConfirmed: upcomingConfirmed.count ?? 0,
-    inHouse: inHouse.count ?? 0,
+    inHouse: inHouseCount,
     pendingBills: pendingBills.count ?? 0,
+    pendingAmount,
+    arrivalsWithDue: arrivalsWithDue.count ?? 0,
     todayCollection: todayCollectionTotal,
     monthRevenue,
+    monthCollection: monthCollectionTotal,
+    monthOutstanding,
+    monthBookings: monthBookingsCount,
+    avgBookingValue,
+    collectionRate,
     occupancy,
     blockedCottages: blockedCottages.count ?? 0,
+    sourceBreakdown,
+    statusBreakdown,
+    trend: trendMonths,
   };
 }
 

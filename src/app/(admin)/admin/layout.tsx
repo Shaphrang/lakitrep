@@ -1,3 +1,4 @@
+//src\app\(admin)\admin\layout.tsx
 import type { ReactNode } from "react";
 import { AdminShell } from "@/components/admin/layout/AdminShell";
 import { getAuthenticatedAdmin } from "@/lib/auth/admin";
