@@ -3,11 +3,8 @@ import { getFirstImage, resolveMediaUrl } from "@/lib/public-site";
 import type {
   GalleryImage,
   GalleryPreviewCard,
-  HomeAttractionInput,
   HomeCottage,
-  HomeExperience,
 } from "./home.types";
-import { FALLBACK_EXPERIENCES } from "./home.constants";
 
 function mapGalleryImage(item?: PublicGalleryItem): GalleryImage | null {
   if (!item) return null;
@@ -88,19 +85,6 @@ export function countTotalGalleryImages(groupedGallery: PublicGroupedGallery): n
     groupedGallery.scenicViews,
     groupedGallery.activitiesExperiences,
   ].reduce((sum, items) => sum + items.length, 0);
-}
-
-export function mapHomeExperiences(attractions: HomeAttractionInput[]): HomeExperience[] {
-  if (attractions.length === 0) {
-    return FALLBACK_EXPERIENCES.map((item) => ({ ...item, distance: "Nearby", image: null }));
-  }
-
-  return attractions.slice(0, 6).map((item) => ({
-    name: item.name,
-    note: item.description || "A nearby highlight to pair with your stay itinerary.",
-    distance: item.distance_text || "Near La Ki Trep",
-    image: resolveMediaUrl(getFirstImage(item.cover_image, item.gallery_images)),
-  }));
 }
 
 export function getCottageHeroImage(cottage: HomeCottage, groupedGallery: PublicGroupedGallery): string | null {

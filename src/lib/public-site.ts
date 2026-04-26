@@ -116,6 +116,7 @@ export type PublicAttraction = {
   distance_text: string | null;
   cover_image: string | null;
   gallery_images: string[];
+  sort_order: number | null;
 };
 
 export type PublicPolicy = {
@@ -190,8 +191,9 @@ export const getAttractions = cache(async (propertyId: string): Promise<PublicAt
   const supabase = getSupabasePublicServerClient();
   const { data, error } = await supabase
     .from("attractions")
-    .select("id,name,description,distance_text,cover_image,gallery_images")
+    .select("id,name,description,distance_text,cover_image,gallery_images,sort_order")
     .eq("property_id", propertyId)
+    .eq("is_active", true)
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
 
