@@ -96,7 +96,7 @@ export function ManualBookingForm({ cottages, customers, propertyId }: { cottage
       </div>
 
       <label className="text-sm text-[#32483a]">Booking Status *
-        <select name="status" className={inputClass} defaultValue="confirmed" required><option value="confirmed">Confirmed</option><option value="advance_paid">Advance Paid</option><option value="contacted">Contacted</option><option value="new_request">New Request</option></select>
+        <select name="status" className={inputClass} defaultValue="confirmed" required><option value="confirmed">Confirmed</option><option value="advance_paid">Advance Paid</option></select>
       </label>
       <label className="text-sm text-[#32483a]">Discount Amount<input name="discount_amount" type="number" min={0} step="0.01" defaultValue={0} className={inputClass} placeholder="Enter discount amount" /></label>
       <label className="text-sm text-[#32483a] sm:col-span-2">Guest Special Requests<input name="special_requests" className={inputClass} maxLength={500} placeholder="Example: Need extra mattress, arrive after 8 PM" /></label>

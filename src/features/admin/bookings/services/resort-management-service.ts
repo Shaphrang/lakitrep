@@ -14,7 +14,8 @@ async function getCottageConflictIds(cottageId: string) {
     .from("cottages")
     .select("id,code,is_combined_unit,component_codes")
     .eq("status", "active")
-    .eq("is_bookable", true);
+    .eq("is_bookable", true)
+    .neq("code", "C1-C2");
 
   if (error) throw new Error(`Failed to load cottages for availability: ${error.message}`);
 
@@ -375,6 +376,7 @@ export async function getManualBookingMeta() {
       .select("id,name,code,slug,max_adults,max_children,max_infants,max_total_guests,weekday_price,weekend_price,child_price,status,is_bookable")
       .eq("status", "active")
       .eq("is_bookable", true)
+      .neq("code", "C1-C2")
       .order("name"),
     supabase.from("booking_guests").select("id,full_name,phone,source").order("created_at", { ascending: false }).limit(50),
   ]);
