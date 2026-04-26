@@ -3,7 +3,18 @@
 import { useMemo, useState } from "react";
 import { ExportCsvButton } from "./ExportCsvButton";
 
-type Col<T> = { key: keyof T; label: string; sortable?: boolean; render?: (row: T) => string };
+type Col<T> = { key: keyof T; label: string; sortable?: boolean; format?: "currency_inr" | "percent_1" | "nights_1" | "booking_actions" };
+
+function formatCell<T extends { id: string }>(row: T, col: Col<T>) {
+  const value = row[col.key];
+
+  if (col.format === "currency_inr") return `₹${Number(value ?? 0).toLocaleString("en-IN")}`;
+  if (col.format === "percent_1") return `${Number(value ?? 0).toFixed(1)}%`;
+  if (col.format === "nights_1") return `${Number(value ?? 0).toFixed(1)} nights`;
+  if (col.format === "booking_actions") return `Open booking: /admin/bookings/${row.id} | billing: /admin/billing/${row.id}`;
+
+  return String(value ?? "—");
+}
 
 export function ReportTableClient<T extends { id: string }>({
   title,
@@ -60,7 +71,7 @@ export function ReportTableClient<T extends { id: string }>({
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm">
           <thead className="bg-[#f4efe4] text-[#536458]"><tr>{columns.map((c) => <th key={String(c.key)} className="whitespace-nowrap px-3 py-2"><button className="font-semibold" onClick={() => { if (!c.sortable) return; if (sortBy === c.key) setSortDir(sortDir === "asc" ? "desc" : "asc"); else { setSortBy(c.key); setSortDir("asc"); } }}>{c.label}</button></th>)}</tr></thead>
-          <tbody>{paged.map((row) => <tr key={row.id} className="border-t border-[#eee6da]">{columns.map((c) => <td key={String(c.key)} className="whitespace-nowrap px-3 py-2">{c.render ? c.render(row) : String(row[c.key] ?? "—")}</td>)}</tr>)}</tbody>
+          <tbody>{paged.map((row) => <tr key={row.id} className="border-t border-[#eee6da]">{columns.map((c) => <td key={String(c.key)} className="whitespace-nowrap px-3 py-2">{formatCell(row, c)}</td>)}</tr>)}</tbody>
         </table>
       </div>
       {rows.length > 0 && paged.length === 0 ? <p className="text-sm text-[#9a5f20]">No results after filters. Try reset.</p> : null}

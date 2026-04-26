@@ -13,6 +13,6 @@ export default async function ExtraChargesReportPage({ searchParams }: { searchP
   const byType = Object.entries(ds.charges.reduce<Record<string,number>>((a,c)=>{a[c.chargeType]=(a[c.chargeType]??0)+c.amount;return a;},{})).sort((a,b)=>b[1]-a[1])[0]?.[0] ?? "—";
   return <div className="space-y-4"><AdminPageHeader title="Extra Charges Report" description="Charge analytics for ancillary revenue." /><ReportsNav />
     <ReportSummaryCards cards={[{label:"Total Extra Charge Revenue",value:ds.charges.reduce((s,c)=>s+c.amount,0),kind:"currency"},{label:"Most Used Charge Type",value:byType}]} />
-    <ReportTableClient title="Extra Charge Entries" fileName="extra-charges-report.csv" rows={ds.charges} searchKeys={["bookingCode","guestName","cottage","chargeType","description"]} columns={[{key:"bookingCode",label:"Booking"},{key:"guestName",label:"Guest"},{key:"cottage",label:"Cottage"},{key:"chargeType",label:"Charge Type"},{key:"description",label:"Description"},{key:"amount",label:"Amount",render:(r)=>`₹${r.amount.toLocaleString('en-IN')}`},{key:"dateAdded",label:"Date Added"}]} />
+    <ReportTableClient title="Extra Charge Entries" fileName="extra-charges-report.csv" rows={ds.charges} searchKeys={["bookingCode","guestName","cottage","chargeType","description"]} columns={[{key:"bookingCode",label:"Booking"},{key:"guestName",label:"Guest"},{key:"cottage",label:"Cottage"},{key:"chargeType",label:"Charge Type"},{key:"description",label:"Description"},{key:"amount",label:"Amount",format: "currency_inr"},{key:"dateAdded",label:"Date Added"}]} />
   </div>;
 }
