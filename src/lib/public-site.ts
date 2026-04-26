@@ -1,9 +1,23 @@
 import { cache } from "react";
 import { getPublicGalleryByPropertyId } from "@/features/gallery/gallery-service";
+import { GALLERY_CATEGORY_OPTIONS } from "@/features/gallery/constants";
+import type { PublicGroupedGallery } from "@/features/gallery/types";
 import { getSupabasePublicServerClient } from "@/lib/supabase/public-server";
 
 const MEDIA_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_MEDIA_BUCKET ?? "lakitrep-media";
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+
+function isPublicSupabaseConfigured() {
+  return Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+}
+
+function emptyGroupedGallery(): PublicGroupedGallery {
+  return GALLERY_CATEGORY_OPTIONS.reduce<PublicGroupedGallery>((acc, category) => {
+    acc[category.key] = [];
+    return acc;
+  }, {} as PublicGroupedGallery);
+}
 
 function getPublicObjectPrefix() {
   if (!SUPABASE_URL) return "";
@@ -144,6 +158,7 @@ export type PageSeo = {
 };
 
 export const getPrimaryProperty = cache(async (): Promise<Property | null> => {
+  if (!isPublicSupabaseConfigured()) return null;
   const supabase = getSupabasePublicServerClient();
   const { data, error } = await supabase
     .from("properties")
@@ -159,6 +174,7 @@ export const getPrimaryProperty = cache(async (): Promise<Property | null> => {
 });
 
 export const getPublicCottages = cache(async (propertyId: string): Promise<PublicCottage[]> => {
+  if (!isPublicSupabaseConfigured()) return [];
   const supabase = getSupabasePublicServerClient();
   const { data, error } = await supabase
     .from("cottages")
@@ -168,6 +184,7 @@ export const getPublicCottages = cache(async (propertyId: string): Promise<Publi
     .eq("property_id", propertyId)
     .eq("status", "active")
     .eq("is_bookable", true)
+    .neq("code", "C1-C2")
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
 
@@ -199,6 +216,7 @@ export async function getCottageBySlug(propertyId: string, slug: string) {
 }
 
 export const getAttractions = cache(async (propertyId: string): Promise<PublicAttraction[]> => {
+  if (!isPublicSupabaseConfigured()) return [];
   const supabase = getSupabasePublicServerClient();
   const { data, error } = await supabase
     .from("attractions")
@@ -213,6 +231,7 @@ export const getAttractions = cache(async (propertyId: string): Promise<PublicAt
 });
 
 export const getPolicies = cache(async (propertyId: string): Promise<PublicPolicy[]> => {
+  if (!isPublicSupabaseConfigured()) return [];
   const supabase = getSupabasePublicServerClient();
   const { data, error } = await supabase
     .from("policies")
@@ -227,6 +246,7 @@ export const getPolicies = cache(async (propertyId: string): Promise<PublicPolic
 
 export const getSeoByPageKey = cache(
   async (propertyId: string, pageKey: string): Promise<PageSeo | null> => {
+    if (!isPublicSupabaseConfigured()) return null;
     const supabase = getSupabasePublicServerClient();
     const { data, error } = await supabase
       .from("seo")
@@ -245,4 +265,7 @@ export function getFirstImage(coverImage: string | null, gallery: string[] = [])
 }
 
 
-export const getPropertyGalleryByCategory = cache(async (propertyId: string) => getPublicGalleryByPropertyId(propertyId));
+export const getPropertyGalleryByCategory = cache(async (propertyId: string) => {
+  if (!isPublicSupabaseConfigured()) return emptyGroupedGallery();
+  return getPublicGalleryByPropertyId(propertyId);
+});

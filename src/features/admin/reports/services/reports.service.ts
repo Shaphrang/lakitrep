@@ -113,7 +113,11 @@ export async function getCheckInCheckoutReportDataset(
 
   const bookingIds = bookings.map((booking) => String(booking.id));
 
-  let paymentRows: { booking_id: string | null; amount: number | null }[] = [];
+  let paymentRows: {
+    booking_id: string | null;
+    amount: number | null;
+    payment_type: string | null;
+  }[] = [];
 
   if (bookingIds.length > 0) {
     const paymentsRes = await supabase
@@ -132,10 +136,12 @@ export async function getCheckInCheckoutReportDataset(
   for (const payment of paymentRows) {
     const bookingId = String(payment.booking_id ?? "");
     if (!bookingId) continue;
+    const amount = toNumber(payment.amount);
+    const netAmount = String(payment.payment_type ?? "") === "refund" ? -amount : amount;
 
     paidByBookingId.set(
       bookingId,
-      (paidByBookingId.get(bookingId) ?? 0) + toNumber(payment.amount),
+      (paidByBookingId.get(bookingId) ?? 0) + netAmount,
     );
   }
 

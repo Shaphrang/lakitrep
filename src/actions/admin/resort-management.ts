@@ -43,6 +43,7 @@ const VALID_CHARGE_TYPES = new Set([
 ]);
 const VALID_PAYMENT_MODES = new Set(["cash", "upi", "card", "bank_transfer", "other"]);
 const VALID_PAYMENT_TYPES = new Set(["advance", "part_payment", "final_payment", "refund"]);
+const VALID_MANUAL_BOOKING_STATUSES = new Set(["confirmed", "advance_paid"]);
 
 const customerSchema = z.object({
   fullName: z.string().trim().min(2).max(100),
@@ -133,9 +134,16 @@ export async function createManualBookingAction(formData: FormData) {
     const adults = Math.max(1, getNumber(formData, "adults", 1));
     const children = Math.max(0, getNumber(formData, "children", 0));
     const infants = Math.max(0, getNumber(formData, "infants", 0));
+    const bookingStatus = getOptionalString(formData, "status") || "confirmed";
 
     if (!customerId || !cottageId || !checkInDate || !checkOutDate) {
       throw new Error("Customer, cottage, check-in and check-out are required.");
+    }
+    if (!UUID_REGEX.test(customerId) || !UUID_REGEX.test(cottageId)) {
+      throw new Error("Invalid customer or cottage selected.");
+    }
+    if (!VALID_MANUAL_BOOKING_STATUSES.has(bookingStatus)) {
+      throw new Error("Invalid booking status for manual booking.");
     }
 
     const today = format(new Date(), "yyyy-MM-dd");
@@ -195,7 +203,7 @@ export async function createManualBookingAction(formData: FormData) {
         children,
         infants,
         source: customerSource,
-        status: getOptionalString(formData, "status") || "confirmed",
+        status: bookingStatus,
         payment_method: "pay_on_arrival",
         payment_status: "unpaid",
         special_requests: getOptionalString(formData, "special_requests") || null,
@@ -301,6 +309,7 @@ export async function applyBookingDiscountAction(formData: FormData) {
   try {
     await requireAdmin();
     const supabase = await getSupabaseServerClient();
+    if (!UUID_REGEX.test(bookingId)) throw new Error("Invalid booking selected.");
     const discount = getNumber(formData, "discount_amount", 0);
     if (discount < 0) throw new Error("Discount cannot be negative.");
     const { data: booking } = await supabase.from("bookings").select("id,total_amount,extra_charges_total").eq("id", bookingId).maybeSingle();
@@ -329,6 +338,7 @@ export async function addBookingPaymentAction(formData: FormData) {
   try {
     const admin = await requireAdmin();
     const supabase = await getSupabaseServerClient();
+    if (!UUID_REGEX.test(bookingId)) throw new Error("Invalid booking selected.");
     const amount = getNumber(formData, "amount", 0);
     if (amount <= 0) throw new Error("Payment amount must be positive.");
     const paymentType = getOptionalString(formData, "payment_type") || "part_payment";
@@ -380,6 +390,7 @@ export async function performCheckInOutAction(formData: FormData) {
   try {
     await requireAdmin();
     const supabase = await getSupabaseServerClient();
+    if (!UUID_REGEX.test(bookingId)) throw new Error("Invalid booking selected.");
 
     const { data: booking } = await supabase
       .from("bookings")
@@ -442,6 +453,7 @@ export async function generateInvoiceAction(formData: FormData) {
   try {
     await requireAdmin();
     const supabase = await getSupabaseServerClient();
+    if (!UUID_REGEX.test(bookingId)) throw new Error("Invalid booking selected.");
 
     const { data: booking } = await supabase
       .from("bookings")

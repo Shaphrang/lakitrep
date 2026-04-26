@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BookNowButton } from "@/components/public/booking/BookNowButton";
 import { notFound } from "next/navigation";
-import { getCottageBySlug, getFirstImage, getPrimaryProperty, getPublicCottages, getSeoByPageKey, resolveMediaUrl } from "@/lib/public-site";
+import { getCottageBySlug, getFirstImage, getPrimaryProperty, getSeoByPageKey, resolveMediaUrl } from "@/lib/public-site";
 
 export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -96,11 +97,4 @@ export default async function CottageDetailPage({ params }: Props) {
       </div>
     </main>
   );
-}
-
-export async function generateStaticParams() {
-  const property = await getPrimaryProperty();
-  if (!property) return [];
-  const cottages = await getPublicCottages(property.id);
-  return cottages.map((cottage) => ({ slug: cottage.slug }));
 }
