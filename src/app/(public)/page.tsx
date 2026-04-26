@@ -15,6 +15,7 @@ import {
   FinalCtaSection,
   GalleryPreviewSection,
   HeroSection,
+  LocationReachSection,
   PoliciesFaqSection,
   QuickHighlightsSection,
   StorySection,
@@ -72,6 +73,7 @@ export default async function HomePage() {
   const experiences = mapHomeExperiences(attractions);
   const topPolicies = policies.slice(0, 3);
   const whatsappEventLink = buildWhatsappEventLink(property.whatsapp_number, property.phone_number);
+  const hasWhatsappContact = Boolean(property.whatsapp_number || property.phone_number);
 
   return (
     <main>
@@ -84,6 +86,10 @@ export default async function HomePage() {
         aboutImageAccent={aboutImageAccent}
       />
       <CottagesSection cottages={cottages} groupedGallery={groupedGallery} />
+      <LocationReachSection
+        whatsappDirectionsLink={whatsappEventLink}
+        hasWhatsappContact={hasWhatsappContact}
+      />
       <GalleryPreviewSection cards={galleryPreviewCards} totalGalleryImages={totalGalleryImages} />
       <AttractionsSection experiences={experiences} />
       <EventsSection eventImage={eventImage} whatsappEventLink={whatsappEventLink} />
