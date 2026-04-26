@@ -90,7 +90,7 @@ function SidebarBody({ pathname, onClose }: { pathname: string; onClose: () => v
         </button>
 
         {reportsOpen ? (
-          <div className="space-y-1 pl-3">
+          <div className="max-h-72 space-y-1 overflow-y-auto pl-3 pr-1">
             {reportItems.map((item) => {
               const active = pathname === item.href;
               return (
