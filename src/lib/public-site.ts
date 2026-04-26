@@ -88,6 +88,7 @@ type Property = {
 export type PublicCottage = {
   id: string;
   property_id: string;
+  code: string;
   name: string;
   slug: string;
   category: string;
@@ -98,15 +99,23 @@ export type PublicCottage = {
   max_children: number;
   max_infants: number;
   max_total_guests: number;
+  room_count: number;
+  has_ac: boolean;
+  breakfast_included: boolean;
+  extra_bed_allowed: boolean;
+  is_combined_unit: boolean;
+  component_codes: string[];
   amenities: string[];
   weekday_price: number;
   weekend_price: number;
   child_price: number;
-  breakfast_included: boolean;
   pricing_note: string | null;
   cover_image: string | null;
   gallery_images: string[];
+  sort_order: number | null;
   is_featured: boolean;
+  is_bookable: boolean;
+  status: string;
 };
 
 export type PublicAttraction = {
@@ -154,12 +163,11 @@ export const getPublicCottages = cache(async (propertyId: string): Promise<Publi
   const { data, error } = await supabase
     .from("cottages")
     .select(
-      "id,property_id,name,slug,category,short_description,full_description,bed_type,max_adults,max_children,max_infants,max_total_guests,amenities,weekday_price,weekend_price,child_price,breakfast_included,pricing_note,cover_image,gallery_images,is_featured",
+      "id,property_id,code,name,slug,category,short_description,full_description,bed_type,max_adults,max_children,max_infants,max_total_guests,room_count,has_ac,breakfast_included,extra_bed_allowed,is_combined_unit,component_codes,amenities,weekday_price,weekend_price,child_price,pricing_note,cover_image,gallery_images,sort_order,is_featured,is_bookable,status",
     )
     .eq("property_id", propertyId)
     .eq("status", "active")
     .eq("is_bookable", true)
-    .order("is_featured", { ascending: false })
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
 
@@ -168,6 +176,9 @@ export const getPublicCottages = cache(async (propertyId: string): Promise<Publi
   return (data ?? []).map((item) => ({
     ...item,
     amenities: Array.isArray(item.amenities) ? item.amenities.map((value) => String(value)) : [],
+    component_codes: Array.isArray(item.component_codes)
+      ? item.component_codes.map((value) => String(value))
+      : [],
   }));
 });
 
