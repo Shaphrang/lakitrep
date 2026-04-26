@@ -1,8 +1,10 @@
-import { enumerateDates } from "../reports.utils";
+import { unstable_noStore as noStore } from "next/cache";
+import { enumerateDates, outstandingAmount } from "../reports.utils";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import type { ReportDataset } from "../reports.types";
 
 export async function getReportDataset(from?: string, to?: string): Promise<ReportDataset> {
+  noStore();
   const supabase = await getSupabaseServerClient();
   let bookingsQuery = supabase
     .from("bookings")
@@ -51,7 +53,7 @@ export async function getReportDataset(from?: string, to?: string): Promise<Repo
       tax: Number((invoice as { tax_amount?: number } | null)?.tax_amount ?? 0),
       finalAmount: Number(row.final_total ?? row.total_amount ?? 0),
       paidAmount: Number(row.amount_paid ?? 0),
-      outstandingAmount: Math.max(0, Number(row.final_total ?? 0) - Number(row.amount_paid ?? 0)),
+      outstandingAmount: outstandingAmount(Number(row.final_total ?? 0), Number(row.amount_paid ?? 0)),
       invoiceNumber: String((invoice as { invoice_number?: string } | null)?.invoice_number ?? "Not generated"),
       invoiceDate: String((invoice as { invoice_date?: string } | null)?.invoice_date ?? "—"),
       invoiceStatus: String((invoice as { status?: string } | null)?.status ?? "not_generated"),

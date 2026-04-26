@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useMemo, useState } from "react";
+import { REPORT_PAGE_LINKS } from "@/features/admin/reports/reports.constants";
 
 const adminNavItems = [
   { href: "/admin", label: "Dashboard" },
@@ -13,21 +15,6 @@ const adminNavItems = [
   { href: "/admin/billing", label: "Billing" },
   { href: "/admin/payments", label: "Payments / Collection" },
   { href: "/admin/invoices", label: "Invoices" },
-  { href: "/admin/reports", label: "Reports Dashboard" },
-  { href: "/admin/reports/bookings", label: "Reports · Bookings" },
-  { href: "/admin/reports/occupancy", label: "Reports · Occupancy" },
-  { href: "/admin/reports/revenue", label: "Reports · Revenue" },
-  { href: "/admin/reports/payments", label: "Reports · Payments & Collections" },
-  { href: "/admin/reports/outstanding", label: "Reports · Outstanding Dues" },
-  { href: "/admin/reports/billing", label: "Reports · Billing & Invoices" },
-  { href: "/admin/reports/customers", label: "Reports · Customers" },
-  { href: "/admin/reports/cottages", label: "Reports · Cottages" },
-  { href: "/admin/reports/sources", label: "Reports · Booking Sources" },
-  { href: "/admin/reports/checkin-checkout", label: "Reports · Check-in / Check-out" },
-  { href: "/admin/reports/cancellations", label: "Reports · Cancellations & Refunds" },
-  { href: "/admin/reports/extra-charges", label: "Reports · Extra Charges" },
-  { href: "/admin/reports/discounts", label: "Reports · Discounts" },
-  { href: "/admin/reports/forecasting", label: "Reports · Forecasting" },
   { href: "/admin/properties", label: "Properties" },
   { href: "/admin/cottages", label: "Cottages" },
   { href: "/admin/attractions", label: "Attractions" },
@@ -57,6 +44,14 @@ export function AdminSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: ()
 }
 
 function SidebarBody({ pathname, onClose }: { pathname: string; onClose: () => void }) {
+  const reportsActive = pathname.startsWith("/admin/reports");
+  const [reportsOpen, setReportsOpen] = useState(reportsActive);
+
+  const reportItems = useMemo(
+    () => REPORT_PAGE_LINKS.map((item) => ({ href: item.href, label: item.label })),
+    [],
+  );
+
   return (
     <div className="flex h-full flex-col">
       <div className="mb-5 rounded-2xl border border-[#3d614d] bg-white/10 p-4 backdrop-blur-sm">
@@ -82,6 +77,37 @@ function SidebarBody({ pathname, onClose }: { pathname: string; onClose: () => v
             </Link>
           );
         })}
+
+        <button
+          type="button"
+          onClick={() => setReportsOpen((prev) => !prev)}
+          className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${
+            reportsActive ? "bg-[#dcbf7b] text-[#1f3529]" : "text-[#f2ece2] hover:bg-white/10 hover:text-white"
+          }`}
+        >
+          <span>Reports</span>
+          <span className={`text-xs transition ${reportsOpen ? "rotate-180" : ""}`}>⌄</span>
+        </button>
+
+        {reportsOpen ? (
+          <div className="space-y-1 pl-3">
+            {reportItems.map((item) => {
+              const active = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onClose}
+                  className={`block rounded-lg px-3 py-2 text-sm transition ${
+                    active ? "bg-[#f4ebd5] font-semibold text-[#1f3529]" : "text-[#d6e3d8] hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+        ) : null}
       </nav>
 
       <div className="mt-auto rounded-xl border border-[#3b5a49] bg-white/5 p-3 text-xs text-[#d4c9b2]">
