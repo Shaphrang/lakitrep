@@ -46,6 +46,42 @@ export function safeDivide(numerator: number, denominator: number) {
   return denominator === 0 ? 0 : numerator / denominator;
 }
 
+export function occupancyRate(bookedCottageNights: number, availableCottageNights: number) {
+  return pct(bookedCottageNights, availableCottageNights);
+}
+
+export function averageBookingValue(totalRevenue: number, numberOfBookings: number) {
+  return safeDivide(totalRevenue, numberOfBookings);
+}
+
+export function averageStayDuration(totalNights: number, numberOfBookings: number) {
+  return safeDivide(totalNights, numberOfBookings);
+}
+
+export function outstandingAmount(finalBillAmount: number, paidAmount: number) {
+  return Math.max(0, finalBillAmount - paidAmount);
+}
+
+export function collectionRate(collectedAmount: number, finalBillAmount: number) {
+  return pct(collectedAmount, finalBillAmount);
+}
+
+export function cancellationRate(cancelledBookings: number, totalBookings: number) {
+  return pct(cancelledBookings, totalBookings);
+}
+
+export function repeatCustomerRate(repeatCustomers: number, totalCustomers: number) {
+  return pct(repeatCustomers, totalCustomers);
+}
+
+export function adr(roomRevenue: number, bookedCottageNights: number) {
+  return safeDivide(roomRevenue, bookedCottageNights);
+}
+
+export function revpar(roomRevenue: number, availableCottageNights: number) {
+  return safeDivide(roomRevenue, availableCottageNights);
+}
+
 export function nightsBetween(from: string, to: string) {
   const start = new Date(from);
   const end = new Date(to);
