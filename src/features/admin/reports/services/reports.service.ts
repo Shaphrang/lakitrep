@@ -96,7 +96,7 @@ export async function getCheckInCheckoutReportDataset(
 
   const [bookingsRes, cottagesRes] = await Promise.all([
     query,
-    supabase.from("cottages").select("id,name").order("name"),
+    supabase.from("cottages").select("id,name,status,is_bookable").order("name"),
   ]);
 
   if (bookingsRes.error) {
@@ -228,6 +228,8 @@ export async function getCheckInCheckoutReportDataset(
     cottages: (cottagesRes.data ?? []).map((cottage) => ({
       id: String(cottage.id),
       name: String(cottage.name ?? "—"),
+      status: String(cottage.status ?? "inactive"),
+      isBookable: Boolean(cottage.is_bookable),
     })),
   };
 }
@@ -773,6 +775,8 @@ export async function getRevenueReportDataset(filters: RevenueReportFilters) {
     cottages: (cottagesRes.data ?? []).map((cottage) => ({
       id: String(cottage.id),
       name: String(cottage.name ?? "—"),
+      status: String(cottage.status ?? "inactive"),
+      isBookable: Boolean(cottage.is_bookable),
     })),
     lastUpdated: new Date().toISOString(),
   };
@@ -887,4 +891,3 @@ export async function getReportDataset(from?: string, to?: string): Promise<Repo
     limitations,
   };
 }
-

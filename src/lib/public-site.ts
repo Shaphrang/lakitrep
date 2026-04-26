@@ -156,6 +156,8 @@ export const getPublicCottages = cache(async (propertyId: string): Promise<Publi
       "id,property_id,name,slug,category,short_description,full_description,bed_type,max_adults,max_children,max_infants,max_total_guests,amenities,weekday_price,weekend_price,child_price,breakfast_included,pricing_note,cover_image,gallery_images,is_featured",
     )
     .eq("property_id", propertyId)
+    .eq("status", "active")
+    .eq("is_bookable", true)
     .order("is_featured", { ascending: false })
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });

@@ -32,6 +32,11 @@ export function HeroBookingWidget({ cottages }: { cottages: PublicCottage[] }) {
       : null;
 
   const maxReached = Boolean(maxOccupants && totalGuests >= maxOccupants);
+  const maxByGuestType: Record<GuestKey, number> = {
+    adults: selected?.max_adults ?? 0,
+    children: selected?.max_children ?? 0,
+    infants: selected?.max_infants ?? 0,
+  };
 
   const guestError = validateGuestCapacity(selected, {
     adults,
@@ -179,7 +184,9 @@ export function HeroBookingWidget({ cottages }: { cottages: PublicCottage[] }) {
 
                     <button
                       type="button"
-                      disabled={maxReached}
+                      disabled={
+                        maxReached || item.value >= maxByGuestType[item.key]
+                      }
                       onClick={() => updateGuests(item.key, item.value + 1, item.min)}
                       className="flex h-6 w-6 items-center justify-center rounded-full border border-[#ddd1c0] bg-white text-xs font-bold text-[#264330] transition hover:bg-[#f2ecdf] disabled:cursor-not-allowed disabled:border-[#eadfce] disabled:bg-[#f6efe5] disabled:text-[#b09f8f]"
                       aria-label={`Increase ${item.label}`}

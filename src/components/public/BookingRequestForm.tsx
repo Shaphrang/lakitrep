@@ -113,6 +113,11 @@ export function BookingRequestForm({
   const maxReached =
     Boolean(selectedCottage) &&
     totalGuests >= (selectedCottage?.max_total_guests ?? 0);
+  const maxByGuestType: Record<keyof GuestCounts, number> = {
+    adults: selectedCottage?.max_adults ?? 0,
+    children: selectedCottage?.max_children ?? 0,
+    infants: selectedCottage?.max_infants ?? 0,
+  };
 
   const canSubmit =
     Boolean(cottageSlug) &&
@@ -166,6 +171,9 @@ export function BookingRequestForm({
       };
 
       if (!selectedCottage) return candidate;
+      if (candidate.adults > selectedCottage.max_adults) return current;
+      if (candidate.children > selectedCottage.max_children) return current;
+      if (candidate.infants > selectedCottage.max_infants) return current;
 
       const isOver = Boolean(validateGuestCapacity(selectedCottage, candidate));
       if (isOver) {
@@ -398,7 +406,9 @@ export function BookingRequestForm({
 
                         <button
                           type="button"
-                          disabled={maxReached}
+                          disabled={
+                            maxReached || guests[key] >= maxByGuestType[key]
+                          }
                           onClick={() =>
                             updateGuests(key, guests[key] + 1, min)
                           }
@@ -433,6 +443,9 @@ export function BookingRequestForm({
                       <p>
                         Weekend: {formatCurrency(selectedCottage.weekend_price)}
                       </p>
+                      {selectedCottage.max_infants > 0 ? (
+                        <p>Infant below 2 years included.</p>
+                      ) : null}
                     </div>
 
                     {estimate ? (

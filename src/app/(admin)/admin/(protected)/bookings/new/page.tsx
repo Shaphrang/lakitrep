@@ -18,7 +18,16 @@ export default async function ManualBookingPage({ searchParams }: { searchParams
         <input type="hidden" name="return_path" value="/admin/bookings/new" />
         <ManualBookingForm
           propertyId={property?.id ?? ""}
-          cottages={meta.cottages.map((row) => ({ id: String(row.id), name: String(row.name), code: String(row.code), slug: String(row.slug), max_total_guests: Number(row.max_total_guests ?? 0) }))}
+          cottages={meta.cottages.map((row) => ({
+            id: String(row.id),
+            name: String(row.name),
+            code: String(row.code),
+            slug: String(row.slug),
+            max_adults: Number(row.max_adults ?? 0),
+            max_children: Number(row.max_children ?? 0),
+            max_infants: Number(row.max_infants ?? 0),
+            max_total_guests: Number(row.max_total_guests ?? 0),
+          }))}
           customers={meta.customers.map((row) => ({ id: String(row.id), full_name: String(row.full_name), phone: String(row.phone), source: String(row.source ?? "other") }))}
         />
       </form>

@@ -1,6 +1,58 @@
 import { addDays, differenceInCalendarDays, format, parseISO } from "date-fns";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
+type CottageAvailabilityMeta = {
+  id: string;
+  code: string;
+  is_combined_unit: boolean;
+  component_codes: string[];
+};
+
+async function getCottageConflictIds(cottageId: string) {
+  const supabase = await getSupabaseServerClient();
+  const { data: cottages, error } = await supabase
+    .from("cottages")
+    .select("id,code,is_combined_unit,component_codes")
+    .eq("status", "active")
+    .eq("is_bookable", true);
+
+  if (error) throw new Error(`Failed to load cottages for availability: ${error.message}`);
+
+  const rows = (cottages ?? []) as CottageAvailabilityMeta[];
+  const selected = rows.find((row) => String(row.id) === cottageId);
+  if (!selected) {
+    return [cottageId];
+  }
+
+  const selectedCode = String(selected.code ?? "").trim();
+  const selectedComponents = Array.isArray(selected.component_codes) ? selected.component_codes.map((code) => String(code)) : [];
+
+  const selectedOrRelatedCodes = new Set<string>([
+    selectedCode,
+    ...selectedComponents,
+  ].filter(Boolean));
+
+  for (const row of rows) {
+    const componentCodes = Array.isArray(row.component_codes) ? row.component_codes.map((code) => String(code)) : [];
+    if (!componentCodes.length) continue;
+    if (selectedCode && componentCodes.includes(selectedCode)) {
+      selectedOrRelatedCodes.add(String(row.code ?? ""));
+    }
+  }
+
+  const conflictIds = rows
+    .filter((row) => {
+      const code = String(row.code ?? "");
+      const componentCodes = Array.isArray(row.component_codes) ? row.component_codes.map((item) => String(item)) : [];
+
+      if (selectedOrRelatedCodes.has(code)) return true;
+      return componentCodes.some((componentCode) => selectedOrRelatedCodes.has(componentCode));
+    })
+    .map((row) => String(row.id));
+
+  return conflictIds.length ? conflictIds : [cottageId];
+}
+
 export async function getResortDashboardMetrics() {
   const supabase = await getSupabaseServerClient();
 
@@ -108,7 +160,8 @@ export async function getResortDashboardMetrics() {
     supabase
       .from("cottages")
       .select("id", { count: "exact", head: true })
-      .eq("status", "active"),
+      .eq("status", "active")
+      .eq("is_bookable", true),
 
     supabase
       .from("cottage_blocks")
@@ -317,7 +370,12 @@ export async function getCustomerById(customerId: string) {
 export async function getManualBookingMeta() {
   const supabase = await getSupabaseServerClient();
   const [{ data: cottages }, { data: customers }] = await Promise.all([
-    supabase.from("cottages").select("id,name,code,slug,max_total_guests,weekday_price,weekend_price,status,is_bookable").eq("is_bookable", true).order("name"),
+    supabase
+      .from("cottages")
+      .select("id,name,code,slug,max_adults,max_children,max_infants,max_total_guests,weekday_price,weekend_price,child_price,status,is_bookable")
+      .eq("status", "active")
+      .eq("is_bookable", true)
+      .order("name"),
     supabase.from("booking_guests").select("id,full_name,phone,source").order("created_at", { ascending: false }).limit(50),
   ]);
 
@@ -329,11 +387,12 @@ export async function getManualBookingMeta() {
 
 export async function assertCottageAvailability(cottageId: string, checkInDate: string, checkOutDate: string, ignoreBookingId?: string) {
   const supabase = await getSupabaseServerClient();
+  const conflictIds = await getCottageConflictIds(cottageId);
 
   let bookingConflict = supabase
     .from("bookings")
     .select("id", { count: "exact", head: true })
-    .eq("cottage_id", cottageId)
+    .in("cottage_id", conflictIds)
     .in("status", ["confirmed", "advance_paid", "checked_in"])
     .lt("check_in_date", checkOutDate)
     .gt("check_out_date", checkInDate);
@@ -345,7 +404,7 @@ export async function assertCottageAvailability(cottageId: string, checkInDate: 
   const blockConflict = supabase
     .from("cottage_blocks")
     .select("id", { count: "exact", head: true })
-    .eq("cottage_id", cottageId)
+    .in("cottage_id", conflictIds)
     .lt("start_date", checkOutDate)
     .gt("end_date", checkInDate);
 
