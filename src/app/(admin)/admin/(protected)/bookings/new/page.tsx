@@ -19,7 +19,7 @@ export default async function ManualBookingPage({ searchParams }: { searchParams
         <ManualBookingForm
           propertyId={property?.id ?? ""}
           cottages={meta.cottages.map((row) => ({ id: String(row.id), name: String(row.name), code: String(row.code), slug: String(row.slug), max_total_guests: Number(row.max_total_guests ?? 0) }))}
-          customers={meta.customers.map((row) => ({ id: String(row.id), full_name: String(row.full_name), phone: String(row.phone) }))}
+          customers={meta.customers.map((row) => ({ id: String(row.id), full_name: String(row.full_name), phone: String(row.phone), source: String(row.source ?? "other") }))}
         />
       </form>
       <ActionDialog success={success} error={error} />

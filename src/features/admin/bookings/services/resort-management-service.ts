@@ -85,7 +85,7 @@ export async function getCustomerById(customerId: string) {
     supabase.from("booking_guests").select("*").eq("id", customerId).maybeSingle(),
     supabase
       .from("bookings")
-      .select("id,booking_code,status,check_in_date,check_out_date,final_total,amount_paid,amount_pending,cottages(name)")
+      .select("id,booking_code,status,payment_status,check_in_date,check_out_date,final_total,amount_paid,amount_pending,cottages(name)")
       .eq("booking_guest_id", customerId)
       .order("created_at", { ascending: false }),
   ]);
@@ -100,7 +100,7 @@ export async function getManualBookingMeta() {
   const supabase = await getSupabaseServerClient();
   const [{ data: cottages }, { data: customers }] = await Promise.all([
     supabase.from("cottages").select("id,name,code,slug,max_total_guests,weekday_price,weekend_price,status,is_bookable").eq("is_bookable", true).order("name"),
-    supabase.from("booking_guests").select("id,full_name,phone").order("created_at", { ascending: false }).limit(50),
+    supabase.from("booking_guests").select("id,full_name,phone,source").order("created_at", { ascending: false }).limit(50),
   ]);
 
   return {

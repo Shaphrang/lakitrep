@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AdminPageHeader } from "@/components/admin/shared/AdminPageHeader";
 import { BookingTable } from "@/features/admin/bookings/components/BookingTable";
+import { BOOKING_SOURCE_OPTIONS, BOOKING_STATUS_OPTIONS } from "@/features/admin/bookings/constants";
 import { getAllBookings } from "@/features/admin/bookings/services/bookings-service";
 
 const inputClass = "rounded-xl border border-[#d8cfbf] bg-[#fdfbf7] px-3 py-2 text-sm text-[#21392c]";
@@ -26,17 +27,7 @@ export default async function BookingsPage({
         <input className={inputClass} name="query" placeholder="Search code / guest / phone" defaultValue={query} />
         <select className={inputClass} name="status" defaultValue={status}>
           <option value="">All statuses</option>
-          {[
-            "new_request",
-            "contacted",
-            "confirmed",
-            "advance_paid",
-            "checked_in",
-            "checked_out",
-            "cancelled",
-            "no_show",
-            "rejected",
-          ].map((value) => (
+          {BOOKING_STATUS_OPTIONS.map((value) => (
             <option key={value} value={value}>
               {value}
             </option>
@@ -44,19 +35,9 @@ export default async function BookingsPage({
         </select>
         <select className={inputClass} name="source" defaultValue={source}>
           <option value="">All sources</option>
-          {[
-            "website",
-            "phone",
-            "whatsapp",
-            "walk_in",
-            "instagram",
-            "facebook",
-            "agent",
-            "repeat_guest",
-            "other",
-          ].map((value) => (
-            <option key={value} value={value}>
-              {value}
+          {BOOKING_SOURCE_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
             </option>
           ))}
         </select>

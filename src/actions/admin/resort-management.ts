@@ -10,6 +10,7 @@ import {
   recalculateBookingTotals,
   simpleRoomEstimate,
 } from "@/features/admin/bookings/services/resort-management-service";
+import { bookingSourceSchema } from "@/features/admin/bookings/schema";
 import { getCottageAvailability } from "@/actions/public/bookings";
 import { requireAdmin } from "@/lib/auth/admin";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
@@ -92,6 +93,7 @@ export async function createOrUpdateCustomerAction(formData: FormData) {
 
     customerSchema.parse({ fullName, phone, whatsappNumber, email });
 
+    const source = bookingSourceSchema.parse(getOptionalString(formData, "source") || "other");
     const payload = {
       full_name: fullName,
       phone,
@@ -102,7 +104,7 @@ export async function createOrUpdateCustomerAction(formData: FormData) {
       state: getOptionalString(formData, "state") || null,
       country: getOptionalString(formData, "country") || "India",
       customer_type: getOptionalString(formData, "customer_type") || "other",
-      source: getOptionalString(formData, "source") || "other",
+      source,
       notes: getOptionalString(formData, "notes") || null,
     };
 
@@ -182,8 +184,9 @@ export async function createManualBookingAction(formData: FormData) {
     if (discountAmount > bookingTotal) throw new Error("Discount cannot exceed room charges.");
 
     const finalTotal = Math.max(0, bookingTotal - discountAmount);
-    const advanceAmount = Math.max(0, getNumber(formData, "advance_amount", 0));
-    const paymentStatus = advanceAmount <= 0 ? "unpaid" : advanceAmount >= finalTotal ? "paid" : "advance_paid";
+    const requestedSource = getOptionalString(formData, "source") || "phone";
+    const { data: customer } = await supabase.from("booking_guests").select("source").eq("id", customerId).maybeSingle();
+    const customerSource = bookingSourceSchema.parse(String(customer?.source ?? requestedSource));
 
     const { data: created, error: bookingError } = await supabase
       .from("bookings")
@@ -197,10 +200,10 @@ export async function createManualBookingAction(formData: FormData) {
         adults,
         children,
         infants,
-        source: getOptionalString(formData, "source") || "phone",
-        status: getOptionalString(formData, "status") || (advanceAmount > 0 ? "advance_paid" : "confirmed"),
+        source: customerSource,
+        status: getOptionalString(formData, "status") || "confirmed",
         payment_method: "pay_on_arrival",
-        payment_status: paymentStatus,
+        payment_status: "unpaid",
         special_requests: getOptionalString(formData, "special_requests") || null,
         admin_notes: getOptionalString(formData, "internal_notes") || null,
         nights,
@@ -209,29 +212,14 @@ export async function createManualBookingAction(formData: FormData) {
         discount_amount: discountAmount,
         extra_charges_total: 0,
         final_total: finalTotal,
-        amount_paid: advanceAmount,
-        amount_pending: Math.max(0, finalTotal - advanceAmount),
+        amount_paid: 0,
+        amount_pending: finalTotal,
         created_by: admin.id,
       })
       .select("id")
       .single();
 
     if (bookingError || !created) throw new Error("Failed to create booking.");
-
-    if (advanceAmount > 0) {
-      const paymentMode = getOptionalString(formData, "payment_mode") || "cash";
-      const { error: paymentError } = await supabase.from("booking_payments").insert({
-        booking_id: created.id,
-        payment_date: new Date().toISOString().slice(0, 10),
-        amount: advanceAmount,
-        payment_mode: paymentMode,
-        payment_type: "advance",
-        reference_number: getOptionalString(formData, "reference_number") || null,
-        notes: "Advance received while creating manual booking",
-        received_by: admin.id,
-      });
-      if (paymentError) throw new Error("Booking created but advance payment could not be recorded.");
-    }
 
     revalidatePath("/admin/bookings");
     redirectWithMessage(`/admin/bookings/${created.id}`, "success", "Booking created successfully. The booking has been added to the calendar.");

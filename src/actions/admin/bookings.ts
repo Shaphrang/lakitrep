@@ -29,6 +29,22 @@ export async function updateBookingsAction(formData: FormData) {
   }
 }
 
+export async function updateBookingStatusInlineAction(id: string, statusInput: string) {
+  try {
+    await requireAdmin();
+    const status = bookingStatusSchema.parse(statusInput);
+    await updateBookingStatus(id, status);
+    revalidatePath("/admin/bookings");
+    revalidatePath(`/admin/bookings/${id}`);
+    return { ok: true as const };
+  } catch (error) {
+    if (error instanceof Error) {
+      return { ok: false as const, error: error.message || "Unable to update booking status." };
+    }
+    return { ok: false as const, error: "Unable to update booking status." };
+  }
+}
+
 export async function deleteBookingsAction(formData: FormData) {
   const id = getString(formData, "id");
   const returnPath = getOptionalString(formData, "return_path") || "/admin/bookings";
