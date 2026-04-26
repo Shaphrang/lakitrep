@@ -25,7 +25,6 @@ import {
   buildWhatsappEventLink,
   countTotalGalleryImages,
   firstGalleryImage,
-  mapHomeExperiences,
 } from "@/components/public/home/home.utils";
 
 export const revalidate = 300;
@@ -70,7 +69,6 @@ export default async function HomePage() {
 
   const galleryPreviewCards = buildGalleryPreviewCards(groupedGallery);
   const totalGalleryImages = countTotalGalleryImages(groupedGallery);
-  const experiences = mapHomeExperiences(attractions);
   const topPolicies = policies.slice(0, 3);
   const whatsappEventLink = buildWhatsappEventLink(property.whatsapp_number, property.phone_number);
   const hasWhatsappContact = Boolean(property.whatsapp_number || property.phone_number);
@@ -86,12 +84,12 @@ export default async function HomePage() {
         aboutImageAccent={aboutImageAccent}
       />
       <CottagesSection cottages={cottages} groupedGallery={groupedGallery} />
+      <AttractionsSection attractions={attractions} whatsappDirectionsLink={whatsappEventLink} hasWhatsappContact={hasWhatsappContact} />
       <LocationReachSection
         whatsappDirectionsLink={whatsappEventLink}
         hasWhatsappContact={hasWhatsappContact}
       />
       <GalleryPreviewSection cards={galleryPreviewCards} totalGalleryImages={totalGalleryImages} />
-      <AttractionsSection experiences={experiences} />
       <EventsSection eventImage={eventImage} whatsappEventLink={whatsappEventLink} />
       <PoliciesFaqSection topPolicies={topPolicies} faqItems={FAQ_ITEMS} />
       <FinalCtaSection />
