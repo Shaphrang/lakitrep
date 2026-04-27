@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { REPORT_DATE_PRESETS } from "../reports.constants";
+import { SubmitButton } from "@/components/admin/shared/SubmitButton";
 
 type Option = {
   value: string;
@@ -113,12 +114,12 @@ export function ReportsFilterBar({
         ))}
 
         <div className="flex flex-wrap items-end gap-2 lg:col-span-12">
-          <button
-            type="submit"
-            className="rounded-xl bg-[#2e5a3d] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#244832]"
+          <SubmitButton
+            pendingText="Applying..."
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2e5a3d] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#244832]"
           >
             Apply Filters
-          </button>
+          </SubmitButton>
 
           <Link
             href={clearHref}

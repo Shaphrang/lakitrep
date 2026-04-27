@@ -5,6 +5,7 @@ import { AdminPageHeader } from "@/components/admin/shared/AdminPageHeader";
 import { DataTable } from "@/components/admin/shared/DataTable";
 import { BOOKING_SOURCE_OPTIONS } from "@/features/admin/bookings/constants";
 import { getCustomers } from "@/features/admin/bookings/services/resort-management-service";
+import { SubmitButton } from "@/components/admin/shared/SubmitButton";
 
 const inputClass = "rounded-xl border border-[#d8cfbf] bg-[#fdfbf7] px-3 py-2 text-sm text-[#21392c]";
 
@@ -33,7 +34,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
           ))}
         </select>
         <input name="customer_type" className={inputClass} placeholder="Guest type (Family, Couple, Group...)" defaultValue={customerType} />
-        <button type="submit" className="rounded-xl bg-[#2e5a3d] px-3 py-2 text-sm font-semibold text-white">Apply</button>
+        <SubmitButton pendingText="Applying..." className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2e5a3d] px-3 py-2 text-sm font-semibold text-white">Apply</SubmitButton>
       </form>
 
       <div className="rounded-2xl border border-[#ddd4c6] bg-white p-4">
@@ -56,7 +57,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
               ))}
             </select>
           </label>
-          <button type="submit" className="rounded-xl bg-[#2e5a3d] px-3 py-2 text-sm font-semibold text-white">Save Customer</button>
+          <SubmitButton pendingText="Saving..." className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2e5a3d] px-3 py-2 text-sm font-semibold text-white">Save Customer</SubmitButton>
         </form>
       </div>
 

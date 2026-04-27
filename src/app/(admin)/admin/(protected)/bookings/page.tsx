@@ -3,6 +3,7 @@ import { AdminPageHeader } from "@/components/admin/shared/AdminPageHeader";
 import { BookingTable } from "@/features/admin/bookings/components/BookingTable";
 import { BOOKING_SOURCE_OPTIONS, BOOKING_STATUS_OPTIONS } from "@/features/admin/bookings/constants";
 import { getAllBookings } from "@/features/admin/bookings/services/bookings-service";
+import { SubmitButton } from "@/components/admin/shared/SubmitButton";
 
 const inputClass = "rounded-xl border border-[#d8cfbf] bg-[#fdfbf7] px-3 py-2 text-sm text-[#21392c]";
 
@@ -41,9 +42,9 @@ export default async function BookingsPage({
             </option>
           ))}
         </select>
-        <button type="submit" className="rounded-xl bg-[#2e5a3d] px-3 py-2 text-sm font-semibold text-white">
+        <SubmitButton pendingText="Applying..." className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2e5a3d] px-3 py-2 text-sm font-semibold text-white">
           Apply Filters
-        </button>
+        </SubmitButton>
         <Link href="/admin/bookings/new" className="rounded-xl border border-[#2e5a3d] px-3 py-2 text-center text-sm font-semibold text-[#2e5a3d]">
           Add Manual Booking
         </Link>

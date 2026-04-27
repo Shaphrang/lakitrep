@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState, useTransition } from "react";
 import { uploadAdminImageFromClient } from "@/lib/supabase/upload-admin-image";
+import { LoadingSpinner } from "@/components/admin/shared/LoadingSpinner";
 
 type Props = {
   label: string;
@@ -81,10 +82,12 @@ export function MultiImageUploadField({ label, folder, name, defaultValues = [] 
             uploadFiles(e.target.files);
             e.currentTarget.value = "";
           }}
-          className="w-full rounded-md border border-slate-300 px-3 py-2"
+          disabled={isPending}
+          aria-busy={isPending}
+          className="w-full rounded-md border border-slate-300 px-3 py-2 disabled:cursor-not-allowed disabled:opacity-70"
         />
       </label>
-      {isPending ? <p className="text-xs text-slate-500">Optimizing and uploading images...</p> : null}
+      {isPending ? <p className="inline-flex items-center gap-2 text-xs text-slate-500"><LoadingSpinner className="h-3 w-3" />Uploading...</p> : null}
       {progress ? <p className="text-xs text-slate-500">{progress}</p> : null}
       {uploadMessage ? <p className="text-xs text-emerald-700">{uploadMessage}</p> : null}
       {error ? <p className="text-xs text-red-600">{error}</p> : null}

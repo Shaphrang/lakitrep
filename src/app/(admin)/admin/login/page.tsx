@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { loginAdminAction } from "@/actions/admin/auth";
+import { SubmitButton } from "@/components/admin/shared/SubmitButton";
 
 export default async function AdminLoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const { error } = await searchParams;
@@ -20,9 +21,9 @@ export default async function AdminLoginPage({ searchParams }: { searchParams: P
             <span className="mb-1 block text-[#33533f]">Password</span>
             <input name="password" className="w-full rounded-xl border border-[#d8cfbf] bg-white px-3 py-2.5" type="password" required />
           </label>
-          <button className="w-full rounded-xl bg-[linear-gradient(135deg,#2e5a3d_0%,#1f3f2f_100%)] px-4 py-2.5 text-sm font-semibold text-white" type="submit">
+          <SubmitButton pendingText="Signing in..." className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[linear-gradient(135deg,#2e5a3d_0%,#1f3f2f_100%)] px-4 py-2.5 text-sm font-semibold text-white">
             Sign In
-          </button>
+          </SubmitButton>
         </form>
         <p className="mt-3 text-xs text-[#66776c]">Admin users are validated against <code>public.admin_users</code>.</p>
         <Link href="/" className="mt-4 inline-block text-xs font-medium text-[#355740] underline">Back to site</Link>

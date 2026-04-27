@@ -1,4 +1,5 @@
 import { logoutAdminAction } from "@/actions/admin/auth";
+import { SubmitButton } from "@/components/admin/shared/SubmitButton";
 
 export function AdminHeader({
   adminLabel,
@@ -36,12 +37,12 @@ export function AdminHeader({
           </div>
 
           <form action={logoutAdminAction}>
-            <button
-              type="submit"
-              className="rounded-xl border border-[#d8cfbf] bg-[#f0e4cb] px-3 py-2 text-xs font-semibold text-[#2d4c38] shadow-sm transition hover:bg-[#e8d6b1]"
+            <SubmitButton
+              pendingText="Logging out..."
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#d8cfbf] bg-[#f0e4cb] px-3 py-2 text-xs font-semibold text-[#2d4c38] shadow-sm transition hover:bg-[#e8d6b1]"
             >
               Logout
-            </button>
+            </SubmitButton>
           </form>
         </div>
       </div>

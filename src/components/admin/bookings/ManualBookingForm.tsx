@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { SubmitButton } from "@/components/admin/shared/SubmitButton";
 import { DateRangePicker } from "@/components/public/booking/DateRangePicker";
 import { BOOKING_SOURCE_OPTIONS } from "@/features/admin/bookings/constants";
 
@@ -100,7 +101,7 @@ export function ManualBookingForm({ cottages, customers, propertyId }: { cottage
       </label>
       <label className="text-sm text-[#32483a] sm:col-span-2">Guest Special Requests<input name="special_requests" className={inputClass} maxLength={500} placeholder="Example: Need extra mattress, arrive after 8 PM" /></label>
       <label className="text-sm text-[#32483a]">Internal Staff Notes<input name="internal_notes" className={inputClass} maxLength={500} placeholder="Only visible to admin staff" /></label>
-      <button type="submit" className="sm:col-span-3 rounded-xl bg-[#2e5a3d] px-3 py-2 text-sm font-semibold text-white">Create Manual Booking</button>
+      <SubmitButton pendingText="Creating booking..." className="sm:col-span-3 inline-flex items-center justify-center gap-2 rounded-xl bg-[#2e5a3d] px-3 py-2 text-sm font-semibold text-white">Create Manual Booking</SubmitButton>
     </>
   );
 }

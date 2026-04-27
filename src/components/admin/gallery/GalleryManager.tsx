@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useMemo, useState } from "react";
 import { GALLERY_CATEGORY_OPTIONS } from "@/features/gallery/constants";
 import type { GalleryCategorySlug, PropertyGalleryMedia } from "@/features/gallery/types";
+import { LoadingSpinner } from "@/components/admin/shared/LoadingSpinner";
 import {
   deleteGalleryImage,
   reorderGalleryImages,
@@ -167,7 +168,7 @@ export function GalleryManager({ propertyId, initialItems }: Props) {
         />
       </div>
 
-      {uploadStatus ? <p className="text-xs text-emerald-700">{uploadStatus}</p> : null}
+      {uploadStatus ? <p className="inline-flex items-center gap-2 text-xs text-emerald-700">{isUploading ? <LoadingSpinner className="h-3 w-3" /> : null}{uploadStatus}</p> : null}
       {error ? <p className="text-xs text-red-700">{error}</p> : null}
 
       {visibleItems.length === 0 ? (
@@ -246,18 +247,20 @@ function GalleryCard({
           <button
             type="button"
             disabled={busy}
+            aria-busy={busy}
             onClick={() => onSave(media.id, { title: title || null, alt_text: altText || null, caption: caption || null, is_featured: featured })}
-            className="rounded-lg bg-[#2f5a3d] px-3 py-1.5 text-xs font-medium text-white disabled:opacity-40"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#2f5a3d] px-3 py-1.5 text-xs font-medium text-white disabled:opacity-40"
           >
-            Save
+            {busy ? <><LoadingSpinner className="h-3 w-3" />Saving...</> : "Save"}
           </button>
           <button
             type="button"
             disabled={busy}
+            aria-busy={busy}
             onClick={onDelete}
-            className="rounded-lg border border-[#e4b6b6] bg-[#fff1f1] px-3 py-1.5 text-xs font-medium text-[#8e3a3a] disabled:opacity-40"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#e4b6b6] bg-[#fff1f1] px-3 py-1.5 text-xs font-medium text-[#8e3a3a] disabled:opacity-40"
           >
-            Delete
+            {busy ? <><LoadingSpinner className="h-3 w-3" />Deleting...</> : "Delete"}
           </button>
         </div>
       </div>

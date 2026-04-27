@@ -518,9 +518,18 @@ export function BookingRequestForm({
           <button
             type="submit"
             disabled={pending || !canSubmit}
-            className="h-12 w-full rounded-2xl bg-[#e17b22] px-5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(225,123,34,0.35)] transition hover:bg-[#c96718] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 sm:h-11 sm:rounded-xl"
+            aria-busy={pending}
+            aria-disabled={pending || !canSubmit}
+            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#e17b22] px-5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(225,123,34,0.35)] transition hover:bg-[#c96718] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 sm:h-11 sm:rounded-xl"
           >
-            {pending ? "Submitting..." : "Book Now"}
+            {pending ? (
+              <>
+                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                Sending request...
+              </>
+            ) : (
+              "Book Now"
+            )}
           </button>
         </div>
       </form>
