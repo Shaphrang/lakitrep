@@ -5,6 +5,7 @@ import { AdminPageHeader } from "@/components/admin/shared/AdminPageHeader";
 import { DataTable } from "@/components/admin/shared/DataTable";
 import { StatusBadge } from "@/components/admin/shared/StatusBadge";
 import { getAllBookings } from "@/features/admin/bookings/services/bookings-service";
+import { SubmitButton } from "@/components/admin/shared/SubmitButton";
 
 export default async function CheckInCheckoutPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
@@ -54,14 +55,14 @@ export default async function CheckInCheckoutPage({ searchParams }: { searchPara
                     <input type="hidden" name="booking_id" value={row.id} />
                     <input type="hidden" name="action_type" value="check_in" />
                     <input type="hidden" name="return_path" value="/admin/checkin-checkout" />
-                    <button disabled={Boolean(checkInReason)} title={checkInReason} className="rounded-lg border border-[#aac8b0] bg-[#eef8ef] px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50">Check-in</button>
+                    <SubmitButton pendingText="Checking in..." disabled={Boolean(checkInReason)} className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#aac8b0] bg-[#eef8ef] px-2 py-1">Check-in</SubmitButton>
                     {checkInReason ? <p className="text-xs text-[#66766b]">{checkInReason}</p> : null}
                   </form>
                   <form action={performCheckInOutAction} className="space-y-1">
                     <input type="hidden" name="booking_id" value={row.id} />
                     <input type="hidden" name="action_type" value="check_out" />
                     <input type="hidden" name="return_path" value="/admin/checkin-checkout" />
-                    <button disabled={Boolean(checkoutReason)} title={checkoutReason} className="rounded-lg border border-[#b7c9dd] bg-[#eef5fc] px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50">Checkout</button>
+                    <SubmitButton pendingText="Checking out..." disabled={Boolean(checkoutReason)} className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#b7c9dd] bg-[#eef5fc] px-2 py-1">Checkout</SubmitButton>
                     {checkoutReason ? <p className="text-xs text-[#66766b]">{checkoutReason}</p> : null}
                   </form>
                 </div>

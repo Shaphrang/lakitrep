@@ -5,6 +5,7 @@ import { AdminPageHeader } from "@/components/admin/shared/AdminPageHeader";
 import { DataTable } from "@/components/admin/shared/DataTable";
 import { BOOKING_SOURCE_OPTIONS } from "@/features/admin/bookings/constants";
 import { getCustomerById } from "@/features/admin/bookings/services/resort-management-service";
+import { SubmitButton } from "@/components/admin/shared/SubmitButton";
 
 const inputClass = "rounded-xl border border-[#d8cfbf] bg-[#fdfbf7] px-3 py-2 text-sm text-[#21392c]";
 
@@ -40,7 +41,7 @@ export default async function CustomerDetailPage({ params, searchParams }: { par
           </select>
         </label>
         <label className="text-sm">Country<input name="country" defaultValue={String(context.customer.country ?? "India")} className={`${inputClass} mt-1 w-full`} /></label>
-        <button type="submit" className="rounded-xl bg-[#2e5a3d] px-3 py-2 text-sm font-semibold text-white">Update Customer</button>
+        <SubmitButton pendingText="Updating..." className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2e5a3d] px-3 py-2 text-sm font-semibold text-white">Update Customer</SubmitButton>
       </form>
 
       <DataTable

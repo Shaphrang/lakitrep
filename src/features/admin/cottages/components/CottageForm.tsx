@@ -2,6 +2,7 @@ import { createCottagesAction, deleteCottagesAction, updateCottagesAction } from
 import { ImageUploadField } from "@/components/admin/media/ImageUploadField";
 import { MultiImageUploadField } from "@/components/admin/media/MultiImageUploadField";
 import { FormActions } from "@/components/admin/shared/FormActions";
+import { SubmitButton } from "@/components/admin/shared/SubmitButton";
 
 const inputClass = "mt-1 w-full rounded-xl border border-[#d8cfbf] bg-[#fdfbf7] px-3 py-2.5 text-sm text-[#21392c]";
 const sectionClass = "space-y-4 rounded-2xl border border-[#e1d9cc] bg-white p-4 sm:p-5";
@@ -67,7 +68,7 @@ export function CottageForm({ cottage, propertyOptions }: { cottage?: Record<str
       {cottage ? (
         <form action={deleteCottagesAction} className="mt-4">
           <input type="hidden" name="id" value={String(cottage.id)} />
-          <button type="submit" className="rounded-xl border border-[#e2b0b0] bg-[#fbeeee] px-4 py-2 text-sm font-medium text-[#8f3f3f]">Delete Cottage</button>
+          <SubmitButton pendingText="Deleting..." className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#e2b0b0] bg-[#fbeeee] px-4 py-2 text-sm font-medium text-[#8f3f3f]">Delete Cottage</SubmitButton>
         </form>
       ) : null}
     </>

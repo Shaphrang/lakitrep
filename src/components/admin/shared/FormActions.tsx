@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SubmitButton } from "@/components/admin/shared/SubmitButton";
 
 export function FormActions({ submitLabel = "Save", cancelHref }: { submitLabel?: string; cancelHref?: string }) {
   return (
@@ -11,12 +12,12 @@ export function FormActions({ submitLabel = "Save", cancelHref }: { submitLabel?
           Cancel
         </Link>
       ) : null}
-      <button
-        type="submit"
-        className="inline-flex items-center justify-center rounded-xl bg-[linear-gradient(135deg,#2e5a3d_0%,#1f3f2f_100%)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_24px_-18px_rgba(10,20,14,0.9)] transition hover:brightness-110"
+      <SubmitButton
+        pendingText="Saving..."
+        className="inline-flex items-center justify-center gap-2 rounded-xl bg-[linear-gradient(135deg,#2e5a3d_0%,#1f3f2f_100%)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_24px_-18px_rgba(10,20,14,0.9)] transition hover:brightness-110"
       >
         {submitLabel}
-      </button>
+      </SubmitButton>
     </div>
   );
 }

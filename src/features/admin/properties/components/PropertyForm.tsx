@@ -3,6 +3,7 @@ import { createPropertiesAction, deletePropertiesAction, updatePropertiesAction 
 import { ImageUploadField } from "@/components/admin/media/ImageUploadField";
 import { MultiImageUploadField } from "@/components/admin/media/MultiImageUploadField";
 import { FormActions } from "@/components/admin/shared/FormActions";
+import { SubmitButton } from "@/components/admin/shared/SubmitButton";
 
 type PropertyRecord = {
   id: string;
@@ -78,9 +79,9 @@ export function PropertyForm({ property }: { property?: PropertyRecord }) {
       {property ? (
         <form action={deletePropertiesAction} className="mt-4">
           <input type="hidden" name="id" value={property.id} />
-          <button type="submit" className="rounded-xl border border-[#e2b0b0] bg-[#fbeeee] px-4 py-2 text-sm font-medium text-[#8f3f3f]">
+          <SubmitButton pendingText="Deleting..." className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#e2b0b0] bg-[#fbeeee] px-4 py-2 text-sm font-medium text-[#8f3f3f]">
             Delete Property
-          </button>
+          </SubmitButton>
         </form>
       ) : null}
     </>

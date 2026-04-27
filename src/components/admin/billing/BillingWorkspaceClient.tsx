@@ -11,6 +11,7 @@ import {
   performCheckInOutAction,
 } from "@/actions/admin/resort-management";
 import { StatusBadge } from "@/components/admin/shared/StatusBadge";
+import { SubmitButton } from "@/components/admin/shared/SubmitButton";
 
 type BillingWorkspaceClientProps = {
   bookingId: string;
@@ -441,9 +442,9 @@ export function BillingWorkspaceClient({
                       name="return_path"
                       value={`/admin/billing/${bookingId}`}
                     />
-                    <button className="w-full rounded-xl bg-[#2e5a3d] px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#244832]">
+                    <SubmitButton pendingText="Generating..." className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#2e5a3d] px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#244832]">
                       Generate Invoice
-                    </button>
+                    </SubmitButton>
                   </form>
                 ) : null}
 
@@ -470,12 +471,13 @@ export function BillingWorkspaceClient({
                 value={`/admin/billing/${bookingId}`}
               />
 
-              <button
+              <SubmitButton
+                pendingText="Processing..."
                 disabled={Boolean(checkoutReason)}
-                className="mt-3 w-full rounded-xl bg-[#d87319] px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#bd6012] disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#d87319] px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#bd6012]"
               >
                 Complete Checkout
-              </button>
+              </SubmitButton>
 
               <p className="mt-2 text-xs leading-5 text-[#7c6e58]">
                 {checkoutReason || "Checkout is ready for completion."}
@@ -561,9 +563,9 @@ export function BillingWorkspaceClient({
                             name="return_path"
                             value={`/admin/billing/${bookingId}`}
                           />
-                          <button className="rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 transition hover:bg-rose-100">
+                          <SubmitButton pendingText="Deleting..." className="inline-flex items-center justify-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 transition hover:bg-rose-100">
                             Delete
-                          </button>
+                          </SubmitButton>
                         </form>
                       </td>
                     </tr>
@@ -661,12 +663,13 @@ export function BillingWorkspaceClient({
               </p>
             ) : null}
 
-            <button
+            <SubmitButton
+              pendingText="Saving payment..."
               disabled={Boolean(paymentValidationMessage)}
-              className="w-full rounded-xl bg-[#2e5a3d] px-3 py-2.5 font-semibold text-white shadow-sm transition hover:bg-[#244832] disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#2e5a3d] px-3 py-2.5 font-semibold text-white shadow-sm transition hover:bg-[#244832]"
             >
               Save Payment
-            </button>
+            </SubmitButton>
           </div>
         </form>
 
@@ -713,12 +716,13 @@ export function BillingWorkspaceClient({
               </p>
             ) : null}
 
-            <button
+            <SubmitButton
+              pendingText="Applying discount..."
               disabled={Boolean(discountValidationMessage)}
-              className="w-full rounded-xl bg-[#d87319] px-3 py-2.5 font-semibold text-white shadow-sm transition hover:bg-[#bd6012] disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#d87319] px-3 py-2.5 font-semibold text-white shadow-sm transition hover:bg-[#bd6012]"
             >
               Apply Discount
-            </button>
+            </SubmitButton>
           </div>
         </form>
       </section>
@@ -956,9 +960,9 @@ export function BillingWorkspaceClient({
                   Cancel
                 </button>
 
-                <button className="rounded-xl bg-[#2e5a3d] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#244832]">
+                <SubmitButton pendingText="Saving charge..." className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2e5a3d] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#244832]">
                   Save Charge
-                </button>
+                </SubmitButton>
               </div>
             </form>
           </div>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { updateBookingStatusInlineAction } from "@/actions/admin/bookings";
 import { DataTable } from "@/components/admin/shared/DataTable";
+import { LoadingSpinner } from "@/components/admin/shared/LoadingSpinner";
 import { BOOKING_STATUS_OPTIONS } from "@/features/admin/bookings/constants";
 import type { Booking } from "@/features/admin/bookings/types";
 
@@ -79,7 +80,7 @@ export function BookingTable({ bookings }: { bookings: Booking[] }) {
                     </option>
                   ))}
                 </select>
-                <p className={`mt-1 text-xs ${feedback?.error ? "text-rose-700" : "text-[#5f6f64]"}`}>{feedback?.message ?? ""}</p>
+                <p className={`mt-1 inline-flex items-center gap-1 text-xs ${feedback?.error ? "text-rose-700" : "text-[#5f6f64]"}`}>{feedback?.saving ? <LoadingSpinner className="h-3 w-3 border-[1.5px]" /> : null}{feedback?.message ?? ""}</p>
               </div>
             );
           },

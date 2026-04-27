@@ -3,6 +3,7 @@ import { AdminPageHeader } from "@/components/admin/shared/AdminPageHeader";
 import { DataTable } from "@/components/admin/shared/DataTable";
 import { StatusBadge } from "@/components/admin/shared/StatusBadge";
 import { getAllBookings } from "@/features/admin/bookings/services/bookings-service";
+import { SubmitButton } from "@/components/admin/shared/SubmitButton";
 
 const inputClass =
   "w-full rounded-xl border border-[#d8cfbf] bg-[#fdfbf7] px-3 py-2.5 text-sm text-[#21392c] outline-none transition focus:border-[#2e5a3d] focus:ring-2 focus:ring-[#2e5a3d]/15";
@@ -204,12 +205,12 @@ export default async function BillingSelectionPage({
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
-          <button
-            type="submit"
-            className="inline-flex items-center justify-center rounded-xl bg-[#2e5a3d] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#244832]"
+          <SubmitButton
+            pendingText="Applying..."
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2e5a3d] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#244832]"
           >
             Apply Filters
-          </button>
+          </SubmitButton>
 
           <Link
             href="/admin/billing"
