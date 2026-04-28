@@ -126,7 +126,7 @@ function SidebarBody({
                 href={item.href}
                 onClick={onClose}
                 className={[
-                  "group flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[0.9rem] font-medium transition",
+                  "group flex items-center gap-2 rounded-xl px-2.5 py-2 text-[0.9rem] font-medium transition",
                   active
                     ? "bg-[#f0d28a] text-[#172d22] shadow-sm"
                     : "text-[#e9efe8] hover:bg-white/10 hover:text-white",
@@ -134,7 +134,7 @@ function SidebarBody({
               >
                 <span
                   className={[
-                    "grid h-8 w-8 shrink-0 place-items-center rounded-lg transition",
+                    "grid h-7 w-8 shrink-0 place-items-center rounded-lg transition",
                     active
                       ? "bg-white/45 text-[#172d22]"
                       : "bg-white/[0.07] text-[#d7e2d9] group-hover:bg-white/[0.14] group-hover:text-white",
