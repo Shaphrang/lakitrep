@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/auth/admin";
+import { requireAdminPermission } from "@/lib/auth/admin";
 import { cottageSchema } from "@/features/admin/cottages/schema";
 import { createCottage, deleteCottage, updateCottage } from "@/features/admin/cottages/services/cottages-service";
 import { getBoolean, getNumber, getString, parseCommaList, parseTextList } from "./_shared";
@@ -43,7 +43,7 @@ function parseCottageForm(formData: FormData) {
 }
 
 export async function createCottagesAction(formData: FormData) {
-  await requireAdmin();
+  await requireAdminPermission("cottages.manage");
   const input = parseCottageForm(formData);
   const row = await createCottage(input);
   revalidatePath("/admin/cottages");
@@ -51,7 +51,7 @@ export async function createCottagesAction(formData: FormData) {
 }
 
 export async function updateCottagesAction(formData: FormData) {
-  await requireAdmin();
+  await requireAdminPermission("cottages.manage");
   const id = getString(formData, "id");
   const input = parseCottageForm(formData);
   await updateCottage(id, input);
@@ -61,7 +61,7 @@ export async function updateCottagesAction(formData: FormData) {
 }
 
 export async function deleteCottagesAction(formData: FormData) {
-  await requireAdmin();
+  await requireAdminPermission("cottages.manage");
   const id = getString(formData, "id");
   await deleteCottage(id);
   revalidatePath("/admin/cottages");

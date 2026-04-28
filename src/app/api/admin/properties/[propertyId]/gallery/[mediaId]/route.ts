@@ -2,12 +2,12 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { deletePropertyGalleryMediaRow, getPropertyGalleryMediaById, updatePropertyGalleryMedia } from "@/features/gallery/gallery-service";
 import { GALLERY_BUCKET } from "@/features/gallery/constants";
-import { requireAdmin } from "@/lib/auth/admin";
+import { requireAdminPermission } from "@/lib/auth/admin";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ propertyId: string; mediaId: string }> }) {
   try {
-    await requireAdmin();
+    await requireAdminPermission("properties.manage");
     const { propertyId, mediaId } = await params;
     const payload = (await request.json()) as {
       title: string | null;
@@ -26,7 +26,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ pr
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ propertyId: string; mediaId: string }> }) {
   try {
-    await requireAdmin();
+    await requireAdminPermission("properties.manage");
     const { propertyId, mediaId } = await params;
     const row = await getPropertyGalleryMediaById(mediaId);
 

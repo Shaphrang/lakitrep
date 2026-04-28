@@ -3,11 +3,11 @@ import { NextResponse } from "next/server";
 import { GALLERY_CATEGORY_SLUGS } from "@/features/gallery/constants";
 import { getPropertyGalleryMedia, insertPropertyGalleryMedia } from "@/features/gallery/gallery-service";
 import type { GalleryCategorySlug } from "@/features/gallery/types";
-import { requireAdmin } from "@/lib/auth/admin";
+import { requireAdminPermission } from "@/lib/auth/admin";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ propertyId: string }> }) {
   try {
-    await requireAdmin();
+    await requireAdminPermission("properties.manage");
     const { propertyId } = await params;
     const rows = await getPropertyGalleryMedia(propertyId);
     return NextResponse.json({ items: rows });
@@ -18,7 +18,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ pro
 
 export async function POST(request: Request) {
   try {
-    await requireAdmin();
+    await requireAdminPermission("properties.manage");
     const body = (await request.json()) as {
       property_id: string;
       category_slug: GalleryCategorySlug;

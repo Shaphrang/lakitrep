@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/auth/admin";
+import { requireAdminPermission } from "@/lib/auth/admin";
 import { propertySchema } from "@/features/admin/properties/schema";
 import { createProperty, deleteProperty, updateProperty } from "@/features/admin/properties/services/properties-service";
 import { getBoolean, getString, parseTextList } from "./_shared";
@@ -28,7 +28,7 @@ function parsePropertyForm(formData: FormData) {
 }
 
 export async function createPropertiesAction(formData: FormData) {
-  await requireAdmin();
+  await requireAdminPermission("properties.manage");
   const input = parsePropertyForm(formData);
   const row = await createProperty(input);
   revalidatePath("/admin/properties");
@@ -36,7 +36,7 @@ export async function createPropertiesAction(formData: FormData) {
 }
 
 export async function updatePropertiesAction(formData: FormData) {
-  await requireAdmin();
+  await requireAdminPermission("properties.manage");
   const id = getString(formData, "id");
   const input = parsePropertyForm(formData);
   await updateProperty(id, input);
@@ -46,7 +46,7 @@ export async function updatePropertiesAction(formData: FormData) {
 }
 
 export async function deletePropertiesAction(formData: FormData) {
-  await requireAdmin();
+  await requireAdminPermission("properties.manage");
   const id = getString(formData, "id");
   await deleteProperty(id);
   revalidatePath("/admin/properties");
