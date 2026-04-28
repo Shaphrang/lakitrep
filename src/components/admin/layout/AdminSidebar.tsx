@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { AdminPermission, AdminRole } from "@/lib/auth/permissions";
+import { hasPermission } from "@/lib/auth/permissions";
 
 type NavIcon =
   | "dashboard"
@@ -14,40 +16,46 @@ type NavIcon =
   | "property"
   | "cottage"
   | "attractions"
-  | "policies";
+  | "policies"
+  | "seo";
 
 const adminNavItems: {
   href: string;
   label: string;
   icon: NavIcon;
   exact?: boolean;
+  permission: AdminPermission;
 }[] = [
-  { href: "/admin", label: "Dashboard", icon: "dashboard", exact: true },
-  { href: "/admin/bookings", label: "Bookings", icon: "bookings" },
-  { href: "/admin/customers", label: "Customers", icon: "customers" },
-  { href: "/admin/availability", label: "Availability", icon: "calendar" },
-  { href: "/admin/checkin-checkout", label: "Check-in / Out", icon: "check" },
-  { href: "/admin/billing", label: "Billing", icon: "billing" },
-  { href: "/admin/reports", label: "Reports", icon: "reports" },
-  { href: "/admin/properties", label: "Properties", icon: "property" },
-  { href: "/admin/cottages", label: "Cottages", icon: "cottage" },
-  { href: "/admin/attractions", label: "Attractions", icon: "attractions" },
-  { href: "/admin/policies", label: "Policies", icon: "policies" },
+  { href: "/admin", label: "Dashboard", icon: "dashboard", exact: true, permission: "dashboard.view" },
+  { href: "/admin/bookings", label: "Bookings", icon: "bookings", permission: "bookings.read" },
+  { href: "/admin/customers", label: "Customers", icon: "customers", permission: "customers.read" },
+  { href: "/admin/availability", label: "Availability", icon: "calendar", permission: "availability.read" },
+  { href: "/admin/checkin-checkout", label: "Check-in / Out", icon: "check", permission: "checkin_checkout.read" },
+  { href: "/admin/billing", label: "Billing", icon: "billing", permission: "billing.read" },
+  { href: "/admin/reports", label: "Reports", icon: "reports", permission: "reports.view" },
+  { href: "/admin/properties", label: "Properties", icon: "property", permission: "properties.manage" },
+  { href: "/admin/cottages", label: "Cottages", icon: "cottage", permission: "cottages.manage" },
+  { href: "/admin/attractions", label: "Attractions", icon: "attractions", permission: "attractions.manage" },
+  { href: "/admin/policies", label: "Policies", icon: "policies", permission: "policies.manage" },
+  { href: "/admin/seo", label: "SEO", icon: "seo", permission: "seo.manage" },
 ];
 
 export function AdminSidebar({
+  adminRole,
   isOpen,
   onClose,
 }: {
+  adminRole: AdminRole;
   isOpen: boolean;
   onClose: () => void;
 }) {
   const pathname = usePathname();
+  const visibleNavItems = adminNavItems.filter((item) => hasPermission(adminRole, item.permission));
 
   return (
     <>
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-[#284a36] bg-[#163023] text-[#f8f4ec] shadow-xl lg:block">
-        <SidebarBody pathname={pathname} onClose={onClose} />
+        <SidebarBody pathname={pathname} navItems={visibleNavItems} onClose={onClose} />
       </aside>
 
       {isOpen ? (
@@ -64,7 +72,7 @@ export function AdminSidebar({
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <SidebarBody pathname={pathname} onClose={onClose} />
+        <SidebarBody pathname={pathname} navItems={visibleNavItems} onClose={onClose} />
       </aside>
     </>
   );
@@ -72,9 +80,11 @@ export function AdminSidebar({
 
 function SidebarBody({
   pathname,
+  navItems,
   onClose,
 }: {
   pathname: string;
+  navItems: typeof adminNavItems;
   onClose: () => void;
 }) {
   return (
@@ -107,7 +117,7 @@ function SidebarBody({
         </p>
 
         <nav className="space-y-0.5">
-          {adminNavItems.map((item) => {
+          {navItems.map((item) => {
             const active = isNavActive(pathname, item.href, item.exact);
 
             return (
@@ -263,6 +273,17 @@ function Icon({
           <path d="M8 16v-5" />
           <path d="M12 16V8" />
           <path d="M16 16v-3" />
+        </svg>
+      );
+
+    case "seo":
+      return (
+        <svg {...common}>
+          <path d="M4 5h12" />
+          <path d="M4 12h9" />
+          <path d="M4 19h7" />
+          <circle cx="17" cy="12" r="3" />
+          <path d="m19.5 14.5 2.5 2.5" />
         </svg>
       );
 

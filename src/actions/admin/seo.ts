@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/auth/admin";
+import { requireAdminPermission } from "@/lib/auth/admin";
 import { seoSchema } from "@/features/admin/seo/schema";
 import { createSeoEntry, deleteSeoEntry, updateSeoEntry } from "@/features/admin/seo/services/seo-service";
 import { getBoolean, getString, parseCommaList } from "./_shared";
@@ -21,14 +21,14 @@ function parseSeoForm(formData: FormData) {
 }
 
 export async function createSeoAction(formData: FormData) {
-  await requireAdmin();
+  await requireAdminPermission("seo.manage");
   const row = await createSeoEntry(parseSeoForm(formData));
   revalidatePath("/admin/seo");
   redirect(`/admin/seo/${row.id}`);
 }
 
 export async function updateSeoAction(formData: FormData) {
-  await requireAdmin();
+  await requireAdminPermission("seo.manage");
   const id = getString(formData, "id");
   await updateSeoEntry(id, parseSeoForm(formData));
   revalidatePath("/admin/seo");
@@ -36,7 +36,7 @@ export async function updateSeoAction(formData: FormData) {
 }
 
 export async function deleteSeoAction(formData: FormData) {
-  await requireAdmin();
+  await requireAdminPermission("seo.manage");
   const id = getString(formData, "id");
   await deleteSeoEntry(id);
   revalidatePath("/admin/seo");

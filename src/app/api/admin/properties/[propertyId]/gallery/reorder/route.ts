@@ -2,11 +2,11 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { GALLERY_CATEGORY_SLUGS } from "@/features/gallery/constants";
 import { reorderPropertyGalleryMedia } from "@/features/gallery/gallery-service";
-import { requireAdmin } from "@/lib/auth/admin";
+import { requireAdminPermission } from "@/lib/auth/admin";
 
 export async function POST(request: Request, { params }: { params: Promise<{ propertyId: string }> }) {
   try {
-    await requireAdmin();
+    await requireAdminPermission("properties.manage");
     const { propertyId } = await params;
     const body = (await request.json()) as {
       category_slug: string;

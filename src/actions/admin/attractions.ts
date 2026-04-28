@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/auth/admin";
+import { requireAdminPermission } from "@/lib/auth/admin";
 import { attractionSchema } from "@/features/admin/attractions/schema";
 import { createAttraction, deleteAttraction, updateAttraction } from "@/features/admin/attractions/services/attractions-service";
 import { getBoolean, getNumber, getString, parseTextList } from "./_shared";
@@ -21,7 +21,7 @@ function parseAttractionForm(formData: FormData) {
 }
 
 export async function createAttractionsAction(formData: FormData) {
-  await requireAdmin();
+  await requireAdminPermission("attractions.manage");
   const input = parseAttractionForm(formData);
   const row = await createAttraction(input);
   revalidatePath("/admin/attractions");
@@ -29,7 +29,7 @@ export async function createAttractionsAction(formData: FormData) {
 }
 
 export async function updateAttractionsAction(formData: FormData) {
-  await requireAdmin();
+  await requireAdminPermission("attractions.manage");
   const id = getString(formData, "id");
   const input = parseAttractionForm(formData);
   await updateAttraction(id, input);
@@ -38,7 +38,7 @@ export async function updateAttractionsAction(formData: FormData) {
 }
 
 export async function deleteAttractionsAction(formData: FormData) {
-  await requireAdmin();
+  await requireAdminPermission("attractions.manage");
   const id = getString(formData, "id");
   await deleteAttraction(id);
   revalidatePath("/admin/attractions");

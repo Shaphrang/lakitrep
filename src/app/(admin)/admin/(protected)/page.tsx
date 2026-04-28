@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { AdminPageHeader } from "@/components/admin/shared/AdminPageHeader";
 import { getResortDashboardMetrics } from "@/features/admin/bookings/services/resort-management-service";
+import { requireAdmin } from "@/lib/auth/admin";
 
 type IconName =
   | "calendar"
@@ -460,6 +462,11 @@ function MiniBreakdown({
 }
 
 export default async function AdminDashboardPage() {
+  const admin = await requireAdmin();
+  if (admin.role === "staff") {
+    redirect("/admin/bookings");
+  }
+
   const metrics = await getResortDashboardMetrics();
 
   const todayCheckins = numberValue(metrics.todayCheckins);
