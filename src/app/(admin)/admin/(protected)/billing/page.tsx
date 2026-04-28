@@ -73,56 +73,6 @@ export default async function BillingSelectionPage({
         }
       />
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <article className="rounded-2xl border border-[#ddd4c6] bg-white p-4 shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-[0.12em] text-[#6e7f72]">
-            Bookings Found
-          </p>
-          <p className="mt-2 text-2xl font-semibold text-[#21392c]">
-            {totalBookings}
-          </p>
-          <p className="mt-1 text-xs text-[#7b877f]">
-            Based on current filters
-          </p>
-        </article>
-
-        <article className="rounded-2xl border border-[#ddd4c6] bg-white p-4 shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-[0.12em] text-[#6e7f72]">
-            Total Final Amount
-          </p>
-          <p className="mt-2 text-2xl font-semibold text-[#21392c]">
-            {currency(totalFinalAmount)}
-          </p>
-          <p className="mt-1 text-xs text-[#7b877f]">
-            Final bill value of listed bookings
-          </p>
-        </article>
-
-        <article className="rounded-2xl border border-[#e6cda2] bg-[#fff9ed] p-4 shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-[0.12em] text-[#8a6b42]">
-            Pending Amount
-          </p>
-          <p className="mt-2 text-2xl font-semibold text-[#7a4b12]">
-            {currency(totalPendingAmount)}
-          </p>
-          <p className="mt-1 text-xs text-[#8a6b42]">
-            Amount still to be received
-          </p>
-        </article>
-
-        <article className="rounded-2xl border border-[#ddd4c6] bg-white p-4 shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-[0.12em] text-[#6e7f72]">
-            Pending Bookings
-          </p>
-          <p className="mt-2 text-2xl font-semibold text-[#21392c]">
-            {pendingBookings}
-          </p>
-          <p className="mt-1 text-xs text-[#7b877f]">
-            Bookings with balance due
-          </p>
-        </article>
-      </section>
-
       <form
         method="GET"
         className="rounded-2xl border border-[#ddd4c6] bg-white p-4 shadow-sm"
